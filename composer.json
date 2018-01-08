@@ -1,0 +1,36 @@
+{
+  "name": "oat-sa/lib-tao-elasticsearch",
+  "description": "Library to search in Tao using Elasticsearch",
+  "type": "library",
+  "authors": [
+    {
+      "name": "Open Assessment Technologies S.A.",
+      "homepage": "http://www.taotesting.com"
+    },
+    {
+      "name": "Aleksej Tikhanovich",
+      "email": "aleksej@taotesting.com",
+      "homepage": "http://www.taotesting.com",
+      "role": "Developer"
+    }
+  ],
+  "support": {
+    "forum": "http://forum.taotesting.com",
+    "issues": "http://forge.taotesting.com"
+  },
+  "keywords" : ["OAT", "TAO", "search", "elastic", "elasticsearch"],
+  "homepage" : "http://www.taotesting.com",
+  "license" : [
+    "GPL-2.0"
+  ],
+  "require" : {
+    "php" : ">=5.3.10",
+    "oat-sa/tao-core" : "*",
+    "elasticsearch/elasticsearch": "~6.0"
+  },
+  "autoload" : {
+    "psr-4" : {
+      "oat\\tao\\elasticsearch\\" : "src/"
+    }
+  }
+}
