@@ -186,15 +186,18 @@ class ElasticSearch extends ConfigurableService implements Search
 
         foreach ($indexesList as $index => $fields) {
             $resource = new \core_kernel_classes_Resource($index);
-            $index = 'documents-'.str_replace(' ', '_', strtolower(trim($resource->getLabel())));
-            $params = [
-                'index' => $index,
-                'body' => [
-                    'settings' => $this->getOption('settings'),
-                    'mappings' => $this->getMappings($fields)
-                ]
-            ];
-            $client->indices()->create($params);
+            $label = str_replace(' ', '_', strtolower(trim($resource->getLabel())));
+            if ($label) {
+                $index = 'documents-'.$label;
+                $params = [
+                    'index' => $index,
+                    'body' => [
+                        'settings' => $this->getOption('settings'),
+                        'mappings' => $this->getMappings($fields)
+                    ]
+                ];
+                $client->indices()->create($params);
+            }
         }
         return true;
     }
@@ -226,13 +229,13 @@ class ElasticSearch extends ConfigurableService implements Search
 
         $queryString = strtolower($queryString);
         $options = $this->getOptionsByClass($rootClass);
-        $label = $rootClass->getLabel() ? $rootClass->getLabel() : (isset($options['label']) ? $options['label'] : '');
+        $label = $rootClass->getLabel() ? $rootClass->getLabel() : (isset($options[DataProvider::LABEL_CLASS_OPTION]) ? $options[DataProvider::LABEL_CLASS_OPTION] : '');
         $index = 'documents-'.str_replace(' ', '_', strtolower(trim($label)));
         $query = [
             'query' => [
                 'multi_match' => [
                     'query' => $queryString,
-                    'fields' => $options['fields'],
+                    'fields' => $options[DataProvider::FIELDS_OPTION],
                     'type' => 'best_fields',
                     'operator' => 'and'
                 ]
@@ -243,6 +246,7 @@ class ElasticSearch extends ConfigurableService implements Search
             "type" => $type,
             "size" => $count,
             "from" => $start,
+            "client" => [ "ignore" => 404 ],
             "body" => json_encode($query)
         ];
 
@@ -270,18 +274,20 @@ class ElasticSearch extends ConfigurableService implements Search
     {
         $uris = array();
         $total = 0;
-        if ($elasticResult) {
+        if ($elasticResult && isset($elasticResult['hits'])) {
             foreach ($elasticResult['hits']['hits'] as $document) {
                 $source = $document['_source'];
-                /** @var DataProvider $dataProvider */
-                $dataProvider = $this->getServiceLocator()->get($source['provider']);
-                if ($dataProvider) {
-                    $uris[] = $dataProvider->getResults($source['id']);
+                if (isset($source['provider'])) {
+                    /** @var DataProvider $dataProvider */
+                    $dataProvider = $this->getServiceLocator()->get($source['provider']);
+                    if ($dataProvider) {
+                        $uris[] = $dataProvider->getResults($source['id']);
+                    }
                 }
             }
             $total = $elasticResult['hits']['total'];
         }
-
+        $uris = array_unique($uris);
         return new ResultSet($uris, $total);
     }
 
