@@ -75,7 +75,7 @@ class ElasticSearchIndexer
                 'body' => $index->getBody()
                 ];
             $params['body']['provider'] = $index->getProvider();
-            $params['body']['id'] = $index->getResponseIdentifier();
+            $params['body']['id'] = $index->getIdentifier();
             $this->client->index($params);
             $count += 1;
         }
@@ -100,7 +100,7 @@ class ElasticSearchIndexer
             ];
             $body = $document->getBody();
             $body['provider'] = $document->getProvider();
-            $body['id'] = $document->getResponseIdentifier();
+            $body['id'] = $document->getIdentifier();
             try {
                 $client->get($params);
                 $params['body']['doc'] = $body;

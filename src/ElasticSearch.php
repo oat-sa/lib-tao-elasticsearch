@@ -24,6 +24,7 @@ use Elasticsearch\ClientBuilder;
 use oat\tao\model\search\dataProviders\DataProvider;
 use oat\tao\model\search\dataProviders\SearchDataProvider;
 use oat\tao\model\search\document\Document;
+use oat\tao\model\search\document\IndexDocument;
 use oat\tao\model\search\Search;
 use common_Logger;
 use oat\tao\model\search\SyntaxException;
@@ -56,15 +57,16 @@ class ElasticSearch extends ConfigurableService implements Search
      * (non-PHPdoc)
      * @see \oat\tao\model\search\Search::query()
      */
-    public function query($queryString, $rootClass = null, $start = 0, $count = 10)
+    public function query($queryString, $rootClass = null, $start = 0, $count = 10, $options = [])
     {
         try {
             $response = [];
             if ($rootClass) {
                 $searchParams = $this->getSearchParams($queryString, $rootClass, 'document', $start, $count);
+
                 $response = $this->getClient()->search($searchParams);
             }
-            return $this->buildResultSet($response);
+            return $this->buildResultSet($response, $options);
 
         } catch ( HttpException $e ) {
             switch ($e->getCode()) {
@@ -117,6 +119,7 @@ class ElasticSearch extends ConfigurableService implements Search
         /** @var SearchDataProvider $searchDataProvider */
         $searchDataProvider = $this->getServiceLocator()->get(SearchDataProvider::SERVICE_ID);
         $indexes = $searchDataProvider->prepareAllDataForIndex($resourceTraversable);
+
         $indexer = new ElasticSearchIndexer($this->getClient());
         $count = $indexer->runReIndex($indexes);
         return $count;
@@ -155,12 +158,15 @@ class ElasticSearch extends ConfigurableService implements Search
     protected function deleteAllIndexes()
     {
         $client = $this->getClient();
+
         $index = 'documents-*';
         $params = [
             'index' => $index,
             'client' => [ 'ignore' => 404 ]
         ];
+
         $response = $client->indices()->delete($params);
+
         return $response;
     }
 
@@ -224,12 +230,17 @@ class ElasticSearch extends ConfigurableService implements Search
      * @param $rootClass
      * @return array
      */
-    protected function getSearchParams( $queryString, \core_kernel_classes_Class $rootClass = null, $type = 'document', $start = 0, $count = 10)
+    protected function getSearchParams( $queryString, $rootClass = null, $type = 'document', $start = 0, $count = 10)
     {
-
+        if ($rootClass instanceof \core_kernel_classes_Class) {
+            $rootClassLabel = $rootClass->getLabel();
+        } else {
+            $rootClass = new \core_kernel_classes_Class($rootClass);
+            $rootClassLabel = $rootClass->getLabel();
+        }
         $queryString = strtolower($queryString);
         $options = $this->getOptionsByClass($rootClass);
-        $label = $rootClass->getLabel() ? $rootClass->getLabel() : (isset($options[DataProvider::LABEL_CLASS_OPTION]) ? $options[DataProvider::LABEL_CLASS_OPTION] : '');
+        $label = isset($options[DataProvider::LABEL_CLASS_OPTION]) ? $options[DataProvider::LABEL_CLASS_OPTION] : ( $rootClassLabel ? $rootClassLabel : '');
         $index = 'documents-'.str_replace(' ', '_', strtolower(trim($label)));
         $query = [
             'query' => [
@@ -268,9 +279,10 @@ class ElasticSearch extends ConfigurableService implements Search
 
     /**
      * @param array $elasticResult
+     * @param array $options
      * @return ResultSet
      */
-    protected function buildResultSet($elasticResult = [])
+    protected function buildResultSet($elasticResult = [], $options = [])
     {
         $uris = array();
         $total = 0;
@@ -281,7 +293,11 @@ class ElasticSearch extends ConfigurableService implements Search
                     /** @var DataProvider $dataProvider */
                     $dataProvider = $this->getServiceLocator()->get($source['provider']);
                     if ($dataProvider) {
-                        $uris[] = $dataProvider->getResults($source['id']);
+                        if (isset($options[self::OPTION_RESPONSE_KEY]) && isset($source[$options[self::OPTION_RESPONSE_KEY]])) {
+                            $uris[] = $dataProvider->getResults($source[$options[self::OPTION_RESPONSE_KEY]]);
+                        } else {
+                            $uris[] = $dataProvider->getResults($document['_id']);
+                        }
                     }
                 }
             }
