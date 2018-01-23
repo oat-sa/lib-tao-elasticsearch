@@ -23,6 +23,7 @@ namespace oat\tao\elasticsearch;
 use Elasticsearch\Client;
 use Elasticsearch\Common\Exceptions\Missing404Exception;
 use oat\tao\model\search\document\Document;
+use oat\tao\model\search\index\IndexDocument;
 use oat\tao\model\search\SearchTokenGenerator;
 
 /**
@@ -59,48 +60,25 @@ class ElasticSearchIndexer
     }
 
     /**
-     * @return int
-     * @throws \common_exception_InconsistentData
-     */
-    public function runReIndex($indexes = []) {
-
-        $count = 0;
-
-        /** @var Document $index */
-        foreach ($indexes as $index) {
-            $params = [
-                'id' => $index->getIdentifier(),
-                'type' => $index->getType(),
-                'index' => $index->getIndex(),
-                'body' => $index->getBody()
-                ];
-            $params['body']['provider'] = $index->getProvider();
-            $params['body']['id'] = $index->getIdentifier();
-            $this->client->index($params);
-            $count += 1;
-        }
-    
-        return $count;
-    }
-
-    /**
-     * @param Document $document
+     * @param IndexDocument $document
      * @return bool
      * @throws \common_exception_InconsistentData
      */
-    public function addIndex(Document $document)
+    public function addIndex(IndexDocument $document)
     {
         $client = $this->client;
 
         if ($document) {
+            $type = strtolower(\tao_helpers_Uri::encode($document->getType()));
             $params = [
-                'id' => $document->getIdentifier(),
-                'type' => $document->getType(),
-                'index' => $document->getIndex(),
+                'id' => $document->getId(),
+                'type' => 'document',
+                'index' => strtolower('documents-'.$type),
             ];
+
             $body = $document->getBody();
-            $body['provider'] = $document->getProvider();
-            $body['id'] = $document->getIdentifier();
+            $body['response_id'] = $document->getResponseId();
+            $body['type'] = $type;
             try {
                 $client->get($params);
                 $params['body']['doc'] = $body;
@@ -109,6 +87,7 @@ class ElasticSearchIndexer
             } catch (Missing404Exception $e) {
                 $params['refresh'] = true;
                 $params['body'] = $body;
+                \common_Logger::i(json_encode($params));
                 $this->client->index($params);
             }
 

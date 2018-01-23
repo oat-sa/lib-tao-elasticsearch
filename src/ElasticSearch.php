@@ -21,25 +21,24 @@
 namespace oat\tao\elasticsearch;
 
 use Elasticsearch\ClientBuilder;
-use oat\tao\model\search\dataProviders\DataProvider;
-use oat\tao\model\search\dataProviders\SearchDataProvider;
-use oat\tao\model\search\document\Document;
-use oat\tao\model\search\document\IndexDocument;
+use oat\tao\model\search\index\IndexService;
 use oat\tao\model\search\Search;
-use common_Logger;
 use oat\tao\model\search\SyntaxException;
 use Solarium\Exception\HttpException;
 use oat\tao\model\search\ResultSet;
 use oat\oatbox\service\ConfigurableService;
 
+/**
+ * Class ElasticSearch
+ * @package oat\tao\elasticsearch
+ */
 class ElasticSearch extends ConfigurableService implements Search
 {
     /**
      *
-     * @var \Solarium\Client
+     * @var \Elasticsearch\Client
      */
     private $client;
-
     /**
      *
      * @return \Elasticsearch\Client
@@ -57,16 +56,15 @@ class ElasticSearch extends ConfigurableService implements Search
      * (non-PHPdoc)
      * @see \oat\tao\model\search\Search::query()
      */
-    public function query($queryString, $rootClass = null, $start = 0, $count = 10, $options = [])
+    public function query($queryString, $rootClass = null, $start = 0, $count = 10)
     {
         try {
             $response = [];
             if ($rootClass) {
                 $searchParams = $this->getSearchParams($queryString, $rootClass, 'document', $start, $count);
-
                 $response = $this->getClient()->search($searchParams);
             }
-            return $this->buildResultSet($response, $options);
+            return $this->buildResultSet($response);
 
         } catch ( HttpException $e ) {
             switch ($e->getCode()) {
@@ -90,7 +88,7 @@ class ElasticSearch extends ConfigurableService implements Search
      * @return bool
      * @throws \common_exception_InconsistentData
      */
-    public function index(Document $document)
+    public function index(\oat\tao\model\search\index\IndexDocument $document)
     {
         $indexer = new ElasticSearchIndexer($this->getClient());
         $indexer->addIndex($document);
@@ -116,12 +114,30 @@ class ElasticSearch extends ConfigurableService implements Search
     {
         $this->deleteAllIndexes();
         $this->settingUpIndexes();
-        /** @var SearchDataProvider $searchDataProvider */
-        $searchDataProvider = $this->getServiceLocator()->get(SearchDataProvider::SERVICE_ID);
-        $indexes = $searchDataProvider->prepareAllDataForIndex($resourceTraversable);
-
+        /** @var IndexService $indexService */
+        $indexService = $this->getServiceLocator()->get(IndexService::SERVICE_ID);
         $indexer = new ElasticSearchIndexer($this->getClient());
-        $count = $indexer->runReIndex($indexes);
+        $count = 0;
+        while ($resourceTraversable->valid()) {
+            /** @var \core_kernel_classes_Resource $resource */
+            $resource = $resourceTraversable->current();
+            $rootClass = $indexService->getRootClassByResource($resource);
+            if ($rootClass) {
+                $body = [
+                    'label' => $resource->getLabel()
+                ];
+                $document = new \oat\tao\model\search\index\IndexDocument(
+                    $resource->getUri(),
+                    $resource->getUri(),
+                    $rootClass,
+                    $body
+                );
+                $indexer->addIndex($document);
+            }
+
+            $resourceTraversable->next();
+            $count += 1;
+        }
         return $count;
     }
 
@@ -132,24 +148,6 @@ class ElasticSearch extends ConfigurableService implements Search
     public function supportCustomIndex()
     {
         return true;
-    }
-
-    /**
-     * (non-PHPdoc)
-     * @see \oat\tao\model\search\Search::needIndex()
-     */
-    public function needIndex(\core_kernel_classes_Resource $resource)
-    {
-        $types = $resource->getTypes();
-        $classes = current($types)->getParentClasses(true);
-        $classes = array_merge($classes, $types);
-        /** @var ElasticSearchIndex $compare */
-        $resourcesIndexed = $this->getListOfIndexes();
-        $compare = current(array_intersect_key($resourcesIndexed, $classes));
-        if ($compare) {
-            return true;
-        }
-        return false;
     }
 
     /**
@@ -175,9 +173,9 @@ class ElasticSearch extends ConfigurableService implements Search
      */
     protected function getListOfIndexes()
     {
-        /** @var SearchDataProvider $searchDataProvider */
-        $searchDataProvider = $this->getServiceLocator()->get(SearchDataProvider::SERVICE_ID);
-        $list = $searchDataProvider->getAllIndexesMap();
+        /** @var IndexService $indexService */
+        $indexService = $this->getServiceLocator()->get(IndexService::SERVICE_ID);
+        $list = $indexService->getOption('rootClasses');
         return $list;
     }
 
@@ -191,26 +189,28 @@ class ElasticSearch extends ConfigurableService implements Search
         $indexesList = $this->getListOfIndexes();
 
         foreach ($indexesList as $index => $fields) {
-            $resource = new \core_kernel_classes_Resource($index);
-            $label = str_replace(' ', '_', strtolower(trim($resource->getLabel())));
-            if ($label) {
-                $index = 'documents-'.$label;
-                $params = [
-                    'index' => $index,
-                    'body' => [
-                        'settings' => $this->getOption('settings'),
-                        'mappings' => $this->getMappings($fields)
-                    ]
-                ];
-                $client->indices()->create($params);
-            }
+            $index = strtolower('documents-'.\tao_helpers_Uri::encode($index));
+            $params = [
+                'index' => $index,
+                'body' => [
+                    'settings' => $this->getOption('settings'),
+                    'mappings' => $this->getMappings($fields)
+                ]
+            ];
+            $client->indices()->create($params);
+
         }
         return true;
     }
 
+    /**
+     * @param $fields
+     * @return array
+     */
     protected function getMappings($fields)
     {
         $properties = [];
+        $fields['fields'][] = 'label';
         foreach ($fields['fields'] as $field) {
             $properties[$field] = [
                 'type' => 'text',
@@ -233,20 +233,15 @@ class ElasticSearch extends ConfigurableService implements Search
     protected function getSearchParams( $queryString, $rootClass = null, $type = 'document', $start = 0, $count = 10)
     {
         if ($rootClass instanceof \core_kernel_classes_Class) {
-            $rootClassLabel = $rootClass->getLabel();
-        } else {
-            $rootClass = new \core_kernel_classes_Class($rootClass);
-            $rootClassLabel = $rootClass->getLabel();
+            $rootClass = $rootClass->getUri();
         }
         $queryString = strtolower($queryString);
-        $options = $this->getOptionsByClass($rootClass);
-        $label = isset($options[DataProvider::LABEL_CLASS_OPTION]) ? $options[DataProvider::LABEL_CLASS_OPTION] : ( $rootClassLabel ? $rootClassLabel : '');
-        $index = 'documents-'.str_replace(' ', '_', strtolower(trim($label)));
+        $index = strtolower('documents-'.\tao_helpers_Uri::encode($rootClass));
         $query = [
             'query' => [
                 'multi_match' => [
                     'query' => $queryString,
-                    'fields' => $options[DataProvider::FIELDS_OPTION],
+                    'fields' => '*',
                     'type' => 'best_fields',
                     'operator' => 'and'
                 ]
@@ -265,41 +260,17 @@ class ElasticSearch extends ConfigurableService implements Search
     }
 
     /**
-     * @param \core_kernel_classes_Class $rootClass
-     * @param string                     $type
-     * @return array
-     */
-    protected function getOptionsByClass(\core_kernel_classes_Class $rootClass, $type = 'resource')
-    {
-        /** @var SearchDataProvider $searchDataProvider */
-        $searchDataProvider = $this->getServiceLocator()->get(SearchDataProvider::SERVICE_ID);
-        $options = $searchDataProvider->getOptionsByClass($rootClass->getUri());
-        return $options;
-    }
-
-    /**
      * @param array $elasticResult
-     * @param array $options
      * @return ResultSet
      */
-    protected function buildResultSet($elasticResult = [], $options = [])
+    protected function buildResultSet($elasticResult = [])
     {
         $uris = array();
         $total = 0;
         if ($elasticResult && isset($elasticResult['hits'])) {
             foreach ($elasticResult['hits']['hits'] as $document) {
                 $source = $document['_source'];
-                if (isset($source['provider'])) {
-                    /** @var DataProvider $dataProvider */
-                    $dataProvider = $this->getServiceLocator()->get($source['provider']);
-                    if ($dataProvider) {
-                        if (isset($options[self::OPTION_RESPONSE_KEY]) && isset($source[$options[self::OPTION_RESPONSE_KEY]])) {
-                            $uris[] = $dataProvider->getResults($source[$options[self::OPTION_RESPONSE_KEY]]);
-                        } else {
-                            $uris[] = $dataProvider->getResults($document['_id']);
-                        }
-                    }
-                }
+                $uris[] = $source['response_id'];
             }
             $total = $elasticResult['hits']['total'];
         }

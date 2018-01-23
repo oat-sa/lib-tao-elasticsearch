@@ -35,11 +35,7 @@ class InitElasticSearch implements Action, ServiceLocatorAwareInterface
     protected function getDefaultHost()
     {
         return [
-            'host' => 'localhost',
-            'port' => '9200',
-            'scheme' => 'http',
-            'user' => 'username',
-            'pass' => 'password!#$?*abc'
+            'http://localhost:9200'
         ];
     }
 
@@ -74,6 +70,7 @@ class InitElasticSearch implements Action, ServiceLocatorAwareInterface
         ];
     }
 
+
     public function __invoke($params) {
         
         if (!class_exists('oat\\tao\\elasticsearch\\ElasticSearch')) {
@@ -82,35 +79,9 @@ class InitElasticSearch implements Action, ServiceLocatorAwareInterface
         
         $config = [
             'hosts' => $this->getDefaultHost(),
-            'settings' => $this->getDefaultSettings()
+            'settings' => $this->getDefaultSettings(),
         ];
-        
-        $p = $params;
-        // host
-        if (count($p) > 0) {
-            $config['hosts']['host'] = array_shift($p);
-        }
-        
-        // port
-        if (count($p) > 0) {
-            $config['hosts']['port'] = array_shift($p);
-        }
-        
-        // scheme
-        if (count($p) > 0) {
-            $config['hosts']['scheme'] = array_shift($p);
-        }
 
-        // user
-        if (count($p) > 0) {
-            $config['hosts']['user'] = array_shift($p);
-        }
-
-        // pass
-        if (count($p) > 0) {
-            $config['hosts']['pass'] = array_shift($p);
-        }
-        
         $taoVersion = $this->getServiceLocator()->get(\common_ext_ExtensionsManager::SERVICE_ID)->getInstalledVersion('tao');
         if (version_compare($taoVersion, '7.8.0') < 0) {
             return new Report(Report::TYPE_ERROR, 'Requires Tao 7.8.0 or higher');
