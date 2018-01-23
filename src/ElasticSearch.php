@@ -46,7 +46,7 @@ class ElasticSearch extends ConfigurableService implements Search
     protected function getClient() {
         if (is_null($this->client)) {
             $this->client = ClientBuilder::create()           // Instantiate a new ClientBuilder
-            ->setHosts([$this->getOptions()['hosts']])      // Set the hosts
+            ->setHosts($this->getOptions()['hosts'])      // Set the hosts
             ->build();
         }
         return $this->client;
