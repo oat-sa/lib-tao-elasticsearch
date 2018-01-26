@@ -21,6 +21,8 @@
 namespace oat\tao\elasticsearch;
 
 use Elasticsearch\ClientBuilder;
+use oat\tao\model\search\index\IndexDocument;
+use oat\tao\model\search\index\IndexIterator;
 use oat\tao\model\search\index\IndexService;
 use oat\tao\model\search\Search;
 use oat\tao\model\search\SyntaxException;
@@ -28,10 +30,6 @@ use Solarium\Exception\HttpException;
 use oat\tao\model\search\ResultSet;
 use oat\oatbox\service\ConfigurableService;
 
-/**
- * Class ElasticSearch
- * @package oat\tao\elasticsearch
- */
 class ElasticSearch extends ConfigurableService implements Search
 {
     /**
@@ -110,34 +108,25 @@ class ElasticSearch extends ConfigurableService implements Search
      * (non-PHPdoc)
      * @see \oat\tao\model\search\Search::fullReIndex()
      */
-    public function fullReIndex(\Traversable $resourceTraversable)
+    public function fullReIndex(\Traversable $indexIterator)
     {
         $this->deleteAllIndexes();
         $this->settingUpIndexes();
-        /** @var IndexService $indexService */
-        $indexService = $this->getServiceLocator()->get(IndexService::SERVICE_ID);
-        $indexer = new ElasticSearchIndexer($this->getClient());
-        $count = 0;
-        while ($resourceTraversable->valid()) {
-            /** @var \core_kernel_classes_Resource $resource */
-            $resource = $resourceTraversable->current();
-            $rootClass = $indexService->getRootClassByResource($resource);
-            if ($rootClass) {
-                $body = [
-                    'label' => $resource->getLabel()
-                ];
-                $document = new \oat\tao\model\search\index\IndexDocument(
-                    $resource->getUri(),
-                    $resource->getUri(),
-                    $rootClass,
-                    $body
-                );
-                $indexer->addIndex($document);
-            }
 
-            $resourceTraversable->next();
-            $count += 1;
-        }
+        $indexer = new ElasticSearchIndexer($this->getClient(), $indexIterator);
+        $count = $indexer->reIndex();
+
+        return $count;
+    }
+
+    /**
+     * (non-PHPdoc)
+     * @see \oat\tao\model\search\Search::addIndexes()
+     */
+    public function addIndexes(\Traversable $indexIterator) {
+        $indexer = new ElasticSearchIndexer($this->getClient(), $indexIterator);
+        $count = $indexer->reIndex();
+
         return $count;
     }
 
@@ -175,7 +164,7 @@ class ElasticSearch extends ConfigurableService implements Search
     {
         /** @var IndexService $indexService */
         $indexService = $this->getServiceLocator()->get(IndexService::SERVICE_ID);
-        $list = $indexService->getOption('rootClasses');
+        $list = $indexService->getOption(IndexService::OPTION_ROOT_CLASSES);
         return $list;
     }
 
@@ -188,13 +177,13 @@ class ElasticSearch extends ConfigurableService implements Search
         $client = $this->getClient();
         $indexesList = $this->getListOfIndexes();
 
-        foreach ($indexesList as $index => $fields) {
+        foreach ($indexesList as $index) {
             $index = strtolower('documents-'.\tao_helpers_Uri::encode($index));
             $params = [
                 'index' => $index,
                 'body' => [
                     'settings' => $this->getOption('settings'),
-                    'mappings' => $this->getMappings($fields)
+                    'mappings' => $this->getMappings()
                 ]
             ];
             $client->indices()->create($params);
@@ -203,23 +192,21 @@ class ElasticSearch extends ConfigurableService implements Search
         return true;
     }
 
-    /**
-     * @param $fields
-     * @return array
-     */
-    protected function getMappings($fields)
+    protected function getMappings()
     {
-        $properties = [];
-        $fields['fields'][] = 'label';
-        foreach ($fields['fields'] as $field) {
-            $properties[$field] = [
-                'type' => 'text',
-                'analyzer' => 'autocomplete',
-                'search_analyzer' => 'standard'
-            ];
-        }
         $mappings = ['document' => [
-            'properties' => $properties
+           'dynamic_templates' => [
+               [
+                   'analysed_string_template' => [
+                       'path_match' => 'field.*',
+                       'mapping' => [
+                           'type' => 'text',
+                           'analyzer' => 'autocomplete',
+                           'search_analyzer' => 'standard'
+                       ]
+                   ]
+               ]
+           ]
         ]];
 
         return $mappings;
@@ -270,7 +257,7 @@ class ElasticSearch extends ConfigurableService implements Search
         if ($elasticResult && isset($elasticResult['hits'])) {
             foreach ($elasticResult['hits']['hits'] as $document) {
                 $source = $document['_source'];
-                $uris[] = $source['response_id'];
+                $uris[] = $source['field.response_id'];
             }
             $total = $elasticResult['hits']['total'];
         }

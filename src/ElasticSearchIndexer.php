@@ -33,14 +33,10 @@ use oat\tao\model\search\SearchTokenGenerator;
 class ElasticSearchIndexer
 {
 
+    const INDEXING_BLOCK_SIZE = 100;
+
     /** @var Client|null  */
     private $client = null;
-
-    /** @var null|\Traversable  */
-    private $resources = null;
-
-    /** @var array|null  */
-    private $indexes = null;
 
     /** @var SearchTokenGenerator */
     private $tokenGenerator = null;
@@ -48,15 +44,34 @@ class ElasticSearchIndexer
     /**
      * ElasticSearchIndexer constructor.
      * @param Client       $client
-     * @param \Traversable $resourceTraversable
-     * @param array        $indexes
+     * @param \Traversable $indexesTraversable
      */
-    public function __construct(Client $client, \Traversable $resourceTraversable = null, $indexes = [])
+    public function __construct(Client $client, \Traversable $indexesTraversable = null)
     {
         $this->client = $client;
-        $this->resources = $resourceTraversable;
-        $this->indexes = $indexes;
+        $this->indexes = $indexesTraversable;
         $this->tokenGenerator = new SearchTokenGenerator();
+    }
+
+    /**
+     * @return int
+     * @throws \common_exception_InconsistentData
+     */
+    public function reIndex()
+    {
+        $count = 0;
+
+        while ($this->indexes->valid()) {
+            $blockSize = 0;
+            while ($this->indexes->valid() && $blockSize < self::INDEXING_BLOCK_SIZE) {
+                $document = $this->indexes->current();
+                $this->addIndex($document);
+                $this->indexes->next();
+            }
+            $count += $blockSize;
+        }
+
+        return $count;
     }
 
     /**
@@ -77,16 +92,21 @@ class ElasticSearchIndexer
             ];
 
             $body = $document->getBody();
+
             $body['response_id'] = $document->getResponseId();
             $body['type'] = $type;
+            $newBody = [];
+            foreach ($body as $key => $value) {
+                $newBody['field.'.$key] = $value;
+            }
             try {
                 $client->get($params);
-                $params['body']['doc'] = $body;
+                $params['body']['doc'] = $newBody;
                 $params['refresh'] = true;
                 $client->update($params);
             } catch (Missing404Exception $e) {
                 $params['refresh'] = true;
-                $params['body'] = $body;
+                $params['body'] = $newBody;
                 \common_Logger::i(json_encode($params));
                 $this->client->index($params);
             }
