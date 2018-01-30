@@ -163,7 +163,7 @@ class ElasticSearch extends ConfigurableService implements Search
             'dynamic_templates' => [
                 [
                     'analysed_string_template' => [
-                        'path_match' => '*_t_d',
+                        'path_match' => '*'.IndexService::INDEX_MAP_PREFIX_FUZZY.IndexService::INDEX_MAP_PREFIX_DEFAULT,
                         'mapping' => [
                             'type' => 'text',
                             'analyzer' => 'autocomplete',
@@ -202,7 +202,7 @@ class ElasticSearch extends ConfigurableService implements Search
      */
     protected function getSearchParams( $queryString, $rootClass = null, $start = 0, $count = 10)
     {
-        $parts = explode( ' ', $queryString );
+        $parts = explode( ' ', htmlspecialchars_decode($queryString) );
         /** @var IndexService $indexService */
         $indexService = $this->getServiceLocator()->get(IndexService::SERVICE_ID);
         $indexMap = $indexService->getOption(IndexService::SUBSTITUTION_CONFIG_KEY);
@@ -213,7 +213,7 @@ class ElasticSearch extends ConfigurableService implements Search
             if (preg_match( '/^([^a-z_]*)([a-z_]+):(.*)/', $part, $matches ) === 1) {
                 list( $fullstring, $prefix, $fieldname, $value ) = $matches;
                 if (isset($indexMap[$fieldname])) {
-                    $parts[$key] = $prefix . $indexMap[$fieldname] . ':' . $value;
+                    $parts[$key] = $prefix . $indexMap[$fieldname] . ':' . str_replace( ':', '\\:', $value );
                 }
             }
         }
