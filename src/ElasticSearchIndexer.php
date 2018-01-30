@@ -24,6 +24,7 @@ use Elasticsearch\Client;
 use Elasticsearch\Common\Exceptions\Missing404Exception;
 use oat\tao\model\search\document\Document;
 use oat\tao\model\search\index\IndexDocument;
+use oat\tao\model\search\index\IndexIterator;
 use oat\tao\model\search\SearchTokenGenerator;
 
 /**
@@ -38,8 +39,8 @@ class ElasticSearchIndexer
     /** @var Client|null  */
     private $client = null;
 
-    /** @var SearchTokenGenerator */
-    private $tokenGenerator = null;
+    /** @var null|IndexIterator  */
+    private $indexes = null;
 
     /**
      * ElasticSearchIndexer constructor.
@@ -49,8 +50,8 @@ class ElasticSearchIndexer
     public function __construct(Client $client, \Traversable $indexesTraversable = null)
     {
         $this->client = $client;
+        /** @var IndexIterator indexes */
         $this->indexes = $indexesTraversable;
-        $this->tokenGenerator = new SearchTokenGenerator();
     }
 
     /**
@@ -63,12 +64,24 @@ class ElasticSearchIndexer
 
         while ($this->indexes->valid()) {
             $blockSize = 0;
+            $params = ['body' => []];
             while ($this->indexes->valid() && $blockSize < self::INDEXING_BLOCK_SIZE) {
                 $document = $this->indexes->current();
-                $this->addIndex($document);
+                $params['body'][] = [
+                    'index' => [
+                        '_index' => 'documents',
+                        '_type' => 'document',
+                        '_id' => $document->getId()
+                    ]
+                ];
+
+                $params['body'][] = $document->getBody();
                 $this->indexes->next();
+                $blockSize++;
             }
+            $responses = $this->client->bulk($params);
             $count += $blockSize;
+            unset($responses);
         }
 
         return $count;
