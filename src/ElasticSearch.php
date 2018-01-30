@@ -59,7 +59,7 @@ class ElasticSearch extends ConfigurableService implements Search
         try {
             $response = [];
             if ($rootClass) {
-                $searchParams = $this->getSearchParams($queryString, $rootClass, 'document', $start, $count);
+                $searchParams = $this->getSearchParams($queryString, $rootClass, $start, $count);
                 $response = $this->getClient()->search($searchParams);
             }
             return $this->buildResultSet($response);
@@ -82,11 +82,11 @@ class ElasticSearch extends ConfigurableService implements Search
 
     /**
      * (Re)Generate the index for a given resource
-     * @param Document $document
+     * @param IndexDocument $document
      * @return bool
      * @throws \common_exception_InconsistentData
      */
-    public function index(\oat\tao\model\search\index\IndexDocument $document)
+    public function index(IndexDocument $document)
     {
         $indexer = new ElasticSearchIndexer($this->getClient());
         $indexer->addIndex($document);
@@ -112,7 +112,6 @@ class ElasticSearch extends ConfigurableService implements Search
     {
         $this->deleteAllIndexes();
         $this->settingUpIndexes();
-
         $indexer = new ElasticSearchIndexer($this->getClient(), $indexIterator);
         $count = $indexer->reIndex();
 
@@ -140,13 +139,52 @@ class ElasticSearch extends ConfigurableService implements Search
     }
 
     /**
+     * @return bool
+     */
+    protected function settingUpIndexes()
+    {
+        $client = $this->getClient();
+
+
+        $params = [
+            'index' => 'documents',
+            'body' => [
+                'settings' => $this->getOption('settings'),
+                'mappings' => $this->getMappings()
+            ]
+        ];
+        $client->indices()->create($params);
+        return true;
+    }
+
+    protected function getMappings()
+    {
+        $mappings = ['document' => [
+            'dynamic_templates' => [
+                [
+                    'analysed_string_template' => [
+                        'path_match' => '*_t_d',
+                        'mapping' => [
+                            'type' => 'text',
+                            'analyzer' => 'autocomplete',
+                            'search_analyzer' => 'standard'
+                        ]
+                    ]
+                ]
+            ]
+        ]];
+
+        return $mappings;
+    }
+
+    /**
      * @return array
      */
     protected function deleteAllIndexes()
     {
         $client = $this->getClient();
 
-        $index = 'documents-*';
+        $index = 'documents';
         $params = [
             'index' => $index,
             'client' => [ 'ignore' => 404 ]
@@ -158,85 +196,46 @@ class ElasticSearch extends ConfigurableService implements Search
     }
 
     /**
-     * @return array
-     */
-    protected function getListOfIndexes()
-    {
-        /** @var IndexService $indexService */
-        $indexService = $this->getServiceLocator()->get(IndexService::SERVICE_ID);
-        $list = $indexService->getOption(IndexService::OPTION_ROOT_CLASSES);
-        return $list;
-    }
-
-
-    /**
-     * @return bool
-     */
-    protected function settingUpIndexes()
-    {
-        $client = $this->getClient();
-        $indexesList = $this->getListOfIndexes();
-
-        foreach ($indexesList as $index) {
-            $index = strtolower('documents-'.\tao_helpers_Uri::encode($index));
-            $params = [
-                'index' => $index,
-                'body' => [
-                    'settings' => $this->getOption('settings'),
-                    'mappings' => $this->getMappings()
-                ]
-            ];
-            $client->indices()->create($params);
-
-        }
-        return true;
-    }
-
-    protected function getMappings()
-    {
-        $mappings = ['document' => [
-           'dynamic_templates' => [
-               [
-                   'analysed_string_template' => [
-                       'path_match' => 'field.*',
-                       'mapping' => [
-                           'type' => 'text',
-                           'analyzer' => 'autocomplete',
-                           'search_analyzer' => 'standard'
-                       ]
-                   ]
-               ]
-           ]
-        ]];
-
-        return $mappings;
-    }
-
-    /**
      * @param $queryString
      * @param $rootClass
      * @return array
      */
-    protected function getSearchParams( $queryString, $rootClass = null, $type = 'document', $start = 0, $count = 10)
+    protected function getSearchParams( $queryString, $rootClass = null, $start = 0, $count = 10)
     {
-        if ($rootClass instanceof \core_kernel_classes_Class) {
-            $rootClass = $rootClass->getUri();
+        $parts = explode( ' ', $queryString );
+        /** @var IndexService $indexService */
+        $indexService = $this->getServiceLocator()->get(IndexService::SERVICE_ID);
+        $indexMap = $indexService->getOption(IndexService::SUBSTITUTION_CONFIG_KEY);
+
+        foreach ($parts as $key => $part) {
+
+            $matches = array();
+            if (preg_match( '/^([^a-z_]*)([a-z_]+):(.*)/', $part, $matches ) === 1) {
+                list( $fullstring, $prefix, $fieldname, $value ) = $matches;
+                if (isset($indexMap[$fieldname])) {
+                    $parts[$key] = $prefix . $indexMap[$fieldname] . ':' . $value;
+                }
+            }
         }
-        $queryString = strtolower($queryString);
-        $index = strtolower('documents-'.\tao_helpers_Uri::encode($rootClass));
+        $queryString = implode( ' ', $parts );
+        if ( ! is_null( $rootClass )) {
+            $queryString = (strlen($queryString) == 0 ? '' : '(' . $queryString . ') AND ')
+                .'type_r:' . str_replace( ':', '\\:', '"'.$rootClass->getUri().'"' );
+        }
         $query = [
             'query' => [
-                'multi_match' => [
-                    'query' => $queryString,
-                    'fields' => '*',
-                    'type' => 'best_fields',
-                    'operator' => 'and'
-                ]
+                'query_string' =>
+                    [
+                        "default_operator" => "AND",
+                        "fuzzy_transpositions" => false,
+                        "query" => $queryString
+                    ]
             ]
         ];
+
         $params = [
-            "index" => $index,
-            "type" => $type,
+            "index" => "documents",
+            "type" => "document",
             "size" => $count,
             "from" => $start,
             "client" => [ "ignore" => 404 ],
@@ -252,17 +251,26 @@ class ElasticSearch extends ConfigurableService implements Search
      */
     protected function buildResultSet($elasticResult = [])
     {
-        $uris = array();
+        $uris = [];
+        $results = [];
         $total = 0;
         if ($elasticResult && isset($elasticResult['hits'])) {
             foreach ($elasticResult['hits']['hits'] as $document) {
                 $source = $document['_source'];
-                $uris[] = $source['field.response_id'];
+                $uris[] = $document['_id'];
+                $results[] = new IndexDocument(
+                    $document['_id'],
+                    $source
+                );
             }
             $total = $elasticResult['hits']['total'];
         }
         $uris = array_unique($uris);
-        return new ResultSet($uris, $total);
+        $result = [
+            'ids' => $uris,
+            'results' => $results
+        ];
+        return new ResultSet($result, $total);
     }
 
 }

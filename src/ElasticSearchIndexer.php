@@ -84,29 +84,21 @@ class ElasticSearchIndexer
         $client = $this->client;
 
         if ($document) {
-            $type = strtolower(\tao_helpers_Uri::encode($document->getType()));
             $params = [
                 'id' => $document->getId(),
                 'type' => 'document',
-                'index' => strtolower('documents-'.$type),
+                'index' => 'documents'
             ];
 
             $body = $document->getBody();
-
-            $body['response_id'] = $document->getResponseId();
-            $body['type'] = $type;
-            $newBody = [];
-            foreach ($body as $key => $value) {
-                $newBody['field.'.$key] = $value;
-            }
             try {
                 $client->get($params);
-                $params['body']['doc'] = $newBody;
+                $params['body']['doc'] = $body;
                 $params['refresh'] = true;
                 $client->update($params);
             } catch (Missing404Exception $e) {
                 $params['refresh'] = true;
-                $params['body'] = $newBody;
+                $params['body'] = $body;
                 \common_Logger::i(json_encode($params));
                 $this->client->index($params);
             }
