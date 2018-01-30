@@ -125,7 +125,6 @@ class ElasticSearch extends ConfigurableService implements Search
     public function addIndexes(\Traversable $indexIterator) {
         $indexer = new ElasticSearchIndexer($this->getClient(), $indexIterator);
         $count = $indexer->reIndex();
-
         return $count;
     }
 
@@ -145,7 +144,6 @@ class ElasticSearch extends ConfigurableService implements Search
     {
         $client = $this->getClient();
 
-
         $params = [
             'index' => 'documents',
             'body' => [
@@ -153,6 +151,7 @@ class ElasticSearch extends ConfigurableService implements Search
                 'mappings' => $this->getMappings()
             ]
         ];
+
         $client->indices()->create($params);
         return true;
     }
@@ -163,7 +162,7 @@ class ElasticSearch extends ConfigurableService implements Search
             'dynamic_templates' => [
                 [
                     'analysed_string_template' => [
-                        'path_match' => '*'.IndexService::INDEX_MAP_PREFIX_FUZZY.IndexService::INDEX_MAP_PREFIX_DEFAULT,
+                        'path_match' => '*',
                         'mapping' => [
                             'type' => 'text',
                             'analyzer' => 'autocomplete',
@@ -203,24 +202,22 @@ class ElasticSearch extends ConfigurableService implements Search
     protected function getSearchParams( $queryString, $rootClass = null, $start = 0, $count = 10)
     {
         $parts = explode( ' ', htmlspecialchars_decode($queryString) );
-        /** @var IndexService $indexService */
-        $indexService = $this->getServiceLocator()->get(IndexService::SERVICE_ID);
-        $indexMap = $indexService->getOption(IndexService::SUBSTITUTION_CONFIG_KEY);
 
         foreach ($parts as $key => $part) {
 
             $matches = array();
             if (preg_match( '/^([^a-z_]*)([a-z_]+):(.*)/', $part, $matches ) === 1) {
                 list( $fullstring, $prefix, $fieldname, $value ) = $matches;
-                if (isset($indexMap[$fieldname])) {
-                    $parts[$key] = $prefix . $indexMap[$fieldname] . ':' . str_replace( ':', '\\:', $value );
+                if ($fieldname) {
+                    $parts[$key] = $prefix . $fieldname . ':' . str_replace( ':', '\\:', $value );
                 }
             }
+
         }
         $queryString = implode( ' ', $parts );
         if ( ! is_null( $rootClass )) {
             $queryString = (strlen($queryString) == 0 ? '' : '(' . $queryString . ') AND ')
-                .'type_r:' . str_replace( ':', '\\:', '"'.$rootClass->getUri().'"' );
+                .'type:' . str_replace( ':', '\\:', '"'.$rootClass->getUri().'"' );
         }
         $query = [
             'query' => [
@@ -252,25 +249,16 @@ class ElasticSearch extends ConfigurableService implements Search
     protected function buildResultSet($elasticResult = [])
     {
         $uris = [];
-        $results = [];
         $total = 0;
         if ($elasticResult && isset($elasticResult['hits'])) {
             foreach ($elasticResult['hits']['hits'] as $document) {
-                $source = $document['_source'];
                 $uris[] = $document['_id'];
-                $results[] = new IndexDocument(
-                    $document['_id'],
-                    $source
-                );
             }
             $total = $elasticResult['hits']['total'];
         }
         $uris = array_unique($uris);
-        $result = [
-            'ids' => $uris,
-            'results' => $results
-        ];
-        return new ResultSet($result, $total);
+
+        return new ResultSet($uris, $total);
     }
 
 }
