@@ -223,6 +223,7 @@ class ElasticSearch extends ConfigurableService implements Search
             'query' => [
                 'query_string' =>
                     [
+                        "default_field" => 'label',
                         "default_operator" => "AND",
                         "fuzzy_transpositions" => false,
                         "query" => $queryString
