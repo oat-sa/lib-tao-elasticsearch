@@ -54,7 +54,7 @@ class ElasticSearch extends ConfigurableService implements Search
      * (non-PHPdoc)
      * @see \oat\tao\model\search\Search::query()
      */
-    public function query($queryString, $rootClass = null, $start = 0, $count = 10)
+    public function query($queryString = '', $rootClass = null, $start = 0, $count = 10)
     {
         try {
             $response = [];
@@ -82,14 +82,15 @@ class ElasticSearch extends ConfigurableService implements Search
 
     /**
      * (Re)Generate the index for a given resource
-     * @param IndexDocument $document
+     * @param IndexIterator|array $documents
      * @return bool
+     * @throws \common_Exception
      * @throws \common_exception_InconsistentData
      */
-    public function index(IndexDocument $document)
+    public function index($documents = [])
     {
-        $indexer = new ElasticSearchIndexer($this->getClient());
-        $indexer->addIndex($document);
+        $indexer = new ElasticSearchIndexer($this->getClient(), $documents);
+        $indexer->index();
         return true;
     }
 
@@ -113,18 +114,8 @@ class ElasticSearch extends ConfigurableService implements Search
         $this->deleteAllIndexes();
         $this->settingUpIndexes();
         $indexer = new ElasticSearchIndexer($this->getClient(), $indexIterator);
-        $count = $indexer->reIndex();
+        $count = $indexer->index();
 
-        return $count;
-    }
-
-    /**
-     * (non-PHPdoc)
-     * @see \oat\tao\model\search\Search::addIndexes()
-     */
-    public function addIndexes(\Traversable $indexIterator) {
-        $indexer = new ElasticSearchIndexer($this->getClient(), $indexIterator);
-        $count = $indexer->reIndex();
         return $count;
     }
 

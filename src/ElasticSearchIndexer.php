@@ -39,34 +39,55 @@ class ElasticSearchIndexer
     /** @var Client|null  */
     private $client = null;
 
-    /** @var null|IndexIterator  */
-    private $indexes = null;
+    /** @var array|IndexIterator  */
+    private $documents = null;
 
     /**
      * ElasticSearchIndexer constructor.
      * @param Client       $client
-     * @param \Traversable $indexesTraversable
+     * @param $documents
      */
-    public function __construct(Client $client, \Traversable $indexesTraversable = null)
+    public function __construct(Client $client, $documents)
     {
         $this->client = $client;
-        /** @var IndexIterator indexes */
-        $this->indexes = $indexesTraversable;
+        /** @var IndexIterator|array indexes */
+        $this->documents = $documents;
     }
 
     /**
      * @return int
+     * @throws \common_Exception
      * @throws \common_exception_InconsistentData
      */
-    public function reIndex()
+    public function index()
     {
         $count = 0;
+        if ($this->documents instanceof IndexIterator) {
+            while ($this->documents->valid()) {
+                $blockSize = 0;
+                $params = ['body' => []];
+                while ($this->documents->valid() && $blockSize < self::INDEXING_BLOCK_SIZE) {
+                    $document = $this->documents->current();
+                    $params['body'][] = [
+                        'index' => [
+                            '_index' => 'documents',
+                            '_type' => 'document',
+                            '_id' => $document->getId()
+                        ]
+                    ];
 
-        while ($this->indexes->valid()) {
-            $blockSize = 0;
+                    $params['body'][] = $document->getBody();
+                    $this->documents->next();
+                    $blockSize++;
+                }
+                $responses = $this->client->bulk($params);
+                $count += $blockSize;
+                unset($responses);
+
+            }
+        } else {
             $params = ['body' => []];
-            while ($this->indexes->valid() && $blockSize < self::INDEXING_BLOCK_SIZE) {
-                $document = $this->indexes->current();
+            foreach ($this->documents as $document) {
                 $params['body'][] = [
                     'index' => [
                         '_index' => 'documents',
@@ -76,48 +97,13 @@ class ElasticSearchIndexer
                 ];
 
                 $params['body'][] = $document->getBody();
-                $this->indexes->next();
-                $blockSize++;
+                $count++;
             }
             $responses = $this->client->bulk($params);
-            $count += $blockSize;
             unset($responses);
         }
 
         return $count;
-    }
-
-    /**
-     * @param IndexDocument $document
-     * @return bool
-     * @throws \common_exception_InconsistentData
-     */
-    public function addIndex(IndexDocument $document)
-    {
-        $client = $this->client;
-
-        if ($document) {
-            $params = [
-                'id' => $document->getId(),
-                'type' => 'document',
-                'index' => 'documents'
-            ];
-
-            $body = $document->getBody();
-            try {
-                $client->get($params);
-                $params['body']['doc'] = $body;
-                $params['refresh'] = true;
-                $client->update($params);
-            } catch (Missing404Exception $e) {
-                $params['refresh'] = true;
-                $params['body'] = $body;
-                $this->client->index($params);
-            }
-
-            return true;
-        }
-        return false;
     }
 
     /**
