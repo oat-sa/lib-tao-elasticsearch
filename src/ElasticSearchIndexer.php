@@ -112,7 +112,6 @@ class ElasticSearchIndexer
             } catch (Missing404Exception $e) {
                 $params['refresh'] = true;
                 $params['body'] = $body;
-                \common_Logger::i(json_encode($params));
                 $this->client->index($params);
             }
 

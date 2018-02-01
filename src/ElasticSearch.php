@@ -64,13 +64,13 @@ class ElasticSearch extends ConfigurableService implements Search
             }
             return $this->buildResultSet($response);
 
-        } catch ( HttpException $e ) {
+        } catch (\Exception $e ) {
             switch ($e->getCode()) {
                 case 400 :
-                    $json = json_decode( $e->getBody(), true );
+                    $json = json_decode( $e->getMessage(), true );
                     throw new SyntaxException(
                         $queryString,
-                        __( 'There is an error in your search query, system returned: %s', $json['error']['msg'] )
+                        __( 'There is an error in your search query, system returned: %s', $json['error']['reason'] )
                     );
                 default :
                     throw new SyntaxException( $queryString, __( 'An unknown error occured during search' ) );
@@ -140,7 +140,7 @@ class ElasticSearch extends ConfigurableService implements Search
     /**
      * @return bool
      */
-    protected function settingUpIndexes()
+    public function settingUpIndexes()
     {
         $client = $this->getClient();
 
@@ -153,9 +153,13 @@ class ElasticSearch extends ConfigurableService implements Search
         ];
 
         $client->indices()->create($params);
+
         return true;
     }
 
+    /**]
+     * @return array
+     */
     protected function getMappings()
     {
         $mappings = ['document' => [
@@ -179,7 +183,7 @@ class ElasticSearch extends ConfigurableService implements Search
     /**
      * @return array
      */
-    protected function deleteAllIndexes()
+    public function deleteAllIndexes()
     {
         $client = $this->getClient();
 
@@ -225,7 +229,6 @@ class ElasticSearch extends ConfigurableService implements Search
                     [
                         "default_field" => 'label',
                         "default_operator" => "AND",
-                        "fuzzy_transpositions" => false,
                         "query" => $queryString
                     ]
             ]

@@ -88,6 +88,8 @@ class InitElasticSearch implements Action, ServiceLocatorAwareInterface
         }
         
         $search = new ElasticSearch($config);
+        $search->deleteAllIndexes();
+        $search->settingUpIndexes();
         try {
             $result = $search->query('');
             $success = SearchService::setSearchImplementation($search);
