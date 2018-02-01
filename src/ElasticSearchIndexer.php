@@ -55,6 +55,16 @@ class ElasticSearchIndexer
     }
 
     /**
+     * @return \Iterator
+     */
+    protected function getDocuments()
+    {
+        return $this->documents instanceof \Iterator
+            ? $this->documents
+            : new \ArrayIterator([$this->documents]);
+    }
+
+    /**
      * @return int
      * @throws \common_Exception
      * @throws \common_exception_InconsistentData
@@ -62,32 +72,12 @@ class ElasticSearchIndexer
     public function index()
     {
         $count = 0;
-        if ($this->documents instanceof IndexIterator) {
-            while ($this->documents->valid()) {
-                $blockSize = 0;
-                $params = ['body' => []];
-                while ($this->documents->valid() && $blockSize < self::INDEXING_BLOCK_SIZE) {
-                    $document = $this->documents->current();
-                    $params['body'][] = [
-                        'index' => [
-                            '_index' => 'documents',
-                            '_type' => 'document',
-                            '_id' => $document->getId()
-                        ]
-                    ];
-
-                    $params['body'][] = $document->getBody();
-                    $this->documents->next();
-                    $blockSize++;
-                }
-                $responses = $this->client->bulk($params);
-                $count += $blockSize;
-                unset($responses);
-
-            }
-        } else {
+        $documents = $this->getDocuments();
+        while ($documents->valid()) {
+            $blockSize = 0;
             $params = ['body' => []];
-            foreach ($this->documents as $document) {
+            while ($documents->valid() && $blockSize < self::INDEXING_BLOCK_SIZE) {
+                $document = $documents->current();
                 $params['body'][] = [
                     'index' => [
                         '_index' => 'documents',
@@ -97,12 +87,15 @@ class ElasticSearchIndexer
                 ];
 
                 $params['body'][] = $document->getBody();
-                $count++;
+                $documents->next();
+                $blockSize++;
             }
-            $responses = $this->client->bulk($params);
+            if ($blockSize > 0) {
+                $responses = $this->client->bulk($params);
+                $count += $blockSize;
             unset($responses);
+            }
         }
-
         return $count;
     }
 
