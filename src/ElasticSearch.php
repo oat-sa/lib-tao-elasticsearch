@@ -107,20 +107,6 @@ class ElasticSearch extends ConfigurableService implements Search
 
     /**
      * (non-PHPdoc)
-     * @see \oat\tao\model\search\Search::fullReIndex()
-     */
-    public function fullReIndex(\Traversable $indexIterator)
-    {
-        $this->deleteAllIndexes();
-        $this->settingUpIndexes();
-        $indexer = new ElasticSearchIndexer($this->getClient(), $indexIterator);
-        $count = $indexer->index();
-
-        return $count;
-    }
-
-    /**
-     * (non-PHPdoc)
      * @see \oat\tao\model\search\Search::supportCustomIndex()
      */
     public function supportCustomIndex()
@@ -174,7 +160,7 @@ class ElasticSearch extends ConfigurableService implements Search
     /**
      * @return array
      */
-    public function deleteAllIndexes()
+    public function flush()
     {
         $client = $this->getClient();
 

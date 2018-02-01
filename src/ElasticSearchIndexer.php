@@ -93,7 +93,7 @@ class ElasticSearchIndexer
             if ($blockSize > 0) {
                 $responses = $this->client->bulk($params);
                 $count += $blockSize;
-            unset($responses);
+                unset($responses);
             }
         }
         return $count;
