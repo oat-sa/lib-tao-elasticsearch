@@ -82,6 +82,29 @@ class InitElasticSearch implements Action, ServiceLocatorAwareInterface
             'settings' => $this->getDefaultSettings(),
         ];
 
+
+        $p = $params;
+
+        // host
+        if (count($p) > 0) {
+            $config['hosts'] = [];
+            $hosts = parse_url(array_shift($p));
+            $config['hosts'][] = $hosts;
+        }
+
+        // port
+        if (count($p) > 0) {
+            $config['hosts'][0]['port'] = array_shift($p);
+        }
+
+        if (count($p) > 0) {
+            $config['hosts'][0]['user'] = array_shift($p);
+        }
+
+        if (count($p) > 0) {
+            $config['hosts'][0]['pass'] = array_shift($p);
+        }
+
         $taoVersion = $this->getServiceLocator()->get(\common_ext_ExtensionsManager::SERVICE_ID)->getInstalledVersion('tao');
         if (version_compare($taoVersion, '7.8.0') < 0) {
             return new Report(Report::TYPE_ERROR, 'Requires Tao 7.8.0 or higher');

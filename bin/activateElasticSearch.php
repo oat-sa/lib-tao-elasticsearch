@@ -8,7 +8,7 @@ $parms = $argv;
 array_shift($parms);
 
 if (count($parms) < 1) {
-    echo 'Usage: '.__FILE__.' TAOROOT [HOST] [PORT] [PATH]'.PHP_EOL;
+    echo 'Usage: '.__FILE__.' TAOROOT [HOST] [PORT] [LOGIN] [PASSWORD]'.PHP_EOL;
     die(1);
 }
 
