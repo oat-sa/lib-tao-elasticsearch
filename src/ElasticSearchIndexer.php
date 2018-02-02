@@ -25,7 +25,6 @@ use Elasticsearch\Common\Exceptions\Missing404Exception;
 use oat\tao\model\search\document\Document;
 use oat\tao\model\search\index\IndexDocument;
 use oat\tao\model\search\index\IndexIterator;
-use oat\tao\model\search\SearchTokenGenerator;
 
 /**
  * Class ElasticSearchIndexer

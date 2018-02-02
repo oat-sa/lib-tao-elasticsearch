@@ -90,8 +90,7 @@ class ElasticSearch extends ConfigurableService implements Search
     public function index($documents = [])
     {
         $indexer = new ElasticSearchIndexer($this->getClient(), $documents);
-        $indexer->index();
-        return true;
+        return $indexer->index();
     }
 
     /**
