@@ -20,18 +20,15 @@
  */
 namespace oat\tao\elasticsearch\Action;
 
-use oat\oatbox\action\Action;
 use oat\tao\elasticsearch\ElasticSearch;
 use oat\tao\model\search\SearchService;
-use Zend\ServiceManager\ServiceLocatorAwareInterface;
-use Zend\ServiceManager\ServiceLocatorAwareTrait;
 use common_report_Report as Report;
 use oat\tao\model\search\SyntaxException;
+use oat\oatbox\extension\InstallAction;
+use oat\tao\model\search\Search;
 
-class InitElasticSearch implements Action, ServiceLocatorAwareInterface
+class InitElasticSearch extends InstallAction
 {
-    use ServiceLocatorAwareTrait;
-    
     protected function getDefaultHost()
     {
         return [
@@ -114,8 +111,8 @@ class InitElasticSearch implements Action, ServiceLocatorAwareInterface
         $search->flush();
         $search->settingUpIndexes();
         try {
-            $result = $search->query('');
-            $success = SearchService::setSearchImplementation($search);
+            $result = $search->query('', 'sample');
+            $success = $this->getServiceManager()->register(Search::SERVICE_ID, $search);
             return new Report(Report::TYPE_SUCCESS, __('Switched to ElasticSearch'));
         } catch (SyntaxException $e) {
             return new Report(Report::TYPE_ERROR, 'ElasticSearch server could not be found');

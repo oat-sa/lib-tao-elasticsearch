@@ -56,14 +56,11 @@ class ElasticSearch extends ConfigurableService implements Search
      * (non-PHPdoc)
      * @see \oat\tao\model\search\Search::query()
      */
-    public function query($queryString = '', $rootClass = null, $start = 0, $count = 10)
+    public function query($queryString = '', $type, $start = 0, $count = 10)
     {
         try {
-            $response = [];
-            if ($rootClass) {
-                $searchParams = $this->getSearchParams($queryString, $rootClass, $start, $count);
-                $response = $this->getClient()->search($searchParams);
-            }
+            $searchParams = $this->getSearchParams($queryString, $type, $start, $count);
+            $response = $this->getClient()->search($searchParams);
             return $this->buildResultSet($response);
 
         } catch (\Exception $e ) {
@@ -178,11 +175,13 @@ class ElasticSearch extends ConfigurableService implements Search
     }
 
     /**
-     * @param $queryString
-     * @param $rootClass
+     * @param string $queryString
+     * @param string $type
+     * @param number $start
+     * @param number $count
      * @return array
      */
-    protected function getSearchParams( $queryString, $rootClass = null, $start = 0, $count = 10)
+    protected function getSearchParams( $queryString, $type, $start = 0, $count = 10)
     {
         $parts = explode( ' ', htmlspecialchars_decode($queryString) );
 
@@ -198,10 +197,8 @@ class ElasticSearch extends ConfigurableService implements Search
 
         }
         $queryString = implode( ' ', $parts );
-        if ( ! is_null( $rootClass )) {
-            $queryString = (strlen($queryString) == 0 ? '' : '(' . $queryString . ') AND ')
-                .'type:' . str_replace( ':', '\\:', '"'.$rootClass->getUri().'"' );
-        }
+        $queryString = (strlen($queryString) == 0 ? '' : '(' . $queryString . ') AND ')
+            .'type:' . str_replace( ':', '\\:', '"'.$type.'"' );
         $query = [
             'query' => [
                 'query_string' =>
