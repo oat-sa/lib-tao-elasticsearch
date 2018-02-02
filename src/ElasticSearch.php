@@ -23,17 +23,13 @@ namespace oat\tao\elasticsearch;
 use Elasticsearch\ClientBuilder;
 use oat\tao\model\search\index\IndexDocument;
 use oat\tao\model\search\index\IndexIterator;
-use oat\tao\model\search\index\IndexService;
 use oat\tao\model\search\Search;
 use oat\tao\model\search\SyntaxException;
-use Solarium\Exception\HttpException;
 use oat\tao\model\search\ResultSet;
 use oat\oatbox\service\ConfigurableService;
 
 class ElasticSearch extends ConfigurableService implements Search
 {
-    const INDEX_MAP_PROPERTIES = 'elastic_search_index_map';
-
     /**
      *
      * @var \Elasticsearch\Client
