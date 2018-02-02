@@ -34,9 +34,6 @@ class ElasticSearch extends ConfigurableService implements Search
 {
     const INDEX_MAP_PROPERTIES = 'elastic_search_index_map';
 
-    /** @var array */
-    private $indexMapProperties;
-
     /**
      *
      * @var \Elasticsearch\Client
@@ -96,7 +93,6 @@ class ElasticSearch extends ConfigurableService implements Search
     {
         $indexer = new ElasticSearchIndexer($this->getClient(), $documents);
         $counts = $indexer->index();
-        $this->setIndexMapProperties($indexer->getIndexMap());
         return $counts;
     }
 
@@ -138,31 +134,6 @@ class ElasticSearch extends ConfigurableService implements Search
         $client->indices()->create($params);
 
         return true;
-    }
-
-    /**
-     * @param $indexMap
-     * @throws \common_exception_Error
-     * @throws \common_ext_ExtensionException
-     */
-    protected function setIndexMapProperties($indexMap = [])
-    {
-        $indexMap = array_merge($this->getIndexMapProperties() ? $this->getIndexMapProperties() : [], $indexMap ? $indexMap : []);
-        $ext = \common_ext_ExtensionsManager::singleton()->getExtensionById('tao');
-        $ext->setConfig(self::INDEX_MAP_PROPERTIES, $indexMap);
-        $this->indexMapProperties = $indexMap;
-    }
-
-    /**
-     * @return mixed
-     * @throws \common_ext_ExtensionException
-     */
-    protected function getIndexMapProperties()
-    {
-        if (is_null($this->indexMapProperties)) {
-            $this->indexMapProperties = \common_ext_ExtensionsManager::singleton()->getExtensionById('tao')->getConfig(self::INDEX_MAP_PROPERTIES);
-        }
-        return $this->indexMapProperties;
     }
 
     /**]
@@ -235,7 +206,6 @@ class ElasticSearch extends ConfigurableService implements Search
             'query' => [
                 'query_string' =>
                     [
-                        "fields" => isset($this->getIndexMapProperties()['default']) ? $this->getIndexMapProperties()['default'] : ['label'],
                         "default_operator" => "AND",
                         "query" => $queryString
                     ]

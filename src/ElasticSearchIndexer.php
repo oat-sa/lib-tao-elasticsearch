@@ -43,9 +43,6 @@ class ElasticSearchIndexer
     /** @var array|IndexIterator  */
     private $documents = null;
 
-    /** @var array */
-    private $map;
-
     /**
      * ElasticSearchIndexer constructor.
      * @param Client       $client
@@ -83,8 +80,7 @@ class ElasticSearchIndexer
             while ($documents->valid() && $blockSize < self::INDEXING_BLOCK_SIZE) {
                 /** @var IndexDocument $document */
                 $document = $documents->current();
-                $indexProperties = $document->getIndexProperties();
-                $this->updateIndexMap($indexProperties);
+
                 // First step we trying to create document. If is exist, then skip this step
                 $params['body'][] = [
                     'create' => [
@@ -164,44 +160,5 @@ class ElasticSearchIndexer
             $document = current($hits['hits']);
         }
         return $document;
-    }
-
-    /**
-     * @return array
-     */
-    public function getIndexMap()
-    {
-        return $this->map;
-    }
-
-    /**
-     * @param $indexProperties
-     */
-    protected function updateIndexMap($indexProperties)
-    {
-        /** @var IndexProperty $indexProperty */
-        foreach ($indexProperties as $indexProperty) {
-            if ($indexProperty->isDefault()) {
-                if (!isset($this->map['default'])) {
-                    $this->map['default'] = [$indexProperty->getField()];
-                } else {
-                    $fields = $this->map['default'];
-                    $fields[] = $indexProperty->getField();
-                    $fields = array_values(array_unique($fields));
-                    $this->map['default'] = $fields;
-                }
-            }
-            if ($indexProperty->isFuzzy()) {
-                if (!isset($this->map['fuzzy'])) {
-                    $this->map['fuzzy'] = [$indexProperty->getField()];
-                } else {
-                    $fields = $this->map['fuzzy'];
-                    $fields[] = $indexProperty->getField();
-                    $fields = array_values(array_unique($fields));
-                    $this->map['fuzzy'] = $fields;
-                }
-            }
-        }
-
     }
 }
