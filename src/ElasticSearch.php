@@ -32,6 +32,11 @@ use oat\oatbox\service\ConfigurableService;
 
 class ElasticSearch extends ConfigurableService implements Search
 {
+    const INDEX_MAP_PROPERTIES = 'elastic_search_index_map';
+
+    /** @var array */
+    private $indexMapProperties;
+
     /**
      *
      * @var \Elasticsearch\Client
@@ -91,6 +96,7 @@ class ElasticSearch extends ConfigurableService implements Search
     {
         $indexer = new ElasticSearchIndexer($this->getClient(), $documents);
         $indexer->index();
+        $this->setIndexMapProperties($indexer->getIndexMap());
         return true;
     }
 
@@ -100,7 +106,7 @@ class ElasticSearch extends ConfigurableService implements Search
      */
     public function remove($resourceId)
     {
-        $indexer = new ElasticSearchIndexer($this->getClient());
+        $indexer = new ElasticSearchIndexer($this->getClient(), null);
         $indexer->deleteIndex($resourceId);
         return true;
     }
@@ -132,6 +138,31 @@ class ElasticSearch extends ConfigurableService implements Search
         $client->indices()->create($params);
 
         return true;
+    }
+
+    /**
+     * @param $indexMap
+     * @throws \common_exception_Error
+     * @throws \common_ext_ExtensionException
+     */
+    protected function setIndexMapProperties($indexMap = [])
+    {
+        $indexMap = array_merge($this->getIndexMapProperties(), $indexMap ? $indexMap : []);
+        $ext = \common_ext_ExtensionsManager::singleton()->getExtensionById('tao');
+        $ext->setConfig(self::INDEX_MAP_PROPERTIES, $indexMap);
+        $this->indexMapProperties = $indexMap;
+    }
+
+    /**
+     * @return mixed
+     * @throws \common_ext_ExtensionException
+     */
+    protected function getIndexMapProperties()
+    {
+        if (is_null($this->indexMapProperties)) {
+            $this->indexMapProperties = \common_ext_ExtensionsManager::singleton()->getExtensionById('tao')->getConfig(self::INDEX_MAP_PROPERTIES);
+        }
+        return $this->indexMapProperties;
     }
 
     /**]
@@ -204,7 +235,7 @@ class ElasticSearch extends ConfigurableService implements Search
             'query' => [
                 'query_string' =>
                     [
-                        "default_field" => 'label',
+                        "fields" => isset($this->getIndexMapProperties()['default']) ? $this->getIndexMapProperties()['default'] : ['label'],
                         "default_operator" => "AND",
                         "query" => $queryString
                     ]

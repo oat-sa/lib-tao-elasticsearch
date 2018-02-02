@@ -25,6 +25,7 @@ use Elasticsearch\Common\Exceptions\Missing404Exception;
 use oat\tao\model\search\document\Document;
 use oat\tao\model\search\index\IndexDocument;
 use oat\tao\model\search\index\IndexIterator;
+use oat\tao\model\search\index\IndexProperty;
 use oat\tao\model\search\SearchTokenGenerator;
 
 /**
@@ -41,6 +42,9 @@ class ElasticSearchIndexer
 
     /** @var array|IndexIterator  */
     private $documents = null;
+
+    /** @var array */
+    private $map;
 
     /**
      * ElasticSearchIndexer constructor.
@@ -61,7 +65,7 @@ class ElasticSearchIndexer
     {
         return $this->documents instanceof \Iterator
             ? $this->documents
-            : new \ArrayIterator([$this->documents]);
+            : new \ArrayIterator($this->documents);
     }
 
     /**
@@ -77,9 +81,13 @@ class ElasticSearchIndexer
             $blockSize = 0;
             $params = ['body' => []];
             while ($documents->valid() && $blockSize < self::INDEXING_BLOCK_SIZE) {
+                /** @var IndexDocument $document */
                 $document = $documents->current();
+                $indexProperties = $document->getIndexProperties();
+                $this->updateIndexMap($indexProperties);
+                // First step we trying to create document. If is exist, then skip this step
                 $params['body'][] = [
-                    'index' => [
+                    'create' => [
                         '_index' => 'documents',
                         '_type' => 'document',
                         '_id' => $document->getId()
@@ -87,6 +95,17 @@ class ElasticSearchIndexer
                 ];
 
                 $params['body'][] = $document->getBody();
+
+                // Trying to update document
+                $params['body'][] = [
+                    'update' => [
+                        '_index' => 'documents',
+                        '_type' => 'document',
+                        '_id' => $document->getId()
+                    ]
+                ];
+
+                $params['body'][]['doc'] = $document->getBody();
                 $documents->next();
                 $blockSize++;
             }
@@ -145,5 +164,44 @@ class ElasticSearchIndexer
             $document = current($hits['hits']);
         }
         return $document;
+    }
+
+    /**
+     * @return array
+     */
+    public function getIndexMap()
+    {
+        return $this->map;
+    }
+
+    /**
+     * @param $indexProperties
+     */
+    protected function updateIndexMap($indexProperties)
+    {
+        /** @var IndexProperty $indexProperty */
+        foreach ($indexProperties as $indexProperty) {
+            if ($indexProperty->isDefault()) {
+                if (!isset($this->map['default'])) {
+                    $this->map['default'] = [$indexProperty->getField()];
+                } else {
+                    $fields = $this->map['default'];
+                    $fields[] = $indexProperty->getField();
+                    $fields = array_values(array_unique($fields));
+                    $this->map['default'] = $fields;
+                }
+            }
+            if ($indexProperty->isFuzzy()) {
+                if (!isset($this->map['fuzzy'])) {
+                    $this->map['fuzzy'] = [$indexProperty->getField()];
+                } else {
+                    $fields = $this->map['fuzzy'];
+                    $fields[] = $indexProperty->getField();
+                    $fields = array_values(array_unique($fields));
+                    $this->map['fuzzy'] = $fields;
+                }
+            }
+        }
+
     }
 }
