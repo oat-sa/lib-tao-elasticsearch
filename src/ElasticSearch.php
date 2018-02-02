@@ -88,16 +88,16 @@ class ElasticSearch extends ConfigurableService implements Search
     /**
      * (Re)Generate the index for a given resource
      * @param IndexIterator|array $documents
-     * @return bool
+     * @return integer
      * @throws \common_Exception
      * @throws \common_exception_InconsistentData
      */
     public function index($documents = [])
     {
         $indexer = new ElasticSearchIndexer($this->getClient(), $documents);
-        $indexer->index();
+        $counts = $indexer->index();
         $this->setIndexMapProperties($indexer->getIndexMap());
-        return true;
+        return $counts;
     }
 
     /**
