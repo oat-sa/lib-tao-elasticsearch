@@ -147,7 +147,7 @@ class ElasticSearch extends ConfigurableService implements Search
      */
     protected function setIndexMapProperties($indexMap = [])
     {
-        $indexMap = array_merge($this->getIndexMapProperties(), $indexMap ? $indexMap : []);
+        $indexMap = array_merge($this->getIndexMapProperties() ? $this->getIndexMapProperties() : [], $indexMap ? $indexMap : []);
         $ext = \common_ext_ExtensionsManager::singleton()->getExtensionById('tao');
         $ext->setConfig(self::INDEX_MAP_PROPERTIES, $indexMap);
         $this->indexMapProperties = $indexMap;
