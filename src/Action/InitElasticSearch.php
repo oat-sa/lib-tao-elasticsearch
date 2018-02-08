@@ -47,7 +47,7 @@ class InitElasticSearch extends InstallAction
                                 array (
                                     'type' => 'edge_ngram',
                                     'min_gram' => 1,
-                                    'max_gram' => 20,
+                                    'max_gram' => 100,
                                 ),
                         ),
                     'analyzer' =>
@@ -106,10 +106,25 @@ class InitElasticSearch extends InstallAction
         if (version_compare($taoVersion, '7.8.0') < 0) {
             return new Report(Report::TYPE_ERROR, 'Requires Tao 7.8.0 or higher');
         }
-        
+        $oldSearchService = $this->getServiceLocator()->get(Search::SERVICE_ID);
+        $oldSettings = $oldSearchService->getOptions();
+        if (isset($oldSettings['settings']) && isset($oldSettings['analysis'])) {
+            $config['settings']['analysis'] = $oldSettings['analysis'];
+        }
+
+        $isMap = true;
+        if ($oldSettings && isset($oldSettings['isMap'])) {
+            $isMap = $oldSettings['isMap'];
+        }
+        $config['isMap'] = $isMap;
+
         $search = new ElasticSearch($config);
         $search->flush();
-        $search->settingUpIndexes();
+
+        if ($isMap) {
+            $search->settingUpIndexes();
+        }
+
         try {
             $result = $search->query('', 'sample');
             $success = $this->getServiceManager()->register(Search::SERVICE_ID, $search);
