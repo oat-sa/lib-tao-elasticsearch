@@ -108,12 +108,12 @@ class InitElasticSearch extends InstallAction
         }
         $oldSearchService = $this->getServiceLocator()->get(Search::SERVICE_ID);
         $oldSettings = $oldSearchService->getOptions();
-        if (isset($oldSettings['settings']) && isset($oldSettings['analysis'])) {
-            $config['settings']['analysis'] = $oldSettings['analysis'];
+        if (isset($oldSettings['settings'])) {
+            $config['settings'] = $oldSettings['settings'];
         }
 
-        $isMap = true;
-        if ($oldSettings && isset($oldSettings['isMap'])) {
+        $isMap = false;
+        if (isset($oldSettings['isMap'])) {
             $isMap = $oldSettings['isMap'];
         }
         $config['isMap'] = $isMap;
