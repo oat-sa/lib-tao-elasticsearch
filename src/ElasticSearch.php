@@ -236,4 +236,16 @@ class ElasticSearch extends ConfigurableService implements Search
         return new ResultSet($uris, $total);
     }
 
+    /**
+     * (non-PHPdoc)
+     * @see \oat\tao\model\search\Search::addFiltersByProperties()
+     */
+    public function addFiltersByProperties($properties = [])
+    {
+        if (count($properties)) {
+            $this->logAlert('SearchByProperties does not implemented for the ElasticSearch', $properties);
+        }
+        return $this;
+    }
+
 }
