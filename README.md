@@ -4,8 +4,13 @@ Elastic Search engine
 
 ###Install:
 ```
-sudo php php vendor/oat-sa/lib-tao-elasticsearch/bin/activateElasticSearch.php <pathToTaoRoot> <host> <port> <login> <password>
+sudo php vendor/oat-sa/lib-tao-elasticsearch/bin/activateElasticSearch.php <pathToTaoRoot> <host> <port> <login> <password>
 ```
+ - `pathToTaoRoot` it's root path of your tao
+ - `host` it's host of your elasticsearch environment. `localhost` by defaut.
+ - `port` it's port of your elasticsearch environment. `9200` by default.
+ - `login` it's login for you elasticsearch environment. Optional property.
+ - `password` it's password for you elasticsearch environment. Optional property.
 
 ####Setting Up:
 ```
