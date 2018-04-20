@@ -52,10 +52,14 @@ class ElasticSearch extends ConfigurableService implements Search
      * (non-PHPdoc)
      * @see \oat\tao\model\search\Search::query()
      */
-    public function query($queryString = '', $type, $start = 0, $count = 10)
+    public function query($queryString = '', $type, $start = 0, $count = 10, $order = '_id', $dir = 'DESC')
     {
+        if ($order == 'id') {
+            $order = '_id';
+        }
+
         try {
-            $searchParams = $this->getSearchParams($queryString, $type, $start, $count);
+            $searchParams = $this->getSearchParams($queryString, $type, $start, $count, $order, $dir);
             $response = $this->getClient()->search($searchParams);
             return $this->buildResultSet($response);
 
@@ -177,7 +181,7 @@ class ElasticSearch extends ConfigurableService implements Search
      * @param number $count
      * @return array
      */
-    protected function getSearchParams( $queryString, $type, $start = 0, $count = 10)
+    protected function getSearchParams( $queryString, $type, $start = 0, $count = 10, $order, $dir)
     {
         $parts = explode( ' ', htmlspecialchars_decode($queryString) );
 
@@ -202,7 +206,8 @@ class ElasticSearch extends ConfigurableService implements Search
                         "default_operator" => "AND",
                         "query" => $queryString
                     ]
-            ]
+            ],
+            'sort' => [$order => ['order' => $dir]]
         ];
 
         $params = [
