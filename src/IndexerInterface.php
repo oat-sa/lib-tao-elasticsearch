@@ -19,6 +19,8 @@
 
 namespace oat\tao\elasticsearch;
 
+use Iterator;
+
 /**
  * Interface IndexerInterface
  */

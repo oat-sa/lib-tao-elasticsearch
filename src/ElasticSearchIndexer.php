@@ -19,8 +19,8 @@
 
 namespace oat\tao\elasticsearch;
 
-use Elasticsearch\Client;
 use Iterator;
+use Elasticsearch\Client;
 use oat\tao\model\search\index\IndexDocument;
 
 /**
