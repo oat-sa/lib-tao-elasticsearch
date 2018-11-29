@@ -17,6 +17,8 @@
  * Copyright (c) 2018 (original work) Open Assessment Technologies SA;
  */
 
+namespace oat\tao\elasticsearch;
+
 /**
  * Interface IndexerInterface
  */

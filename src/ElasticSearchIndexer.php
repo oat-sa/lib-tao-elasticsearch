@@ -20,7 +20,6 @@
 namespace oat\tao\elasticsearch;
 
 use Elasticsearch\Client;
-use IndexerInterface;
 use Iterator;
 use oat\tao\model\search\index\IndexDocument;
 
