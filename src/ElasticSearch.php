@@ -57,7 +57,7 @@ class ElasticSearch extends ConfigurableService implements Search
     /**
      * @return ElasticSearchIndexer
      */
-    public function getIndexer()
+    protected function getIndexer()
     {
         return new ElasticSearchIndexer($this->getClient(), 'documents', 'document');
     }
