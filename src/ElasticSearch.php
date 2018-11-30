@@ -191,8 +191,10 @@ class ElasticSearch extends ConfigurableService implements Search
 
         foreach ($parts as $key => $part) {
             $matches = [];
+            $part = $this->updateIfUri($part);
             if (preg_match( '/^([^a-z_]*)([a-z_]+):(.*)/', $part, $matches ) === 1) {
                 list( $fullstring, $prefix, $fieldname, $value ) = $matches;
+                $value = $this->updateIfUri($value);
                 if ($fieldname) {
                     $parts[$key] = $prefix . $fieldname . ':' . str_replace(':', '\\:', $value);
                 }
@@ -243,5 +245,17 @@ class ElasticSearch extends ConfigurableService implements Search
         $uris = array_unique($uris);
 
         return new ResultSet($uris, $total);
+    }
+
+    /**
+     * @param $query
+     * @return string
+     */
+    protected function updateIfUri($query)
+    {
+        if (\common_Utils::isUri($query)) {
+            $query = '"'.$query.'"';
+        }
+        return $query;
     }
 }
