@@ -15,68 +15,79 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * Copyright (c) 2018 (original work) Open Assessment Technologies SA;
- *
- *
  */
+
 namespace oat\tao\elasticsearch;
 
+use Iterator;
 use Elasticsearch\Client;
-use Elasticsearch\Common\Exceptions\Missing404Exception;
-use oat\tao\model\search\document\Document;
 use oat\tao\model\search\index\IndexDocument;
-use oat\tao\model\search\index\IndexIterator;
-use oat\tao\model\search\index\IndexProperty;
-use oat\tao\model\search\SearchTokenGenerator;
 
 /**
  * Class ElasticSearchIndexer
  * @package oat\tao\elasticsearch
  */
-class ElasticSearchIndexer
+class ElasticSearchIndexer implements IndexerInterface
 {
-
     const INDEXING_BLOCK_SIZE = 100;
 
     /** @var Client|null  */
     private $client = null;
 
-    /** @var array|IndexIterator  */
-    private $documents = null;
+    /** @var string */
+    private $index;
+
+    /** @var string */
+    private $type;
 
     /**
      * ElasticSearchIndexer constructor.
-     * @param Client       $client
-     * @param $documents
+     * @param Client $client
+     * @param string $index
+     * @param string $type
      */
-    public function __construct(Client $client, $documents)
+    public function __construct(Client $client, $index = 'documents', $type = 'document')
     {
         $this->client = $client;
-        /** @var IndexIterator|array indexes */
-        $this->documents = $documents;
+        $this->index = $index;
+        $this->type = $type;
     }
 
     /**
-     * @return \Iterator
+     * @return string
      */
-    protected function getDocuments()
+    public function getIndex()
     {
-        return $this->documents instanceof \Iterator
-            ? $this->documents
-            : new \ArrayIterator($this->documents);
+        return $this->index;
     }
 
     /**
-     * @return int
-     * @throws \common_Exception
-     * @throws \common_exception_InconsistentData
+     * @return string
      */
-    public function index()
+    public function getType()
+    {
+        return $this->type;
+    }
+
+    /**
+     * @return Client|null
+     */
+    protected function getClient()
+    {
+        return $this->client;
+    }
+
+    /**
+     * @param Iterator $documents
+     * @return int
+     */
+    public function buildIndex(Iterator $documents)
     {
         $count = 0;
-        $documents = $this->getDocuments();
         while ($documents->valid()) {
             $blockSize = 0;
             $params = ['body' => []];
+
             while ($documents->valid() && $blockSize < self::INDEXING_BLOCK_SIZE) {
                 /** @var IndexDocument $document */
                 $document = $documents->current();
@@ -84,8 +95,8 @@ class ElasticSearchIndexer
                 // First step we trying to create document. If is exist, then skip this step
                 $params['body'][] = [
                     'create' => [
-                        '_index' => 'documents',
-                        '_type' => 'document',
+                        '_index' => $this->getIndex(),
+                        '_type' => $this->getType(),
                         '_id' => $document->getId()
                     ]
                 ];
@@ -95,8 +106,8 @@ class ElasticSearchIndexer
                 // Trying to update document
                 $params['body'][] = [
                     'update' => [
-                        '_index' => 'documents',
-                        '_type' => 'document',
+                        '_index' => $this->getIndex(),
+                        '_type' => $this->getType(),
                         '_id' => $document->getId()
                     ]
                 ];
@@ -111,17 +122,17 @@ class ElasticSearchIndexer
                 unset($responses);
             }
         }
+
         return $count;
     }
 
     /**
-     * @param $resourceId
+     * @param $id
      * @return bool
      */
-    public function deleteIndex($resourceId)
+    public function deleteIndex($id)
     {
-        $client = $this->client;
-        $document = $this->searchIndexByIds([$resourceId]);
+        $document = $this->searchResourceByIds([$id]);
 
         if ($document) {
             $deleteParams = [
@@ -129,9 +140,11 @@ class ElasticSearchIndexer
                 'type' => $document['_type'],
                 'id' => $document['_id']
             ];
-            $client->delete($deleteParams);
+            $this->getClient()->delete($deleteParams);
+
             return true;
         }
+
         return false;
     }
 
@@ -140,9 +153,8 @@ class ElasticSearchIndexer
      * @param string $type
      * @return array
      */
-    public function searchIndexByIds($ids = [], $type = 'document')
+    public function searchResourceByIds($ids = [], $type = 'document')
     {
-        $client = $this->client;
         $searchParams = [
             'body' => [
                 'query' => [
@@ -153,12 +165,16 @@ class ElasticSearchIndexer
                 ]
             ]
         ];
-        $response = $client->search($searchParams);
-        $hits = isset($response['hits']) ? $response['hits'] : [];
+        $response = $this->getClient()->search($searchParams);
+        $hits = isset($response['hits'])
+            ? $response['hits']
+            : [];
+
         $document = [];
-        if ($hits && isset($hits['total']) && $hits['total'] && isset($hits['hits'])) {
+        if ($hits && isset($hits['hits']) && isset($hits['total']) && $hits['total']) {
             $document = current($hits['hits']);
         }
+
         return $document;
     }
 }
