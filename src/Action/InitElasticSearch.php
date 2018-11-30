@@ -21,14 +21,20 @@
 namespace oat\tao\elasticsearch\Action;
 
 use oat\tao\elasticsearch\ElasticSearch;
-use oat\tao\model\search\SearchService;
 use common_report_Report as Report;
 use oat\tao\model\search\SyntaxException;
 use oat\oatbox\extension\InstallAction;
 use oat\tao\model\search\Search;
 
+/**
+ * Class InitElasticSearch
+ * @package oat\tao\elasticsearch\Action
+ */
 class InitElasticSearch extends InstallAction
 {
+    /**
+     * @return array
+     */
     protected function getDefaultHost()
     {
         return [
@@ -36,40 +42,43 @@ class InitElasticSearch extends InstallAction
         ];
     }
 
+    /**
+     * @return array
+     */
     protected function getDefaultSettings()
     {
         return [
-            'analysis' =>
-                array (
-                    'filter' =>
-                        array (
-                            'autocomplete_filter' =>
-                                array (
-                                    'type' => 'edge_ngram',
-                                    'min_gram' => 1,
-                                    'max_gram' => 100,
-                                ),
-                        ),
-                    'analyzer' =>
-                        array (
-                            'autocomplete' =>
-                                array (
-                                    'type' => 'custom',
-                                    'tokenizer' => 'standard',
-                                    'filter' =>
-                                        array (
-                                            'lowercase',
-                                            'autocomplete_filter',
-                                        ),
-                                ),
-                        ),
-                ),
+            'analysis' => [
+                'filter' => [
+                    'autocomplete_filter' => [
+                        'type' => 'edge_ngram',
+                        'min_gram' => 1,
+                        'max_gram' => 100,
+                    ]
+                ],
+                'analyzer' => [
+                    'autocomplete' => [
+                        'type' => 'custom',
+                        'tokenizer' => 'standard',
+                        'filter' => [
+                            'lowercase',
+                            'autocomplete_filter',
+                        ]
+                    ]
+                ]
+            ]
         ];
     }
 
-
-    public function __invoke($params) {
-        
+    /**
+     * @param $params
+     * @return Report
+     * @throws \common_Exception
+     * @throws \oat\oatbox\service\exception\InvalidServiceManagerException
+     * @throws \Exception
+     */
+    public function __invoke($params)
+    {
         if (!class_exists('oat\\tao\\elasticsearch\\ElasticSearch')) {
             throw new \Exception('Tao ElasticSearch not found');
         }
@@ -79,35 +88,33 @@ class InitElasticSearch extends InstallAction
             'settings' => $this->getDefaultSettings(),
         ];
 
-
-        $p = $params;
-
-        // host
-        if (count($p) > 0) {
+        if (count($params) > 0) {
             $config['hosts'] = [];
-            $hosts = parse_url(array_shift($p));
+            $hosts = parse_url(array_shift($params));
             $config['hosts'][] = $hosts;
         }
 
-        // port
-        if (count($p) > 0) {
-            $config['hosts'][0]['port'] = array_shift($p);
+        if (count($params) > 0) {
+            $config['hosts'][0]['port'] = array_shift($params);
         }
 
-        if (count($p) > 0) {
-            $config['hosts'][0]['user'] = array_shift($p);
+        if (count($params) > 0) {
+            $config['hosts'][0]['user'] = array_shift($params);
         }
 
-        if (count($p) > 0) {
-            $config['hosts'][0]['pass'] = array_shift($p);
+        if (count($params) > 0) {
+            $config['hosts'][0]['pass'] = array_shift($params);
         }
 
         $taoVersion = $this->getServiceLocator()->get(\common_ext_ExtensionsManager::SERVICE_ID)->getInstalledVersion('tao');
+
         if (version_compare($taoVersion, '7.8.0') < 0) {
             return new Report(Report::TYPE_ERROR, 'Requires Tao 7.8.0 or higher');
         }
+
         $oldSearchService = $this->getServiceLocator()->get(Search::SERVICE_ID);
         $oldSettings = $oldSearchService->getOptions();
+
         if (isset($oldSettings['settings'])) {
             $config['settings'] = $oldSettings['settings'];
         }
@@ -126,12 +133,11 @@ class InitElasticSearch extends InstallAction
         }
 
         try {
-            $result = $search->query('', 'sample');
-            $success = $this->getServiceManager()->register(Search::SERVICE_ID, $search);
+            $search->query('', 'sample');
+            $this->getServiceManager()->register(Search::SERVICE_ID, $search);
             return new Report(Report::TYPE_SUCCESS, __('Switched to ElasticSearch'));
         } catch (SyntaxException $e) {
             return new Report(Report::TYPE_ERROR, 'ElasticSearch server could not be found');
         }
-        
     }
 }
