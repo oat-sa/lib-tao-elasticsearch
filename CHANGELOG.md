@@ -1,6 +1,10 @@
 CHANGELOG
 =========
 
+1.1.1
+-----
+- Total count of results with Elasticsearch >= 7.0
+
 1.1.0
 -----
 - Code style fixes
