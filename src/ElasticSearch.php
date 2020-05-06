@@ -88,13 +88,14 @@ class ElasticSearch extends ConfigurableService implements Search
             switch ($e->getCode()) {
                 case 400:
                     $json = json_decode($e->getMessage(), true);
-                    throw new SyntaxException($queryString,
-                        __('There is an error in your search query, system returned: %s', $json['error']['reason']));
-                default :
+                    throw new SyntaxException(
+                        $queryString,
+                        __('There is an error in your search query, system returned: %s', $json['error']['reason'])
+                    );
+                default:
                     throw new SyntaxException($queryString, __('An unknown error occured during search'));
             }
         }
-
     }
 
     /**
@@ -187,23 +188,22 @@ class ElasticSearch extends ConfigurableService implements Search
      */
     protected function getSearchParams($queryString, $type, $start, $count, $order, $dir)
     {
-        $parts = explode( ' ', htmlspecialchars_decode($queryString) );
+        $parts = explode(' ', htmlspecialchars_decode($queryString));
 
         foreach ($parts as $key => $part) {
             $matches = [];
             $part = $this->updateIfUri($part);
-            if (preg_match( '/^([^a-z_]*)([a-z_]+):(.*)/', $part, $matches ) === 1) {
-                list( $fullstring, $prefix, $fieldname, $value ) = $matches;
+            if (preg_match('/^([^a-z_]*)([a-z_]+):(.*)/', $part, $matches) === 1) {
+                list($fullstring, $prefix, $fieldname, $value) = $matches;
                 $value = $this->updateIfUri($value);
                 if ($fieldname) {
                     $parts[$key] = $prefix . $fieldname . ':' . str_replace(':', '\\:', $value);
                 }
             }
-
         }
         $queryString = implode(' ', $parts);
         $queryString = (strlen($queryString) == 0 ? '' : '(' . $queryString . ') AND ')
-            .'type:' . str_replace( ':', '\\:', '"'.$type.'"' );
+            .'type:' . str_replace(':', '\\:', '"'.$type.'"');
 
         $query = [
             'query' => [
@@ -240,7 +240,10 @@ class ElasticSearch extends ConfigurableService implements Search
             foreach ($elasticResult['hits']['hits'] as $document) {
                 $uris[] = $document['_id'];
             }
-            $total = $elasticResult['hits']['total'];
+            // Starts from Elasticsearch 7.0 the `total` attribute is object with two parameters [value,relation]
+            $total = is_array($elasticResult['hits']['total'])
+                ? $elasticResult['hits']['total']['value']
+                : $elasticResult['hits']['total'];
         }
         $uris = array_unique($uris);
 
