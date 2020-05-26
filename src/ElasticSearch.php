@@ -134,13 +134,86 @@ class ElasticSearch extends ConfigurableService implements Search
      */
     public function settingUpIndexes()
     {
-        $this->getClient()->indices()->create([
-            'index' => $this->getIndexer()->getIndex(),
+        $indexSettings = [
+            'index' => 'items',
             'body' => [
-                'settings' => $this->getOption('settings'),
-                'mappings' => $this->getMappings()
-            ]
-        ]);
+                'mappings' => [
+                    'properties' => [
+                        'class' => [
+                            'type' => 'keyword',
+                            'ignore_above' => 256,
+                        ],
+                        'content' => [
+                            'type' => 'text',
+                        ],
+                        'label' => [
+                            'type' => 'text',
+                        ],
+                        'model' => [
+                            'type' => 'keyword',
+                            'ignore_above' => 256,
+                        ],
+                        'type' => [
+                            'type' => 'keyword',
+                            'ignore_above' => 256,
+                        ],
+                        'data_privileges' => [
+                            'properties' => [
+                                'privilege' => [
+                                    'type' => 'keyword',
+                                    'ignore_above' => 256,
+                                ],
+                                'user_id' => [
+                                    'type' => 'keyword',
+                                    'ignore_above' => 256,
+                                ],
+                            ],
+                        ],
+                    ],
+                    'dynamic_templates' => [
+                        [
+                            'propertyShortText' => [
+                                'match_mapping_type' => 'string',
+                                'match' => 'propertyShortText_*',
+                                'mapping' => [
+                                    'type' => 'text',
+                                ],
+                            ],
+                        ],
+                        [
+                            'propertyLongText' => [
+                                'match_mapping_type' => 'long',
+                                'match' => 'propertyLongText_*',
+                                'mapping' => [
+                                    'type' => 'text',
+                                ],
+                            ],
+                        ],
+                        [
+                            'propertyHTML' => [
+                                'match_mapping_type' => 'long',
+                                'match' => 'propertyHTML_*',
+                                'mapping' => [
+                                    'type' => 'text',
+                                ],
+                            ],
+                        ],
+                        [
+                            'propertyChoice' => [
+                                'match_mapping_type' => 'string',
+                                'match' => 'propertyChoice_*',
+                                'mapping' => [
+                                    'type' => 'keyword',
+                                    'ignore_above' => 256,
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->getClient()->indices()->create($indexSettings);
 
         return true;
     }
