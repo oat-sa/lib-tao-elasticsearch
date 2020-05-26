@@ -126,6 +126,7 @@ class InitElasticSearch extends InstallAction
         $search->createGroupsIndex();
         $search->createDeliveriesIndex();
         $search->createResultsIndex();
+        $search->createTestTakersIndex();
 
         try {
             $search->query('', 'sample');
