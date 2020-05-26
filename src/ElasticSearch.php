@@ -47,8 +47,8 @@ class ElasticSearch extends ConfigurableService implements Search
     {
         if (is_null($this->client)) {
             $this->client = ClientBuilder::create()
-            ->setHosts($this->getOptions()['hosts'])
-            ->build();
+                ->setHosts($this->getOptions()['hosts'])
+                ->build();
         }
 
         return $this->client;
@@ -130,9 +130,9 @@ class ElasticSearch extends ConfigurableService implements Search
     }
 
     /**
-     * @return bool
+     * @return void
      */
-    public function settingUpIndexes()
+    public function createItemsIndex(): void
     {
         $indexSettings = [
             'index' => 'items',
@@ -210,12 +210,155 @@ class ElasticSearch extends ConfigurableService implements Search
                         ],
                     ],
                 ],
+                'settings' => [
+                    'index' => [
+                        'number_of_shards' => '1',
+                        'number_of_replicas' => '1',
+                    ],
+                ],
             ],
         ];
 
         $this->getClient()->indices()->create($indexSettings);
+    }
 
-        return true;
+    /**
+     * @return void
+     */
+    public function createTestsIndex(): void
+    {
+        $indexSettings = [
+            'index' => 'tests',
+            'body' => [
+                'mappings' => [
+                    'properties' => [
+                        'class' => [
+                            'type' => 'keyword',
+                            'ignore_above' => 256,
+                        ],
+                        'label' => [
+                            'type' => 'text',
+                        ],
+                        'type' => [
+                            'type' => 'keyword',
+                            'ignore_above' => 256,
+                        ],
+                        'data_privileges' => [
+                            'properties' => [
+                                'privilege' => [
+                                    'type' => 'keyword',
+                                    'ignore_above' => 256,
+                                ],
+                                'user_id' => [
+                                    'type' => 'keyword',
+                                    'ignore_above' => 256,
+                                ],
+                            ],
+                        ],
+                    ],
+                    'dynamic_templates' => [
+                        [
+                            'propertyShortText' => [
+                                'match_mapping_type' => 'string',
+                                'match' => 'propertyShortText_*',
+                                'mapping' => [
+                                    'type' => 'text',
+                                ],
+                            ],
+                        ],
+                        [
+                            'propertyLongText' => [
+                                'match_mapping_type' => 'long',
+                                'match' => 'propertyLongText_*',
+                                'mapping' => [
+                                    'type' => 'text',
+                                ],
+                            ],
+                        ],
+                        [
+                            'propertyHTML' => [
+                                'match_mapping_type' => 'long',
+                                'match' => 'propertyHTML_*',
+                                'mapping' => [
+                                    'type' => 'text',
+                                ],
+                            ],
+                        ],
+                        [
+                            'propertyChoice' =>
+                                [
+                                    'match_mapping_type' => 'string',
+                                    'match' => 'propertyChoice_*',
+                                    'mapping' => [
+                                        'type' => 'keyword',
+                                        'ignore_above' => 256,
+                                    ],
+                                ],
+                        ],
+                    ],
+                ],
+                'settings' => [
+                    'index' => [
+                        'number_of_shards' => '1',
+                        'number_of_replicas' => '1',
+                    ],
+                ],
+            ],
+        ];
+
+        $this->getClient()->indices()->create($indexSettings);
+    }
+
+    /**
+     * @return void
+     */
+    public function createGroupsIndex(): void
+    {
+        $indexSettings = [
+            'index' => 'items',
+            'body' => [],
+        ];
+
+        $this->getClient()->indices()->create($indexSettings);
+    }
+
+    /**
+     * @return void
+     */
+    public function createDeliveriesIndex(): void
+    {
+        $indexSettings = [
+            'index' => 'items',
+            'body' => [],
+        ];
+
+        $this->getClient()->indices()->create($indexSettings);
+    }
+
+    /**
+     * @return void
+     */
+    public function createResultsIndex(): void
+    {
+        $indexSettings = [
+            'index' => 'items',
+            'body' => [],
+        ];
+
+        $this->getClient()->indices()->create($indexSettings);
+    }
+
+    /**
+     * @return void
+     */
+    public function createtestTakersIndex(): void
+    {
+        $indexSettings = [
+            'index' => 'items',
+            'body' => [],
+        ];
+
+        $this->getClient()->indices()->create($indexSettings);
     }
 
     /**
@@ -276,7 +419,7 @@ class ElasticSearch extends ConfigurableService implements Search
         }
         $queryString = implode(' ', $parts);
         $queryString = (strlen($queryString) == 0 ? '' : '(' . $queryString . ') AND ')
-            .'type:' . str_replace(':', '\\:', '"'.$type.'"');
+            . 'type:' . str_replace(':', '\\:', '"' . $type . '"');
 
         $query = [
             'query' => [
@@ -294,7 +437,7 @@ class ElasticSearch extends ConfigurableService implements Search
             "type" => $this->getIndexer()->getType(),
             "size" => $count,
             "from" => $start,
-            "client" => [ "ignore" => 404 ],
+            "client" => ["ignore" => 404],
             "body" => json_encode($query)
         ];
 
@@ -330,7 +473,7 @@ class ElasticSearch extends ConfigurableService implements Search
     protected function updateIfUri($query)
     {
         if (\common_Utils::isUri($query)) {
-            $query = '"'.$query.'"';
+            $query = '"' . $query . '"';
         }
         return $query;
     }

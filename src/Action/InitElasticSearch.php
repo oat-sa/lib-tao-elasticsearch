@@ -119,7 +119,10 @@ class InitElasticSearch extends InstallAction
             $config['settings'] = $oldSettings['settings'];
         }
 
-        $search->settingUpIndexes();
+        $search = new ElasticSearch($config);
+
+        $search->createItemsIndex();
+        $search->createTestsIndex();
 
         try {
             $search->query('', 'sample');
