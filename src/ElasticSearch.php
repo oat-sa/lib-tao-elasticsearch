@@ -47,7 +47,7 @@ class ElasticSearch extends ConfigurableService implements Search
     {
         if (is_null($this->client)) {
             $this->client = ClientBuilder::create()
-                ->setHosts($this->getOptions()['hosts'])
+                ->setHosts($this->getOption('hosts'))
                 ->build();
         }
 
@@ -132,9 +132,15 @@ class ElasticSearch extends ConfigurableService implements Search
     /**
      * @return void
      */
-    public function createIndex(array $settings): void
+    public function createIndexes(): void
     {
-        $this->getClient()->indices()->create($settings);
+        $indexes = $this->getOption('indexes');
+
+        $this->getClient()->indices()->create($indexes['items']);
+        $this->getClient()->indices()->create($indexes['tests']);
+        $this->getClient()->indices()->create($indexes['groups']);
+        $this->getClient()->indices()->create($indexes['deliveries']);
+        $this->getClient()->indices()->create($indexes['test-takers']);
     }
 
     /**

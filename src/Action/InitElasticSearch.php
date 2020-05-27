@@ -71,20 +71,8 @@ class InitElasticSearch extends InstallAction
         ];
     }
 
-    protected function createIndexes(ElasticSearch $search): void
-    {
-        $indexConfig = include(__DIR__ . '/../../config/index.conf.php');
-
-        $search->createIndex($indexConfig['items']);
-        $search->createIndex($indexConfig['tests']);
-        $search->createIndex($indexConfig['groups']);
-        $search->createIndex($indexConfig['deliveries']);
-        $search->createIndex($indexConfig['results']);
-        $search->createIndex($indexConfig['test-takers']);
-    }
-
     /**
-     * @param $params
+     * @param array $params
      * @return Report
      * @throws \common_Exception
      * @throws \oat\oatbox\service\exception\InvalidServiceManagerException
@@ -99,6 +87,7 @@ class InitElasticSearch extends InstallAction
         $config = [
             'hosts' => $this->getDefaultHost(),
             'settings' => $this->getDefaultSettings(),
+            'indexes' => array_pop($params)
         ];
 
         if (count($params) > 0) {
@@ -135,7 +124,7 @@ class InitElasticSearch extends InstallAction
         try {
             $search = new ElasticSearch($config);
 
-            $this->createIndexes($search);
+            $search->createIndexes();
             $search->query('', 'sample');
             $this->getServiceManager()->register(Search::SERVICE_ID, $search);
             return new Report(Report::TYPE_SUCCESS, __('Switched to ElasticSearch'));
