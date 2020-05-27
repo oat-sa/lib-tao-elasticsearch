@@ -70,6 +70,18 @@ class InitElasticSearch extends InstallAction
         ];
     }
 
+    protected function createIndexes(ElasticSearch $search): void
+    {
+        $indexConfig = include(__DIR__ . '/../../config/index.conf.php');
+
+        $search->createIndex($indexConfig['items']);
+        $search->createIndex($indexConfig['tests']);
+        $search->createIndex($indexConfig['groups']);
+        $search->createIndex($indexConfig['deliveries']);
+        $search->createIndex($indexConfig['results']);
+        $search->createIndex($indexConfig['test-takers']);
+    }
+
     /**
      * @param $params
      * @return Report
@@ -121,12 +133,7 @@ class InitElasticSearch extends InstallAction
 
         $search = new ElasticSearch($config);
 
-        $search->createItemsIndex();
-        $search->createTestsIndex();
-        $search->createGroupsIndex();
-        $search->createDeliveriesIndex();
-        $search->createResultsIndex();
-        $search->createTestTakersIndex();
+        $this->createIndexes($search);
 
         try {
             $search->query('', 'sample');
