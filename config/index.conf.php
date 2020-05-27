@@ -1,5 +1,62 @@
 <?php
 
+$dynamicTemplates = [
+    [
+        "HTMLArea" => [
+            "match" => "HTMLArea_*",
+            "match_mapping_type" => "string",
+            "mapping" => [
+                "type" => "text"
+            ]
+        ]
+    ],
+    [
+        "TextArea" => [
+            "match" => "TextArea_*",
+            "match_mapping_type" => "string",
+            "mapping" => [
+                "type" => "text"
+            ]
+        ]
+    ],
+    [
+        "TextBox" => [
+            "match" => "TextBox_*",
+            "match_mapping_type" => "string",
+            "mapping" => [
+                "type" => "text"
+            ]
+        ]
+    ],
+    [
+        "CheckBox" => [
+            "match" => "CheckBox_*",
+            "match_mapping_type" => "string",
+            "mapping" => [
+                "type" => "keyword"
+            ]
+        ]
+    ],
+    [
+        "ComboBox" => [
+            "match" => "ComboBox_*",
+            "match_mapping_type" => "string",
+            "mapping" => [
+                "type" => "keyword"
+            ]
+        ]
+    ],
+    [
+        "RadioBox" => [
+            "match" => "RadioBox_*",
+            "match_mapping_type" => "string",
+            "mapping" => [
+                "type" => "keyword"
+            ]
+        ]
+    ]
+];
+
 return [
     'items' => [
         'index' => 'items',
@@ -18,6 +75,7 @@ return [
                     ],
                     'label' => [
                         'type' => 'text',
+                        'store' => true,
                     ],
                     'model' => [
                         'type' => 'keyword',
@@ -40,45 +98,7 @@ return [
                         ],
                     ],
                 ],
-                'dynamic_templates' => [
-                    [
-                        'propertyShortText' => [
-                            'match_mapping_type' => 'string',
-                            'match' => 'propertyShortText_*',
-                            'mapping' => [
-                                'type' => 'text',
-                            ],
-                        ],
-                    ],
-                    [
-                        'propertyLongText' => [
-                            'match_mapping_type' => 'long',
-                            'match' => 'propertyLongText_*',
-                            'mapping' => [
-                                'type' => 'text',
-                            ],
-                        ],
-                    ],
-                    [
-                        'propertyHTML' => [
-                            'match_mapping_type' => 'long',
-                            'match' => 'propertyHTML_*',
-                            'mapping' => [
-                                'type' => 'text',
-                            ],
-                        ],
-                    ],
-                    [
-                        'propertyChoice' => [
-                            'match_mapping_type' => 'string',
-                            'match' => 'propertyChoice_*',
-                            'mapping' => [
-                                'type' => 'keyword',
-                                'ignore_above' => 256,
-                            ],
-                        ],
-                    ],
-                ],
+                'dynamic_templates' => $dynamicTemplates,
             ],
             'settings' => [
                 'index' => [
@@ -102,6 +122,7 @@ return [
                     ],
                     'label' => [
                         'type' => 'text',
+                        'store' => true,
                     ],
                     'type' => [
                         'type' => 'keyword',
@@ -120,46 +141,7 @@ return [
                         ],
                     ],
                 ],
-                'dynamic_templates' => [
-                    [
-                        'propertyShortText' => [
-                            'match_mapping_type' => 'string',
-                            'match' => 'propertyShortText_*',
-                            'mapping' => [
-                                'type' => 'text',
-                            ],
-                        ],
-                    ],
-                    [
-                        'propertyLongText' => [
-                            'match_mapping_type' => 'long',
-                            'match' => 'propertyLongText_*',
-                            'mapping' => [
-                                'type' => 'text',
-                            ],
-                        ],
-                    ],
-                    [
-                        'propertyHTML' => [
-                            'match_mapping_type' => 'long',
-                            'match' => 'propertyHTML_*',
-                            'mapping' => [
-                                'type' => 'text',
-                            ],
-                        ],
-                    ],
-                    [
-                        'propertyChoice' =>
-                            [
-                                'match_mapping_type' => 'string',
-                                'match' => 'propertyChoice_*',
-                                'mapping' => [
-                                    'type' => 'keyword',
-                                    'ignore_above' => 256,
-                                ],
-                            ],
-                    ],
-                ],
+                'dynamic_templates' => $dynamicTemplates,
             ],
             'settings' => [
                 'index' => [
@@ -183,6 +165,7 @@ return [
                     ],
                     'label' => [
                         'type' => 'text',
+                        'store' => true,
                     ],
                     'type' => [
                         'type' => 'keyword',
@@ -201,46 +184,7 @@ return [
                         ],
                     ],
                 ],
-                'dynamic_templates' => [
-                    [
-                        'propertyShortText' => [
-                            'match_mapping_type' => 'string',
-                            'match' => 'propertyShortText_*',
-                            'mapping' => [
-                                'type' => 'text',
-                            ],
-                        ],
-                    ],
-                    [
-                        'propertyLongText' => [
-                            'match_mapping_type' => 'long',
-                            'match' => 'propertyLongText_*',
-                            'mapping' => [
-                                'type' => 'text',
-                            ],
-                        ],
-                    ],
-                    [
-                        'propertyHTML' => [
-                            'match_mapping_type' => 'long',
-                            'match' => 'propertyHTML_*',
-                            'mapping' => [
-                                'type' => 'text',
-                            ],
-                        ],
-                    ],
-                    [
-                        'propertyChoice' =>
-                            [
-                                'match_mapping_type' => 'string',
-                                'match' => 'propertyChoice_*',
-                                'mapping' => [
-                                    'type' => 'keyword',
-                                    'ignore_above' => 256,
-                                ],
-                            ],
-                    ],
-                ],
+                'dynamic_templates' => $dynamicTemplates,
             ],
             'settings' => [
                 'index' => [
@@ -264,6 +208,7 @@ return [
                     ],
                     'label' => [
                         'type' => 'text',
+                        'store' => true,
                     ],
                     'type' => [
                         'type' => 'keyword',
@@ -282,46 +227,7 @@ return [
                         ],
                     ],
                 ],
-                'dynamic_templates' => [
-                    [
-                        'propertyShortText' => [
-                            'match_mapping_type' => 'string',
-                            'match' => 'propertyShortText_*',
-                            'mapping' => [
-                                'type' => 'text',
-                            ],
-                        ],
-                    ],
-                    [
-                        'propertyLongText' => [
-                            'match_mapping_type' => 'long',
-                            'match' => 'propertyLongText_*',
-                            'mapping' => [
-                                'type' => 'text',
-                            ],
-                        ],
-                    ],
-                    [
-                        'propertyHTML' => [
-                            'match_mapping_type' => 'long',
-                            'match' => 'propertyHTML_*',
-                            'mapping' => [
-                                'type' => 'text',
-                            ],
-                        ],
-                    ],
-                    [
-                        'propertyChoice' =>
-                            [
-                                'match_mapping_type' => 'string',
-                                'match' => 'propertyChoice_*',
-                                'mapping' => [
-                                    'type' => 'keyword',
-                                    'ignore_above' => 256,
-                                ],
-                            ],
-                    ],
-                ],
+                'dynamic_templates' => $dynamicTemplates,
             ],
             'settings' => [
                 'index' => [
@@ -345,6 +251,7 @@ return [
                     ],
                     'label' => [
                         'type' => 'text',
+                        'store' => true,
                     ],
                     'login' => [
                         'type' => 'keyword',
@@ -367,45 +274,7 @@ return [
                         ],
                     ],
                 ],
-                'dynamic_templates' => [
-                    [
-                        'propertyShortText' => [
-                            'match_mapping_type' => 'string',
-                            'match' => 'propertyShortText_*',
-                            'mapping' => [
-                                'type' => 'text',
-                            ],
-                        ],
-                    ],
-                    [
-                        'propertyLongText' => [
-                            'match_mapping_type' => 'long',
-                            'match' => 'propertyLongText_*',
-                            'mapping' => [
-                                'type' => 'text',
-                            ],
-                        ],
-                    ],
-                    [
-                        'propertyHTML' => [
-                            'match_mapping_type' => 'long',
-                            'match' => 'propertyHTML_*',
-                            'mapping' => [
-                                'type' => 'text',
-                            ],
-                        ],
-                    ],
-                    [
-                        'propertyChoice' => [
-                            'match_mapping_type' => 'string',
-                            'match' => 'propertyChoice_*',
-                            'mapping' => [
-                                'type' => 'keyword',
-                                'ignore_above' => 256,
-                            ],
-                        ],
-                    ],
-                ],
+                'dynamic_templates' => $dynamicTemplates,
             ],
             'settings' => [
                 'index' => [
