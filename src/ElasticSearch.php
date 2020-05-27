@@ -140,25 +140,6 @@ class ElasticSearch extends ConfigurableService implements Search
     /**
      * @return array
      */
-    protected function getMappings()
-    {
-        return [$this->getIndexer()->getType() => [
-            'dynamic_templates' => [[
-                'analysed_string_template' => [
-                    'path_match' => '*',
-                    'mapping' => [
-                        'type' => 'text',
-                        'analyzer' => 'autocomplete',
-                        'search_analyzer' => 'standard'
-                    ]
-                ]
-            ]]
-        ]];
-    }
-
-    /**
-     * @return array
-     */
     public function flush()
     {
         return $this->getClient()->indices()->delete([

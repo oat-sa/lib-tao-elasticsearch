@@ -20,6 +20,7 @@
  */
 namespace oat\tao\elasticsearch\Action;
 
+use Elasticsearch\Common\Exceptions\BadRequest400Exception;
 use oat\tao\elasticsearch\ElasticSearch;
 use common_report_Report as Report;
 use oat\tao\model\search\SyntaxException;
@@ -131,14 +132,15 @@ class InitElasticSearch extends InstallAction
             $config['settings'] = $oldSettings['settings'];
         }
 
-        $search = new ElasticSearch($config);
-
-        $this->createIndexes($search);
-
         try {
+            $search = new ElasticSearch($config);
+
+            $this->createIndexes($search);
             $search->query('', 'sample');
             $this->getServiceManager()->register(Search::SERVICE_ID, $search);
             return new Report(Report::TYPE_SUCCESS, __('Switched to ElasticSearch'));
+        } catch (BadRequest400Exception $e) {
+            return new Report(Report::TYPE_ERROR, 'Unable to crate index: ' . $e->getMessage());
         } catch (SyntaxException $e) {
             return new Report(Report::TYPE_ERROR, 'ElasticSearch server could not be found');
         }
