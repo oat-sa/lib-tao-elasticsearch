@@ -47,8 +47,8 @@ class ElasticSearch extends ConfigurableService implements Search
     {
         if (is_null($this->client)) {
             $this->client = ClientBuilder::create()
-            ->setHosts($this->getOptions()['hosts'])
-            ->build();
+                ->setHosts($this->getOption('hosts'))
+                ->build();
         }
 
         return $this->client;
@@ -130,38 +130,17 @@ class ElasticSearch extends ConfigurableService implements Search
     }
 
     /**
-     * @return bool
+     * @return void
      */
-    public function settingUpIndexes()
+    public function createIndexes(): void
     {
-        $this->getClient()->indices()->create([
-            'index' => $this->getIndexer()->getIndex(),
-            'body' => [
-                'settings' => $this->getOption('settings'),
-                'mappings' => $this->getMappings()
-            ]
-        ]);
+        $indexes = $this->getOption('indexes');
 
-        return true;
-    }
-
-    /**
-     * @return array
-     */
-    protected function getMappings()
-    {
-        return [$this->getIndexer()->getType() => [
-            'dynamic_templates' => [[
-                'analysed_string_template' => [
-                    'path_match' => '*',
-                    'mapping' => [
-                        'type' => 'text',
-                        'analyzer' => 'autocomplete',
-                        'search_analyzer' => 'standard'
-                    ]
-                ]
-            ]]
-        ]];
+        $this->getClient()->indices()->create($indexes['items']);
+        $this->getClient()->indices()->create($indexes['tests']);
+        $this->getClient()->indices()->create($indexes['groups']);
+        $this->getClient()->indices()->create($indexes['deliveries']);
+        $this->getClient()->indices()->create($indexes['test-takers']);
     }
 
     /**
@@ -203,7 +182,7 @@ class ElasticSearch extends ConfigurableService implements Search
         }
         $queryString = implode(' ', $parts);
         $queryString = (strlen($queryString) == 0 ? '' : '(' . $queryString . ') AND ')
-            .'type:' . str_replace(':', '\\:', '"'.$type.'"');
+            . 'type:' . str_replace(':', '\\:', '"' . $type . '"');
 
         $query = [
             'query' => [
@@ -221,7 +200,7 @@ class ElasticSearch extends ConfigurableService implements Search
             "type" => $this->getIndexer()->getType(),
             "size" => $count,
             "from" => $start,
-            "client" => [ "ignore" => 404 ],
+            "client" => ["ignore" => 404],
             "body" => json_encode($query)
         ];
 
@@ -254,10 +233,10 @@ class ElasticSearch extends ConfigurableService implements Search
      * @param $query
      * @return string
      */
-    protected function updateIfUri($query)
+    protected function updateIfUri($query): string
     {
         if (\common_Utils::isUri($query)) {
-            $query = '"'.$query.'"';
+            $query = '"' . $query . '"';
         }
         return $query;
     }
