@@ -126,6 +126,7 @@ class ElasticSearchIndexer implements IndexerInterface
 
         if ($document) {
             $deleteParams = [
+                'type' => '_doc',
                 'index' => $document['_index'],
                 'id' => $document['_id']
             ];
@@ -142,13 +143,12 @@ class ElasticSearchIndexer implements IndexerInterface
      * @param string $type
      * @return array
      */
-    public function searchResourceByIds($ids = [], $type = 'document')
+    public function searchResourceByIds($ids = [])
     {
         $searchParams = [
             'body' => [
                 'query' => [
                     'ids' => [
-                        'type' => $type,
                         'values' => $ids
                     ]
                 ]

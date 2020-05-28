@@ -1,25 +1,27 @@
 <?php
-/**  
+/**
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; under version 2
  * of the License (non-upgradable).
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- * 
+ *
  * Copyright (c) 2018 (original work) Open Assessment Technologies SA;
- *               
- * 
  */
+
+declare(strict_types=1);
+
 namespace oat\tao\elasticsearch\Action;
 
+use Elasticsearch\Common\Exceptions\BadRequest400Exception;
 use oat\tao\elasticsearch\ElasticSearch;
 use common_report_Report as Report;
 use oat\tao\model\search\SyntaxException;
@@ -35,7 +37,7 @@ class InitElasticSearch extends InstallAction
     /**
      * @return array
      */
-    protected function getDefaultHost()
+    protected function getDefaultHost(): array
     {
         return [
             'http://localhost:9200'
@@ -45,7 +47,7 @@ class InitElasticSearch extends InstallAction
     /**
      * @return array
      */
-    protected function getDefaultSettings()
+    protected function getDefaultSettings(): array
     {
         return [
             'analysis' => [
@@ -71,21 +73,22 @@ class InitElasticSearch extends InstallAction
     }
 
     /**
-     * @param $params
+     * @param array $params
      * @return Report
      * @throws \common_Exception
      * @throws \oat\oatbox\service\exception\InvalidServiceManagerException
      * @throws \Exception
      */
-    public function __invoke($params)
+    public function __invoke($params): Report
     {
         if (!class_exists('oat\\tao\\elasticsearch\\ElasticSearch')) {
             throw new \Exception('Tao ElasticSearch not found');
         }
-        
+
         $config = [
             'hosts' => $this->getDefaultHost(),
             'settings' => $this->getDefaultSettings(),
+            'indexes' => array_pop($params)
         ];
 
         if (count($params) > 0) {
@@ -119,23 +122,15 @@ class InitElasticSearch extends InstallAction
             $config['settings'] = $oldSettings['settings'];
         }
 
-        $isMap = false;
-        if (isset($oldSettings['isMap'])) {
-            $isMap = $oldSettings['isMap'];
-        }
-        $config['isMap'] = $isMap;
-
-        $search = new ElasticSearch($config);
-        $search->flush();
-
-        if ($isMap) {
-            $search->settingUpIndexes();
-        }
-
         try {
+            $search = new ElasticSearch($config);
+
+            $search->createIndexes();
             $search->query('', 'sample');
             $this->getServiceManager()->register(Search::SERVICE_ID, $search);
             return new Report(Report::TYPE_SUCCESS, __('Switched to ElasticSearch'));
+        } catch (BadRequest400Exception $e) {
+            return new Report(Report::TYPE_ERROR, 'Unable to crate index: ' . $e->getMessage());
         } catch (SyntaxException $e) {
             return new Report(Report::TYPE_ERROR, 'ElasticSearch server could not be found');
         }

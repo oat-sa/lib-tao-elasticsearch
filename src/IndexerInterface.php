@@ -73,12 +73,10 @@ interface IndexerInterface
 
     /**
      * Searches and returns resources that matches a given list of identifiers
-     * 
-     * @param $ids array List of identifiers
      *
-     * @param $type string Type of resources
+     * @param $ids array List of identifiers
      *
      * @return mixed
      */
-    public function searchResourceByIds($ids, $type);
+    public function searchResourceByIds($ids);
 }
