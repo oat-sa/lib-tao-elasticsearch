@@ -233,7 +233,7 @@ class ElasticSearch extends ConfigurableService implements Search
      * @param $query
      * @return string
      */
-    protected function updateIfUri($query)
+    protected function updateIfUri($query): string
     {
         if (\common_Utils::isUri($query)) {
             $query = '"' . $query . '"';

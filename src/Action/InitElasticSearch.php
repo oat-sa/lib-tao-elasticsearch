@@ -15,9 +15,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * Copyright (c) 2018 (original work) Open Assessment Technologies SA;
- *
- *
  */
+
+declare(strict_types=1);
+
 namespace oat\tao\elasticsearch\Action;
 
 use Elasticsearch\Common\Exceptions\BadRequest400Exception;
@@ -36,7 +37,7 @@ class InitElasticSearch extends InstallAction
     /**
      * @return array
      */
-    protected function getDefaultHost()
+    protected function getDefaultHost(): array
     {
         return [
             'http://localhost:9200'
@@ -46,7 +47,7 @@ class InitElasticSearch extends InstallAction
     /**
      * @return array
      */
-    protected function getDefaultSettings()
+    protected function getDefaultSettings(): array
     {
         return [
             'analysis' => [
@@ -78,7 +79,7 @@ class InitElasticSearch extends InstallAction
      * @throws \oat\oatbox\service\exception\InvalidServiceManagerException
      * @throws \Exception
      */
-    public function __invoke($params)
+    public function __invoke($params): Report
     {
         if (!class_exists('oat\\tao\\elasticsearch\\ElasticSearch')) {
             throw new \Exception('Tao ElasticSearch not found');
