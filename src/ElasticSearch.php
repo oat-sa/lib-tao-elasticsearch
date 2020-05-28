@@ -118,7 +118,7 @@ class ElasticSearch extends ConfigurableService implements Search
      */
     public function remove($resourceId)
     {
-        return $this->getIndexer()->deleteIndex($resourceId);
+        return $this->getIndexer()->deleteDocument($resourceId);
     }
 
     /**
@@ -130,47 +130,12 @@ class ElasticSearch extends ConfigurableService implements Search
     }
 
     /**
-     * @return bool
-     */
-    public function settingUpIndexes()
-    {
-        $this->getClient()->indices()->create([
-            'index' => $this->getIndexer()->getIndex(),
-            'body' => [
-                'settings' => $this->getOption('settings'),
-                'mappings' => $this->getMappings()
-            ]
-        ]);
-
-        return true;
-    }
-
-    /**
-     * @return array
-     */
-    protected function getMappings()
-    {
-        return [$this->getIndexer()->getType() => [
-            'dynamic_templates' => [[
-                'analysed_string_template' => [
-                    'path_match' => '*',
-                    'mapping' => [
-                        'type' => 'text',
-                        'analyzer' => 'autocomplete',
-                        'search_analyzer' => 'standard'
-                    ]
-                ]
-            ]]
-        ]];
-    }
-
-    /**
      * @return array
      */
     public function flush()
     {
         return $this->getClient()->indices()->delete([
-            'index' => $this->getIndexer()->getIndex(),
+            'index' => implode(',', IndexerInterface::AVAILABLE_INDEXES),
             'client' => [
                 'ignore' => 404
             ]
@@ -217,8 +182,7 @@ class ElasticSearch extends ConfigurableService implements Search
         ];
 
         $params = [
-            "index" => $this->getIndexer()->getIndex(),
-            "type" => $this->getIndexer()->getType(),
+            "index" => implode(',', IndexerInterface::AVAILABLE_INDEXES), //TODO we need to specificy only one index during implementation of task (TAO-10248)
             "size" => $count,
             "from" => $start,
             "client" => [ "ignore" => 404 ],

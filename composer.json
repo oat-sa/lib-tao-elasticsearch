@@ -24,7 +24,7 @@
     "GPL-2.0-only"
   ],
   "require" : {
-    "php" : ">=5.3.10",
+    "php" : ">=7.1",
     "oat-sa/tao-core" : ">=18.1.0||dev-develop",
     "elasticsearch/elasticsearch": "~6.0"
   },
