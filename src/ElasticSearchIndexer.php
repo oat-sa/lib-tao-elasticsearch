@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace oat\tao\elasticsearch;
 
 use Elasticsearch\Client;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Iterator;
 use oat\tao\model\search\index\IndexDocument;
@@ -37,9 +38,13 @@ class ElasticSearchIndexer implements IndexerInterface
     /** @var Client */
     private $client;
 
-    public function __construct(Client $client)
+    /** @var LoggerInterface */
+    private $logger;
+
+    public function __construct(Client $client, LoggerInterface $logger)
     {
         $this->client = $client;
+        $this->logger = $logger;
     }
 
     protected function getClient(): Client
@@ -84,13 +89,13 @@ class ElasticSearchIndexer implements IndexerInterface
             $indexName = $this->getIndexNameByDocument($document);
 
             if ($indexName === self::UNCLASSIFIEDS_DOCUMENTS_INDEX) {
-                \common_Logger::i(sprintf('There is no proper index for the document "%s"', $document->getId()));
+                $this->logger->info(sprintf('There is no proper index for the document "%s"', $document->getId()));
 
                 $documents->next();
                 continue;
             }
 
-            \common_Logger::i(sprintf('adding document "%s" to be indexed', $document->getId()));
+            $this->logger->info(sprintf('adding document "%s" to be indexed', $document->getId()));
 
             $params = $this->extendBatch('delete', $indexName, $document, $params);
             $params = $this->extendBatch('create', $indexName, $document, $params);
