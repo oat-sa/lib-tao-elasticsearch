@@ -86,8 +86,7 @@ return [
                 ],
                 'properties' => [
                     'class' => [
-                        'type' => 'keyword',
-                        'ignore_above' => 256,
+                        'type' => 'text',
                     ],
                     'content' => [
                         'type' => 'text',
@@ -136,8 +135,7 @@ return [
                 ],
                 'properties' => [
                     'class' => [
-                        'type' => 'keyword',
-                        'ignore_above' => 256,
+                        'type' => 'text',
                     ],
                     'label' => [
                         'type' => 'text',
@@ -179,8 +177,7 @@ return [
                 ],
                 'properties' => [
                     'class' => [
-                        'type' => 'keyword',
-                        'ignore_above' => 256,
+                        'type' => 'text',
                     ],
                     'label' => [
                         'type' => 'text',
@@ -222,8 +219,7 @@ return [
                 ],
                 'properties' => [
                     'class' => [
-                        'type' => 'keyword',
-                        'ignore_above' => 256,
+                        'type' => 'text',
                     ],
                     'label' => [
                         'type' => 'text',
@@ -265,8 +261,7 @@ return [
                 ],
                 'properties' => [
                     'class' => [
-                        'type' => 'keyword',
-                        'ignore_above' => 256,
+                        'type' => 'text',
                     ],
                     'label' => [
                         'type' => 'text',
