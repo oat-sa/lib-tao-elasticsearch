@@ -17,9 +17,12 @@
  * Copyright (c) 2018 (original work) Open Assessment Technologies SA;
  */
 
+declare(strict_types=1);
+
 namespace oat\tao\elasticsearch;
 
 use ArrayIterator;
+use Elasticsearch\Client;
 use Elasticsearch\ClientBuilder;
 use Iterator;
 use oat\tao\model\search\index\IndexIterator;
@@ -35,15 +38,11 @@ use oat\oatbox\service\ConfigurableService;
  */
 class ElasticSearch extends ConfigurableService implements Search
 {
-    /**
-     * @var \Elasticsearch\Client
-     */
+    /** @var \Elasticsearch\Client */
     private $client;
 
-    /**
-     * @return \Elasticsearch\Client
-     */
-    protected function getClient()
+    /** @return \Elasticsearch\Client */
+    protected function getClient(): Client
     {
         if (is_null($this->client)) {
             $this->client = ClientBuilder::create()
@@ -54,12 +53,9 @@ class ElasticSearch extends ConfigurableService implements Search
         return $this->client;
     }
 
-    /**
-     * @return ElasticSearchIndexer
-     */
-    protected function getIndexer()
+    protected function getIndexer(): ElasticSearchIndexer
     {
-        return new ElasticSearchIndexer($this->getClient(), 'documents', 'document');
+        return new ElasticSearchIndexer($this->getClient(), $this->getLogger());
     }
 
     /**
@@ -103,7 +99,7 @@ class ElasticSearch extends ConfigurableService implements Search
      * @param IndexIterator|array $documents
      * @return integer
      */
-    public function index($documents = [])
+    public function index($documents = []): int
     {
         $documents = $documents instanceof Iterator
             ? $documents
@@ -112,26 +108,16 @@ class ElasticSearch extends ConfigurableService implements Search
         return $this->getIndexer()->buildIndex($documents);
     }
 
-    /**
-     * @param $resourceId
-     * @return bool
-     */
-    public function remove($resourceId)
+    public function remove($resourceId): bool
     {
-        return $this->getIndexer()->deleteIndex($resourceId);
+        return $this->getIndexer()->deleteDocument($resourceId);
     }
 
-    /**
-     * @return bool
-     */
-    public function supportCustomIndex()
+    public function supportCustomIndex(): bool
     {
         return true;
     }
 
-    /**
-     * @return void
-     */
     public function createIndexes(): void
     {
         $indexes = $this->getOption('indexes');
@@ -143,13 +129,10 @@ class ElasticSearch extends ConfigurableService implements Search
         $this->getClient()->indices()->create($indexes['test-takers']);
     }
 
-    /**
-     * @return array
-     */
-    public function flush()
+    public function flush(): array
     {
         return $this->getClient()->indices()->delete([
-            'index' => $this->getIndexer()->getIndex(),
+            'index' => implode(',', IndexerInterface::AVAILABLE_INDEXES),
             'client' => [
                 'ignore' => 404
             ]
@@ -173,7 +156,7 @@ class ElasticSearch extends ConfigurableService implements Search
             $matches = [];
             $part = $this->updateIfUri($part);
             if (preg_match('/^([^a-z_]*)([a-z_]+):(.*)/', $part, $matches) === 1) {
-                list($fullstring, $prefix, $fieldname, $value) = $matches;
+                [$fullstring, $prefix, $fieldname, $value] = $matches;
                 $value = $this->updateIfUri($value);
                 if ($fieldname) {
                     $parts[$key] = $prefix . $fieldname . ':' . str_replace(':', '\\:', $value);
@@ -196,8 +179,7 @@ class ElasticSearch extends ConfigurableService implements Search
         ];
 
         $params = [
-            "index" => $this->getIndexer()->getIndex(),
-            "type" => $this->getIndexer()->getType(),
+            "index" => implode(',', IndexerInterface::AVAILABLE_INDEXES), //TODO we need to specificy only one index during implementation of task (TAO-10248)
             "size" => $count,
             "from" => $start,
             "client" => ["ignore" => 404],
@@ -211,7 +193,7 @@ class ElasticSearch extends ConfigurableService implements Search
      * @param array $elasticResult
      * @return ResultSet
      */
-    protected function buildResultSet($elasticResult = [])
+    protected function buildResultSet($elasticResult = []): ResultSet
     {
         $uris = [];
         $total = 0;
@@ -229,11 +211,7 @@ class ElasticSearch extends ConfigurableService implements Search
         return new ResultSet($uris, $total);
     }
 
-    /**
-     * @param $query
-     * @return string
-     */
-    protected function updateIfUri($query): string
+    protected function updateIfUri(string $query): string
     {
         if (\common_Utils::isUri($query)) {
             $query = '"' . $query . '"';
