@@ -95,15 +95,6 @@ class ElasticSearchIndexer implements IndexerInterface
                 continue;
             }
 
-            $this->logger->info(
-                sprintf(
-                    'Machinhe info: XDebug Memory Usage (%d), PHP Memory Usage (%d), Memory Limit (%s)',
-                    xdebug_memory_usage(),
-                    memory_get_usage(),
-                    ini_get('memory_limit')
-                )
-            );
-
             $this->logger->info(sprintf('adding document "%s" to be indexed', $document->getId()));
 
             $params = $this->extendBatch('delete', $indexName, $document, $params);
