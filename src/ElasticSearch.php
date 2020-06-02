@@ -88,9 +88,13 @@ class ElasticSearch extends ConfigurableService implements Search
         }
 
         try {
+            $query = $this->getQueryBuilder()->getSearchParams($queryString, $type, $start, $count, $order, $dir);
+
+            $this->logDebug('Query ', $query);
+
             return $this->buildResultSet(
                 $this->getClient()->search(
-                    $this->getQueryBuilder()->getSearchParams($queryString, $type, $start, $count, $order, $dir)
+                    $query
                 )
             );
         } catch (\Exception $e) {
