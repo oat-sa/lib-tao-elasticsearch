@@ -65,8 +65,6 @@ class QueryBuilder
             }
         }
 
-        $query[] = 'type:' . str_replace(':', '\\:', '"' . $type . '"');
-
         $query = [
             'query' => [
                 'query_string' =>
