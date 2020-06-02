@@ -44,4 +44,12 @@ Add you castom settings, filters or analysis
            )
        ),
     'isMap' => true
+```
 
+After this step, you need to populate the index with documents. to do it, i must run:
+
+```bash
+$ bash tao/scripts/tools/index/IndexPopulator.sh <TAO_ROOT_PLATFORM>
+```
+
+This script will index all the resources on TAO platform to elastic search.

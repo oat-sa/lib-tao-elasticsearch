@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.2.0
+-----
+- README.md updated with indexing script
+- Class properties automatically indexed
+
 1.1.1
 -----
 - Total count of results with Elasticsearch >= 7.0
