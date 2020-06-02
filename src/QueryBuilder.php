@@ -48,20 +48,18 @@ class QueryBuilder
     public function getSearchParams(string $queryString, string $type, int $start, int $count, string $order, string $dir): array
     {
         $qs = htmlspecialchars_decode($queryString);
-        $blocks = explode('AND', $qs);
+        $blocks = $output = preg_split( '/(AND)/i', $qs);
         $query = [];
 
         foreach ($blocks as $block) {
             preg_match('/((?P<field>.*):)?(?P<term>.*)/', $block,$matches);
-            $field = strtolower(trim($matches['field']));
-
-            $term = trim($matches['term']);
-            $term = $this->updateIfUri($term);
+            $field = $this->getSlug(trim($matches['field']));
+            $term = $this->updateIfUri(trim($matches['term']));
 
             if (empty($field)) {
-                $query[] = sprintf('(%s)', $term);
+                $query[] = sprintf('("%s")', $term);
             } elseif ($this->isStandardField($field)) {
-                $query[] = sprintf('(%s:%s)', $field, $term);
+                $query[] = sprintf('(%s:"%s")', $field, $term);
             } else {
                 $query[] = $this->buildCustomConditions($field, $term);
             }
@@ -73,19 +71,19 @@ class QueryBuilder
             'query' => [
                 'query_string' =>
                     [
-                        "default_operator" => "AND",
-                        "query" => $queryString = implode(' AND ', $query)
+                        'default_operator' => 'AND',
+                        'query' => implode(' AND ', $query)
                     ]
             ],
             'sort' => [$order => ['order' => $dir]]
         ];
 
         $params = [
-            "index" => $this->getIndexByType($type),
-            "size" => $count,
-            "from" => $start,
-            "client" => ["ignore" => 404],
-            "body" => json_encode($query)
+            'index' => $this->getIndexByType($type),
+            'size' => $count,
+            'from' => $start,
+            'client' => ['ignore' => 404],
+            'body' => json_encode($query)
         ];
 
         return $params;
@@ -98,7 +96,7 @@ class QueryBuilder
 
     private function getIndexByType(string $type): string
     {
-        return IndexerInterface::AVAILABLE_INDEXES[$type];
+        return IndexerInterface::AVAILABLE_INDEXES[$type] ?? IndexerInterface::UNCLASSIFIEDS_DOCUMENTS_INDEX;
     }
 
     private function updateIfUri(string $query): string
@@ -114,9 +112,14 @@ class QueryBuilder
         $conditions = [];
 
         foreach (self::CUSTOM_FIELDS as $customField) {
-            $conditions[] = sprintf('%s_%s:%s', $customField, $fieldName, $term);
+            $conditions[] = sprintf('%s_%s:"%s"', $customField, $fieldName, $term);
         }
 
         return '(' . implode(' OR ', $conditions). ')';
+    }
+
+    private function getSlug(string $text): string
+    {
+        return strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $text)));
     }
 }
