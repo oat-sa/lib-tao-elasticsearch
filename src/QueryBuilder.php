@@ -21,6 +21,8 @@ declare(strict_types=1);
 
 namespace oat\tao\elasticsearch;
 
+use tao_helpers_Slug;
+
 class QueryBuilder
 {
     private const STANDARD_FIELDS = [
@@ -40,14 +42,9 @@ class QueryBuilder
         'RadioBox',
     ];
 
-    public function __construct(SlugCreator $slugCreator)
-    {
-        $this->slugCreator = $slugCreator;
-    }
-
     public static function create(): self
     {
-        return new self(SlugCreator::create());
+        return new self();
     }
 
     public function getSearchParams(string $queryString, string $type, int $start, int $count, string $order, string $dir): array
@@ -58,7 +55,7 @@ class QueryBuilder
 
         foreach ($blocks as $block) {
             preg_match('/((?P<field>.*):)?(?P<term>.*)/', $block,$matches);
-            $field = $this->slugCreator->getSlug(trim($matches['field']));
+            $field = tao_helpers_Slug::create(trim($matches['field']));
             $term = $this->updateIfUri(trim($matches['term']));
 
             if (empty($field)) {
