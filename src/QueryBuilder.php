@@ -36,13 +36,18 @@ class QueryBuilder
         'TextArea',
         'TextBox',
         'ComboBox',
-        'Checkbox',
+        'CheckBox',
         'RadioBox',
     ];
 
+    public function __construct(SlugCreator $slugCreator)
+    {
+        $this->slugCreator = $slugCreator;
+    }
+
     public static function create(): self
     {
-        return new self();
+        return new self(SlugCreator::create());
     }
 
     public function getSearchParams(string $queryString, string $type, int $start, int $count, string $order, string $dir): array
@@ -53,7 +58,7 @@ class QueryBuilder
 
         foreach ($blocks as $block) {
             preg_match('/((?P<field>.*):)?(?P<term>.*)/', $block,$matches);
-            $field = $this->getSlug(trim($matches['field']));
+            $field = $this->slugCreator->getSlug(trim($matches['field']));
             $term = $this->updateIfUri(trim($matches['term']));
 
             if (empty($field)) {
@@ -114,10 +119,5 @@ class QueryBuilder
         }
 
         return '(' . implode(' OR ', $conditions). ')';
-    }
-
-    private function getSlug(string $text): string
-    {
-        return strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $text)));
     }
 }

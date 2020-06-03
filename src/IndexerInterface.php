@@ -41,7 +41,9 @@ interface IndexerInterface
         TaoOntology::CLASS_URI_TEST => self::TESTS_INDEX,
         TaoOntology::CLASS_URI_SUBJECT => self::TEST_TAKERS_INDEX,
         TaoOntology::CLASS_URI_DELIVERY => self::DELIVERIES_INDEX,
-        TaoOntology::CLASS_URI_GROUP => self::GROUPS_INDEX
+        TaoOntology::CLASS_URI_GROUP => self::GROUPS_INDEX,
+        TaoOntology::CLASS_URI_ASSEMBLED_DELIVERY => self::DELIVERIES_INDEX,
+        TaoOntology::CLASS_URI_RESULT => self::DELIVERIES_INDEX,
     ];
 
     /**
