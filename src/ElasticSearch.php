@@ -89,7 +89,6 @@ class ElasticSearch extends ConfigurableService implements Search
 
         try {
             $query = $this->getQueryBuilder()->getSearchParams($queryString, $type, $start, $count, $order, $dir);
-
             $this->getLogger()->debug('Query ', $query);
 
             return $this->buildResultSet(
@@ -97,16 +96,17 @@ class ElasticSearch extends ConfigurableService implements Search
                     $query
                 )
             );
-        } catch (\Exception $e) {
-            switch ($e->getCode()) {
+        } catch (\Exception $exception) {
+            switch ($exception->getCode()) {
                 case 400:
-                    $json = json_decode($e->getMessage(), true);
-                    throw new SyntaxException(
-                        $queryString,
-                        __('There is an error in your search query, system returned: %s', $json['error']['reason'])
-                    );
+                    $json = json_decode($exception->getMessage(), true);
+                    $message = __('There is an error in your search query, system returned: %s', $json['error']['reason']);
+                    $this->getLogger()->error($message, [$exception->getMessage()]);
+                    throw new SyntaxException($queryString, $message);
                 default:
-                    throw new SyntaxException($queryString, __('An unknown error occured during search'));
+                    $message = 'An unknown error occured during search';
+                    $this->getLogger()->error($message, [$exception->getMessage()]);
+                    throw new SyntaxException($queryString, __($message));
             }
         }
     }
