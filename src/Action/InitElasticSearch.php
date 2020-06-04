@@ -124,9 +124,7 @@ class InitElasticSearch extends InstallAction
 
         try {
             $search = new ElasticSearch($config);
-
             $search->createIndexes();
-            $search->query('', 'sample');
             $this->getServiceManager()->register(Search::SERVICE_ID, $search);
             return new Report(Report::TYPE_SUCCESS, __('Switched to ElasticSearch'));
         } catch (BadRequest400Exception $e) {

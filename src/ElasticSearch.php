@@ -41,6 +41,9 @@ class ElasticSearch extends ConfigurableService implements Search
     /** @var \Elasticsearch\Client */
     private $client;
 
+    /** @var QueryBuilder */
+    private $queryBuilder;
+
     /** @return \Elasticsearch\Client */
     protected function getClient(): Client
     {
@@ -51,6 +54,16 @@ class ElasticSearch extends ConfigurableService implements Search
         }
 
         return $this->client;
+    }
+
+    /** @return QueryBuilder */
+    protected function getQueryBuilder(): QueryBuilder
+    {
+        if (is_null($this->queryBuilder)) {
+            $this->queryBuilder = QueryBuilder::create();
+        }
+
+        return $this->queryBuilder;
     }
 
     protected function getIndexer(): ElasticSearchIndexer
@@ -75,21 +88,25 @@ class ElasticSearch extends ConfigurableService implements Search
         }
 
         try {
+            $query = $this->getQueryBuilder()->getSearchParams($queryString, $type, $start, $count, $order, $dir);
+            $this->getLogger()->debug('Query ', $query);
+
             return $this->buildResultSet(
                 $this->getClient()->search(
-                    $this->getSearchParams($queryString, $type, $start, $count, $order, $dir)
+                    $query
                 )
             );
-        } catch (\Exception $e) {
-            switch ($e->getCode()) {
+        } catch (\Exception $exception) {
+            switch ($exception->getCode()) {
                 case 400:
-                    $json = json_decode($e->getMessage(), true);
-                    throw new SyntaxException(
-                        $queryString,
-                        __('There is an error in your search query, system returned: %s', $json['error']['reason'])
-                    );
+                    $json = json_decode($exception->getMessage(), true);
+                    $message = __('There is an error in your search query, system returned: %s', $json['error']['reason']);
+                    $this->getLogger()->error($message, [$exception->getMessage()]);
+                    throw new SyntaxException($queryString, $message);
                 default:
-                    throw new SyntaxException($queryString, __('An unknown error occured during search'));
+                    $message = 'An unknown error occured during search';
+                    $this->getLogger()->error($message, [$exception->getMessage()]);
+                    throw new SyntaxException($queryString, __($message));
             }
         }
     }
@@ -140,56 +157,6 @@ class ElasticSearch extends ConfigurableService implements Search
     }
 
     /**
-     * @param string $queryString
-     * @param string $type
-     * @param int $start
-     * @param int $count
-     * @param $order
-     * @param $dir
-     * @return array
-     */
-    protected function getSearchParams($queryString, $type, $start, $count, $order, $dir)
-    {
-        $parts = explode(' ', htmlspecialchars_decode($queryString));
-
-        foreach ($parts as $key => $part) {
-            $matches = [];
-            $part = $this->updateIfUri($part);
-            if (preg_match('/^([^a-z_]*)([a-z_]+):(.*)/', $part, $matches) === 1) {
-                [$fullstring, $prefix, $fieldname, $value] = $matches;
-                $value = $this->updateIfUri($value);
-                if ($fieldname) {
-                    $parts[$key] = $prefix . $fieldname . ':' . str_replace(':', '\\:', $value);
-                }
-            }
-        }
-        $queryString = implode(' ', $parts);
-        $queryString = (strlen($queryString) == 0 ? '' : '(' . $queryString . ') AND ')
-            . 'type:' . str_replace(':', '\\:', '"' . $type . '"');
-
-        $query = [
-            'query' => [
-                'query_string' =>
-                    [
-                        "default_operator" => "AND",
-                        "query" => $queryString
-                    ]
-            ],
-            'sort' => [$order => ['order' => $dir]]
-        ];
-
-        $params = [
-            "index" => implode(',', IndexerInterface::AVAILABLE_INDEXES), //TODO we need to specificy only one index during implementation of task (TAO-10248)
-            "size" => $count,
-            "from" => $start,
-            "client" => ["ignore" => 404],
-            "body" => json_encode($query)
-        ];
-
-        return $params;
-    }
-
-    /**
      * @param array $elasticResult
      * @return ResultSet
      */
@@ -209,13 +176,5 @@ class ElasticSearch extends ConfigurableService implements Search
         $uris = array_unique($uris);
 
         return new ResultSet($uris, $total);
-    }
-
-    protected function updateIfUri(string $query): string
-    {
-        if (\common_Utils::isUri($query)) {
-            $query = '"' . $query . '"';
-        }
-        return $query;
     }
 }
