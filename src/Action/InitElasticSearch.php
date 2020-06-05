@@ -24,6 +24,8 @@ namespace oat\tao\elasticsearch\Action;
 use Elasticsearch\Common\Exceptions\BadRequest400Exception;
 use oat\tao\elasticsearch\ElasticSearch;
 use common_report_Report as Report;
+use oat\tao\elasticsearch\Watcher\IndexDocumentFactory;
+use oat\tao\model\search\index\IndexService;
 use oat\tao\model\search\SyntaxException;
 use oat\oatbox\extension\InstallAction;
 use oat\tao\model\search\Search;
@@ -81,6 +83,7 @@ class InitElasticSearch extends InstallAction
      */
     public function __invoke($params): Report
     {
+        $report = new Report(Report::TYPE_INFO, 'Started switch to elastic search');
         if (!class_exists('oat\\tao\\elasticsearch\\ElasticSearch')) {
             throw new \Exception('Tao ElasticSearch not found');
         }
@@ -126,11 +129,20 @@ class InitElasticSearch extends InstallAction
             $search = new ElasticSearch($config);
             $search->createIndexes();
             $this->getServiceManager()->register(Search::SERVICE_ID, $search);
-            return new Report(Report::TYPE_SUCCESS, __('Switched to ElasticSearch'));
+
+            $message = "
+                In order for the ElasticSearch to work correctly please make sure that you will update config/tao/IndexService.conf.php
+                Providing `new oat\\tao\\elasticsearch\\Watcher\\IndexDocumentFactory()` as a value for `documentBuilderFactory` option
+            ";
+
+            $report->add(new Report(Report::TYPE_WARNING, $message));
+            $report->add(new Report(Report::TYPE_SUCCESS, __('Switched to ElasticSearch')));
         } catch (BadRequest400Exception $e) {
-            return new Report(Report::TYPE_ERROR, 'Unable to crate index: ' . $e->getMessage());
+            $report->add(new Report(Report::TYPE_ERROR, 'Unable to crate index: ' . $e->getMessage()));
         } catch (SyntaxException $e) {
-            return new Report(Report::TYPE_ERROR, 'ElasticSearch server could not be found');
+            $report->add(new Report(Report::TYPE_ERROR, 'ElasticSearch server could not be found'));
         }
+
+        return $report;
     }
 }
