@@ -52,7 +52,6 @@ class UnclassifiedIndexDocumentBuilder implements IndexDocumentBuilderInterface
         );
 
         return $document;
-
     }
 
     /**
