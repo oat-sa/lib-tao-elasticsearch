@@ -53,10 +53,11 @@ class GenericIndexDocumentBuilder implements IndexDocumentBuilderInterface
     }
 
     /**
+     * No need to implement this as we are making documents for resources
      * {@inheritdoc}
      */
     public function createDocumentFromArray(array $resource): ?IndexDocument
     {
-        // TODO: Implement createDocumentFromArray() method.
+        return null;
     }
 }
