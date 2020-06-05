@@ -21,9 +21,10 @@ declare(strict_types=1);
 
 namespace oat\tao\elasticsearch\Watcher;
 
+use oat\tao\model\search\index\AbstractDocumentBuilderFactory;
 use oat\tao\model\search\index\IndexDocumentBuilderInterface;
 
-class IndexDocumentBuilderFactory
+class IndexDocumentBuilderFactory extends AbstractDocumentBuilderFactory
 {
     const AVAILABLE_DOCUMENT_BUILDERS = [
         'http://www.tao.lu/Ontologies/TAOItem.rdf#Item' => 'oat\\tao\\elasticsearch\\Watcher\\Resources\\ItemIndexDocumentBuilder',
@@ -42,7 +43,7 @@ class IndexDocumentBuilderFactory
      */
     public function getDocumentBuilderByResourceType(string $resourceType): IndexDocumentBuilderInterface
     {
-        if (array_key_exists($resourceType, self::AVAILABLE_INDEXERS)) {
+        if (array_key_exists($resourceType, self::AVAILABLE_DOCUMENT_BUILDERS)) {
             $indexer = self::AVAILABLE_DOCUMENT_BUILDERS[$resourceType];
         } else {
             $indexer = self::AVAILABLE_DOCUMENT_BUILDERS['unclassified'];
