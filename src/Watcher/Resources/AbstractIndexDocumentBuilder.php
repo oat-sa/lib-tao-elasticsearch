@@ -21,36 +21,40 @@ declare(strict_types=1);
 
 namespace oat\tao\elasticsearch\Watcher\Resources;
 
-use oat\generis\model\GenerisRdf;
-use oat\tao\model\search\index\IndexDocument;
+use oat\generis\model\OntologyAwareTrait;
+use oat\tao\model\search\index\IndexDocumentBuilderInterface;
 
-class TesttakerIndexDocumentBuilder extends AbstractIndexDocumentBuilder
+abstract class AbstractIndexDocumentBuilder implements IndexDocumentBuilderInterface
 {
+    use OntologyAwareTrait;
+
     /**
      * {@inheritdoc}
      */
-    public function createDocumentFromResource(\core_kernel_classes_Resource $resource): ?IndexDocument
+    public function createDocumentFromArray(array $resource): ?IndexDocument
     {
-        $classProperty = $resource->getOnePropertyValue($this->getProperty(self::TYPE_PROPERTY));
-        $classResource = $this->getProperty($classProperty);
+        if (!isset($resource['id'])) {
+            throw new \common_exception_MissingParameter('id');
+        }
 
-        $loginProperty = $this->getProperty(GenerisRdf::PROPERTY_USER_LOGIN);
-        $login = $resource->getOnePropertyValue($loginProperty);
+        if (!isset($resource['body'])) {
+            throw new \common_exception_MissingParameter('body');
+        }
 
-        $body = [
-            'class' => $classResource->getLabel(),
-            'label' => $resource->getLabel(),
-            'login' => $login
-        ];
+        $body = $resource['body'];
+        $indexProperties = [];
 
-        $resourceType = current(array_keys($resource->getTypes()));
-        $body['type'] = $resourceType;
+        if (isset($resource['indexProperties'])) {
+            $indexProperties = $resource['indexProperties'];
+        }
 
         $document = new IndexDocument(
-            $resource->getUri(),
-            $body
+            $resource['id'],
+            $body,
+            $indexProperties
         );
 
         return $document;
     }
+
 }

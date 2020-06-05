@@ -21,13 +21,10 @@ declare(strict_types=1);
 
 namespace oat\tao\elasticsearch\Watcher\Resources;
 
-use oat\generis\model\OntologyAwareTrait;
 use oat\tao\model\search\index\IndexDocument;
-use oat\tao\model\search\index\IndexDocumentBuilderInterface;
 
-class GenericIndexDocumentBuilder implements IndexDocumentBuilderInterface
+class GenericIndexDocumentBuilder extends AbstractIndexDocumentBuilder
 {
-
     /**
      * {@inheritdoc}
      */
@@ -50,14 +47,5 @@ class GenericIndexDocumentBuilder implements IndexDocumentBuilderInterface
         );
 
         return $document;
-    }
-
-    /**
-     * No need to implement this as we are making documents for resources
-     * {@inheritdoc}
-     */
-    public function createDocumentFromArray(array $resource): ?IndexDocument
-    {
-        return null;
     }
 }
