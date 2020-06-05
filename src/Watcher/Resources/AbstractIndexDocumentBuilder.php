@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace oat\tao\elasticsearch\Watcher\Resources;
 
 use oat\generis\model\OntologyAwareTrait;
+use oat\tao\model\search\index\IndexDocument;
 use oat\tao\model\search\index\IndexDocumentBuilderInterface;
 
 abstract class AbstractIndexDocumentBuilder implements IndexDocumentBuilderInterface
