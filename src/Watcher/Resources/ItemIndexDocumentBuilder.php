@@ -56,7 +56,6 @@ class ItemIndexDocumentBuilder implements IndexDocumentBuilderInterface
         );
 
         return $document;
-
     }
 
     /**
