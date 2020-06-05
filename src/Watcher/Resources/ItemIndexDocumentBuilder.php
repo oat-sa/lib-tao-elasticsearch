@@ -35,7 +35,7 @@ class ItemIndexDocumentBuilder implements IndexDocumentBuilderInterface
      */
     public function createDocumentFromResource(\core_kernel_classes_Resource $resource): ?IndexDocument
     {
-        $classProperty = $resource->getOnePropertyValue($this->getProperty('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'));
+        $classProperty = $resource->getOnePropertyValue($this->getProperty(self::TYPE_PROPERTY));
         $classResource = $this->getProperty($classProperty);
 
         $resourceModel = $resource->getOnePropertyValue($this->getProperty('http://www.tao.lu/Ontologies/TAOItem.rdf#ItemModel'));

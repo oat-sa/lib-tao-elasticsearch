@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace oat\tao\elasticsearch\Watcher\Resources;
 
+use oat\generis\model\GenerisRdf;
 use oat\generis\model\OntologyAwareTrait;
 use oat\generis\model\user\UserRdf;
 use oat\tao\model\event\UserRemovedEvent;
@@ -36,10 +37,10 @@ class TesttakerIndexDocumentBuilder implements IndexDocumentBuilderInterface
      */
     public function createDocumentFromResource(\core_kernel_classes_Resource $resource): ?IndexDocument
     {
-        $classProperty = $resource->getOnePropertyValue($this->getProperty('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'));
+        $classProperty = $resource->getOnePropertyValue($this->getProperty(self::TYPE_PROPERTY));
         $classResource = $this->getProperty($classProperty);
 
-        $loginProperty = $this->getProperty('http://www.tao.lu/Ontologies/generis.rdf#login');
+        $loginProperty = $this->getProperty(GenerisRdf::PROPERTY_USER_LOGIN);
         $login = $resource->getOnePropertyValue($loginProperty);
 
         $body = [
