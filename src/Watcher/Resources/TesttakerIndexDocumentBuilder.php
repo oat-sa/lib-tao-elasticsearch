@@ -1,0 +1,70 @@
+<?php
+/**
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; under version 2
+ * of the License (non-upgradable).
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ * Copyright (c) 2020 (original work) Open Assessment Technologies SA;
+ */
+
+declare(strict_types=1);
+
+namespace oat\tao\elasticsearch\Watcher\Resources;
+
+use oat\generis\model\OntologyAwareTrait;
+use oat\generis\model\user\UserRdf;
+use oat\tao\model\event\UserRemovedEvent;
+use oat\tao\model\search\index\IndexDocument;
+use oat\tao\model\search\index\IndexDocumentBuilderInterface;
+
+class TesttakerIndexDocumentBuilder implements IndexDocumentBuilderInterface
+{
+    use OntologyAwareTrait;
+
+    /**
+     * {@inheritdoc}
+     */
+    public function createDocumentFromResource(\core_kernel_classes_Resource $resource): ?IndexDocument
+    {
+        $classProperty = $resource->getOnePropertyValue($this->getProperty('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'));
+        $classResource = $this->getProperty($classProperty);
+
+        $loginProperty = $this->getProperty('http://www.tao.lu/Ontologies/generis.rdf#login');
+        $login = $resource->getOnePropertyValue($loginProperty);
+
+        $body = [
+            'class' => $classResource->getLabel(),
+            'label' => $resource->getLabel(),
+            'login' => $login
+        ];
+
+        $resourceType = current(array_keys($resource->getTypes()));
+        $body['type'] = $resourceType;
+
+        $document = new IndexDocument(
+            $resource->getUri(),
+            $body
+        );
+
+        return $document;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function createDocumentFromArray(array $resource): ?IndexDocument
+    {
+        // TODO: Implement createDocumentFromArray() method.
+    }
+
+}
