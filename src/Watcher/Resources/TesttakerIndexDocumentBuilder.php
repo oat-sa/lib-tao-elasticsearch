@@ -67,5 +67,4 @@ class TesttakerIndexDocumentBuilder implements IndexDocumentBuilderInterface
     {
         return null;
     }
-
 }

@@ -82,5 +82,4 @@ class ItemIndexDocumentBuilder implements IndexDocumentBuilderInterface
 
         return $itemContent;
     }
-
 }

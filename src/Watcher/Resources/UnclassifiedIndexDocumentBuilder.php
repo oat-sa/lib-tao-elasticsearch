@@ -63,5 +63,4 @@ class UnclassifiedIndexDocumentBuilder implements IndexDocumentBuilderInterface
     {
         return null;
     }
-
 }

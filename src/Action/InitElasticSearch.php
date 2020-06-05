@@ -132,7 +132,7 @@ class InitElasticSearch extends InstallAction
 
             $message = "
                 In order for the ElasticSearch to work correctly please make sure that you will update config/tao/IndexService.conf.php
-                Providing `new oat\\tao\\elasticsearch\\Watcher\\IndexDocumentFactory()` as a value for `documentBuilderFactory` option
+                Providing `new oat\\tao\\elasticsearch\\Watcher\\IndexDocumentBuilderFactory()` as a value for `documentBuilderFactory` option
             ";
 
             $report->add(new Report(Report::TYPE_WARNING, $message));

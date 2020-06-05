@@ -23,13 +23,14 @@ namespace oat\tao\elasticsearch\Watcher;
 
 use oat\tao\model\search\index\IndexDocumentBuilderInterface;
 
-class IndexDocumentFactory
+class IndexDocumentBuilderFactory
 {
-    const AVAILABLE_INDEXERS = [
+    const AVAILABLE_DOCUMENT_BUILDERS = [
         'http://www.tao.lu/Ontologies/TAOItem.rdf#Item' => 'oat\\tao\\elasticsearch\\Watcher\\Resources\\ItemIndexDocumentBuilder',
         'http://www.tao.lu/Ontologies/TAOTest.rdf#Test' => 'oat\\tao\\elasticsearch\\Watcher\\Resources\\GenericIndexDocumentBuilder',
         'http://www.tao.lu/Ontologies/TAOGroup.rdf#Group' => 'oat\\tao\\elasticsearch\\Watcher\\Resources\\GenericIndexDocumentBuilder',
         'http://www.tao.lu/Ontologies/TAODelivery.rdf#Delivery' => 'oat\\tao\\elasticsearch\\Watcher\\Resources\\GenericIndexDocumentBuilder',
+        'http://www.tao.lu/Ontologies/TAOResult.rdf#DeliveryResult' => 'oat\\tao\\elasticsearch\\Watcher\\Resources\\GenericIndexDocumentBuilder',
         'http://www.tao.lu/Ontologies/TAOSubject.rdf#Subject' => 'oat\\tao\\elasticsearch\\Watcher\\Resources\\TesttakerIndexDocumentBuilder',
         'unclassified' => 'oat\\tao\\elasticsearch\\Watcher\\Resources\\UnclassifiedIndexDocumentBuilder'
     ];
@@ -42,9 +43,9 @@ class IndexDocumentFactory
     public function getDocumentBuilderByResourceType(string $resourceType): IndexDocumentBuilderInterface
     {
         if (array_key_exists($resourceType, self::AVAILABLE_INDEXERS)) {
-            $indexer = self::AVAILABLE_INDEXERS[$resourceType];
+            $indexer = self::AVAILABLE_DOCUMENT_BUILDERS[$resourceType];
         } else {
-            $indexer = self::AVAILABLE_INDEXERS['unclassified'];
+            $indexer = self::AVAILABLE_DOCUMENT_BUILDERS['unclassified'];
         }
 
         return new $indexer();
