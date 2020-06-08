@@ -138,7 +138,7 @@ class InitElasticSearch extends InstallAction
             $report->add(new Report(Report::TYPE_WARNING, $message));
             $report->add(new Report(Report::TYPE_SUCCESS, __('Switched to ElasticSearch')));
         } catch (BadRequest400Exception $e) {
-            $report->add(new Report(Report::TYPE_ERROR, 'Unable to crate index: ' . $e->getMessage()));
+            $report->add(new Report(Report::TYPE_ERROR, 'Unable to create index: ' . $e->getMessage()));
         } catch (SyntaxException $e) {
             $report->add(new Report(Report::TYPE_ERROR, 'ElasticSearch server could not be found'));
         }

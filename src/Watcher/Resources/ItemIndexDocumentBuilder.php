@@ -46,13 +46,11 @@ class ItemIndexDocumentBuilder extends AbstractIndexDocumentBuilder
 
         $resourceType = current(array_keys($resource->getTypes()));
         $body['type'] = $resourceType;
-
-        $document = new IndexDocument(
+    
+        return new IndexDocument(
             $resource->getUri(),
             $body
         );
-
-        return $document;
     }
     
     /**
