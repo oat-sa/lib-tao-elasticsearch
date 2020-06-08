@@ -7,6 +7,7 @@ CHANGELOG
 - Class properties automatically indexed
 - Creted separated indexes for Items, Tests, Test-Takers, Groups and Deliveries
 - Added a query builder to handle searches on different indexes
+- Added IndexDocument builders' factory and needed builders
 
 1.1.1
 -----
