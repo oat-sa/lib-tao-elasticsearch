@@ -139,7 +139,7 @@ class InitElasticSearch extends InstallAction
             $report->add(new Report(Report::TYPE_SUCCESS, __('Switched search service implementation to ElasticSearch')));
         } catch (BadRequest400Exception $e) {
             $report->add(new Report(Report::TYPE_ERROR, 'Unable to create index: ' . $e->getMessage()));
-        } catch (SyntaxException $e) {
+        } catch (\Exception $e) {
             $report->add(new Report(Report::TYPE_ERROR, 'ElasticSearch server could not be found'));
         }
 
