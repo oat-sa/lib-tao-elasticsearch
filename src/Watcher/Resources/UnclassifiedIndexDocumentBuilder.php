@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace oat\tao\elasticsearch\Watcher\Resources;
 
 use oat\tao\model\search\index\IndexDocument;
+use oat\tao\model\search\index\AbstractIndexDocumentBuilder;
 
 class UnclassifiedIndexDocumentBuilder extends AbstractIndexDocumentBuilder
 {

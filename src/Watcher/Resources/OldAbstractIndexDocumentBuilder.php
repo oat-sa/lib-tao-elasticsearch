@@ -25,7 +25,7 @@ use oat\generis\model\OntologyAwareTrait;
 use oat\tao\model\search\index\IndexDocument;
 use oat\tao\model\search\index\IndexDocumentBuilderInterface;
 
-abstract class AbstractIndexDocumentBuilder implements IndexDocumentBuilderInterface
+abstract class OldAbstractIndexDocumentBuilder implements IndexDocumentBuilderInterface
 {
     use OntologyAwareTrait;
 

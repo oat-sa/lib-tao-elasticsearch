@@ -23,6 +23,7 @@ namespace oat\tao\elasticsearch\Watcher\Resources;
 
 use oat\tao\model\search\index\IndexDocument;
 use oat\taoQtiItem\model\qti\Service;
+use oat\tao\model\search\index\AbstractIndexDocumentBuilder;
 
 class ItemIndexDocumentBuilder extends AbstractIndexDocumentBuilder
 {
