@@ -26,7 +26,6 @@ use oat\tao\elasticsearch\ElasticSearch;
 use common_report_Report as Report;
 use oat\tao\elasticsearch\Watcher\IndexDocumentFactory;
 use oat\tao\model\search\index\IndexService;
-use oat\tao\model\search\SyntaxException;
 use oat\oatbox\extension\InstallAction;
 use oat\tao\model\search\Search;
 
