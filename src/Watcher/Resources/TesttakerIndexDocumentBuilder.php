@@ -29,7 +29,7 @@ class TesttakerIndexDocumentBuilder extends AbstractIndexDocumentBuilder
     /**
      * {@inheritdoc}
      */
-    public function createDocumentFromResource(\core_kernel_classes_Resource $resource): ?IndexDocument
+    public function createDocumentFromResource(\core_kernel_classes_Resource $resource): IndexDocument
     {
         $classProperty = $resource->getOnePropertyValue($this->getProperty(self::TYPE_PROPERTY));
         $classResource = $this->getProperty($classProperty);

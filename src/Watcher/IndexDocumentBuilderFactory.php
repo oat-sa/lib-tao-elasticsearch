@@ -23,16 +23,17 @@ namespace oat\tao\elasticsearch\Watcher;
 
 use oat\tao\model\search\index\AbstractDocumentBuilderFactory;
 use oat\tao\model\search\index\IndexDocumentBuilderInterface;
+use oat\tao\model\TaoOntology;
 
 class IndexDocumentBuilderFactory extends AbstractDocumentBuilderFactory
 {
-    const AVAILABLE_DOCUMENT_BUILDERS = [
-        'http://www.tao.lu/Ontologies/TAOItem.rdf#Item' => 'oat\\tao\\elasticsearch\\Watcher\\Resources\\ItemIndexDocumentBuilder',
-        'http://www.tao.lu/Ontologies/TAOTest.rdf#Test' => 'oat\\tao\\elasticsearch\\Watcher\\Resources\\GenericIndexDocumentBuilder',
-        'http://www.tao.lu/Ontologies/TAOGroup.rdf#Group' => 'oat\\tao\\elasticsearch\\Watcher\\Resources\\GenericIndexDocumentBuilder',
-        'http://www.tao.lu/Ontologies/TAODelivery.rdf#Delivery' => 'oat\\tao\\elasticsearch\\Watcher\\Resources\\GenericIndexDocumentBuilder',
+    public const AVAILABLE_DOCUMENT_BUILDERS = [
+        TaoOntology::CLASS_URI_ITEM => 'oat\\tao\\elasticsearch\\Watcher\\Resources\\ItemIndexDocumentBuilder',
+        TaoOntology::CLASS_URI_TEST => 'oat\\tao\\elasticsearch\\Watcher\\Resources\\GenericIndexDocumentBuilder',
+        TaoOntology::CLASS_URI_GROUP => 'oat\\tao\\elasticsearch\\Watcher\\Resources\\GenericIndexDocumentBuilder',
+        TaoOntology::CLASS_URI_DELIVERY => 'oat\\tao\\elasticsearch\\Watcher\\Resources\\GenericIndexDocumentBuilder',
+        TaoOntology::CLASS_URI_SUBJECT => 'oat\\tao\\elasticsearch\\Watcher\\Resources\\TesttakerIndexDocumentBuilder',
         'http://www.tao.lu/Ontologies/TAOResult.rdf#DeliveryResult' => 'oat\\tao\\elasticsearch\\Watcher\\Resources\\GenericIndexDocumentBuilder',
-        'http://www.tao.lu/Ontologies/TAOSubject.rdf#Subject' => 'oat\\tao\\elasticsearch\\Watcher\\Resources\\TesttakerIndexDocumentBuilder',
         'unclassified' => 'oat\\tao\\elasticsearch\\Watcher\\Resources\\UnclassifiedIndexDocumentBuilder'
     ];
 
@@ -51,5 +52,4 @@ class IndexDocumentBuilderFactory extends AbstractDocumentBuilderFactory
 
         return new $indexer();
     }
-
 }

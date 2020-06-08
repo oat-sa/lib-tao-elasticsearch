@@ -29,7 +29,7 @@ class ItemIndexDocumentBuilder extends AbstractIndexDocumentBuilder
     /**
      * {@inheritdoc}
      */
-    public function createDocumentFromResource(\core_kernel_classes_Resource $resource): ?IndexDocument
+    public function createDocumentFromResource(\core_kernel_classes_Resource $resource): IndexDocument
     {
         $classProperty = $resource->getOnePropertyValue($this->getProperty(self::TYPE_PROPERTY));
         $classResource = $this->getProperty($classProperty);
@@ -53,7 +53,14 @@ class ItemIndexDocumentBuilder extends AbstractIndexDocumentBuilder
 
         return $document;
     }
-
+    
+    /**
+     * Get items' content in XML form
+     * @param \core_kernel_classes_Resource $itemResource
+     * @return string
+     * @throws \common_Exception
+     * @throws \core_kernel_persistence_Exception
+     */
     private function getItemContentXML(\core_kernel_classes_Resource $itemResource): string
     {
         $itemContent = "";

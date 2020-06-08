@@ -32,7 +32,7 @@ abstract class AbstractIndexDocumentBuilder implements IndexDocumentBuilderInter
     /**
      * {@inheritdoc}
      */
-    public function createDocumentFromArray(array $resource): ?IndexDocument
+    public function createDocumentFromArray(array $resource): IndexDocument
     {
         if (!isset($resource['id'])) {
             throw new \common_exception_MissingParameter('id');
@@ -57,5 +57,4 @@ abstract class AbstractIndexDocumentBuilder implements IndexDocumentBuilderInter
 
         return $document;
     }
-
 }
