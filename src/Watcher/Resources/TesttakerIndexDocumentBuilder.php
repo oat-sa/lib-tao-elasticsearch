@@ -23,7 +23,7 @@ namespace oat\tao\elasticsearch\Watcher\Resources;
 
 use oat\generis\model\GenerisRdf;
 use oat\tao\model\search\index\IndexDocument;
-use oat\tao\model\search\index\AbstractIndexDocumentBuilder;
+use oat\tao\model\search\index\DocumentBuilder\AbstractIndexDocumentBuilder;
 
 class TesttakerIndexDocumentBuilder extends AbstractIndexDocumentBuilder
 {

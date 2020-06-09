@@ -23,7 +23,7 @@ namespace oat\tao\elasticsearch\Watcher\Resources;
 
 use oat\tao\model\search\index\IndexDocument;
 use oat\taoQtiItem\model\qti\Service;
-use oat\tao\model\search\index\AbstractIndexDocumentBuilder;
+use oat\tao\model\search\index\DocumentBuilder\AbstractIndexDocumentBuilder;
 
 class ItemIndexDocumentBuilder extends AbstractIndexDocumentBuilder
 {
@@ -32,10 +32,15 @@ class ItemIndexDocumentBuilder extends AbstractIndexDocumentBuilder
      */
     public function createDocumentFromResource(\core_kernel_classes_Resource $resource): IndexDocument
     {
-        $classProperty = $resource->getOnePropertyValue($this->getProperty(self::TYPE_PROPERTY));
-        $classResource = $this->getProperty($classProperty);
-
-        $resourceModel = $resource->getOnePropertyValue($this->getProperty('http://www.tao.lu/Ontologies/TAOItem.rdf#ItemModel'));
+        $properties = [
+            $this->getProperty(self::TYPE_PROPERTY),
+            $this->getProperty('http://www.tao.lu/Ontologies/TAOItem.rdf#ItemModel')
+        ];
+        
+        $propertiesValues = $resource->getPropertiesValues($properties);
+        
+        $classResource = current($propertiesValues[self::TYPE_PROPERTY]);
+        $resourceModel = current($propertiesValues['http://www.tao.lu/Ontologies/TAOItem.rdf#ItemModel']);
 
         $body = [
             'class' => $classResource->getLabel(),
