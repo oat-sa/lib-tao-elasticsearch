@@ -24,6 +24,8 @@ namespace oat\tao\elasticsearch\Action;
 use Elasticsearch\Common\Exceptions\BadRequest400Exception;
 use oat\tao\elasticsearch\ElasticSearch;
 use common_report_Report as Report;
+use oat\tao\elasticsearch\IndexUpdater;
+use oat\tao\model\search\index\IndexUpdaterInterface;
 use oat\tao\model\search\SyntaxException;
 use oat\oatbox\extension\InstallAction;
 use oat\tao\model\search\Search;
@@ -124,8 +126,11 @@ class InitElasticSearch extends InstallAction
 
         try {
             $search = new ElasticSearch($config);
+
             $search->createIndexes();
             $this->getServiceManager()->register(Search::SERVICE_ID, $search);
+            $this->getServiceManager()->register(IndexUpdaterInterface::SERVICE_ID, new IndexUpdater($config['hosts']));
+
             return new Report(Report::TYPE_SUCCESS, __('Switched to ElasticSearch'));
         } catch (BadRequest400Exception $e) {
             return new Report(Report::TYPE_ERROR, 'Unable to crate index: ' . $e->getMessage());

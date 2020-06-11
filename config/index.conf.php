@@ -19,7 +19,7 @@
 
 declare(strict_types=1);
 
-$dynamicTemplates = [
+$dynamicTemplates = [   
     [
         "HTMLArea" => [
             "match" => "HTMLArea_*",
@@ -81,9 +81,6 @@ return [
         'index' => 'items',
         'body' => [
             'mappings' => [
-                '_source' => [
-                    'enabled' => false
-                ],
                 'properties' => [
                     'class' => [
                         'type' => 'text',
@@ -92,8 +89,7 @@ return [
                         'type' => 'text',
                     ],
                     'label' => [
-                        'type' => 'text',
-                        'store' => true,
+                        'type' => 'text'
                     ],
                     'model' => [
                         'type' => 'keyword',
@@ -138,8 +134,7 @@ return [
                         'type' => 'text',
                     ],
                     'label' => [
-                        'type' => 'text',
-                        'store' => true,
+                        'type' => 'text'
                     ],
                     'type' => [
                         'type' => 'keyword',
@@ -180,8 +175,7 @@ return [
                         'type' => 'text',
                     ],
                     'label' => [
-                        'type' => 'text',
-                        'store' => true,
+                        'type' => 'text'
                     ],
                     'type' => [
                         'type' => 'keyword',
@@ -222,8 +216,7 @@ return [
                         'type' => 'text',
                     ],
                     'label' => [
-                        'type' => 'text',
-                        'store' => true,
+                        'type' => 'text'
                     ],
                     'type' => [
                         'type' => 'keyword',
@@ -264,8 +257,7 @@ return [
                         'type' => 'text',
                     ],
                     'label' => [
-                        'type' => 'text',
-                        'store' => true,
+                        'type' => 'text'
                     ],
                     'login' => [
                         'type' => 'keyword',
