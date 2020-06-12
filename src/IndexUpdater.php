@@ -30,6 +30,7 @@ use oat\generis\model\WidgetRdf;
 use oat\oatbox\service\ConfigurableService;
 use oat\tao\model\search\index\IndexUpdaterInterface;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
 {
@@ -47,7 +48,11 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
         return $this->client;
     }
 
-    public function updateProperties(array $properties): void {
+    /**
+     * @inheritDoc
+     */
+    public function updateProperties(array $properties): void
+    {
         $queryNewProperty = [];
         $queryRemoveOldProperty = [];
         foreach ($properties as $propertyData) {
@@ -81,28 +86,40 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
 
         $result = implode(' ', array_merge($queryNewProperty, $queryRemoveOldProperty));
 
-        $this->getClient()->updateByQuery(
-            [
-                'index' => $index,
-                'type'  => '_doc',
-                'conflicts' => 'proceed',
-                'wait_for_completion' => true,
-                'body' => [
-                    'query' => [
-                        'match' => [
-                            'type' => $type
+        try {
+            $this->getClient()->updateByQuery(
+                [
+                    'index' => $index,
+                    'type' => '_doc',
+                    'conflicts' => 'proceed',
+                    'wait_for_completion' => true,
+                    'body' => [
+                        'query' => [
+                            'match' => [
+                                'type' => $type
+                            ]
+                        ],
+                        'script' => [
+                            'source' => $result
                         ]
-                    ],
-                    'script' => [
-                        'source' => $result
                     ]
                 ]
-            ]
-        );
+            );
+        } catch (Throwable $e) {
+            throw new FailToUpdatePropertiesException(
+                sprintf(
+                    'Error During Update the Properties by script: %s AND type: %s. Please, check previous exception for more details.',
+                    $result,
+                    $type
+                ),
+                $e->getCode(),
+                $e
+            );
+        }
     }
 
-    private function findIndex(array $parentClasses, string $type): string {
-
+    private function findIndex(array $parentClasses, string $type): string
+    {
         if (isset(IndexerInterface::AVAILABLE_INDEXES[$type])) {
             return IndexerInterface::AVAILABLE_INDEXES[$type];
         }
