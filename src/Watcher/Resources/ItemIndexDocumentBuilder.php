@@ -30,7 +30,7 @@ class ItemIndexDocumentBuilder extends AbstractIndexDocumentBuilder
     /**
      * {@inheritdoc}
      */
-    public function createDocumentFromResource(\core_kernel_classes_Resource $resource): IndexDocument
+    public function createDocumentFromResource(\core_kernel_classes_Resource $resource, string $rootResourceType = ""): IndexDocument
     {
         $properties = [
             $this->getProperty(self::TYPE_PROPERTY),
@@ -48,9 +48,13 @@ class ItemIndexDocumentBuilder extends AbstractIndexDocumentBuilder
             'label' => $resource->getLabel(),
             'model' => $resourceModel
         ];
-
-        $resourceType = current(array_keys($resource->getTypes()));
-        $body['type'] = $resourceType;
+    
+        if ($rootResourceType) {
+            $body['type'] = $rootResourceType;
+        } else {
+            $resourceType = current(array_keys($resource->getTypes()));
+            $body['type'] = $resourceType;
+        }
     
         return new IndexDocument(
             $resource->getUri(),

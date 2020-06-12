@@ -30,7 +30,7 @@ class TesttakerIndexDocumentBuilder extends AbstractIndexDocumentBuilder
     /**
      * {@inheritdoc}
      */
-    public function createDocumentFromResource(\core_kernel_classes_Resource $resource): IndexDocument
+    public function createDocumentFromResource(\core_kernel_classes_Resource $resource, string $rootResourceType = ""): IndexDocument
     {
         $classProperty = $resource->getOnePropertyValue($this->getProperty(self::TYPE_PROPERTY));
         $classResource = $this->getProperty($classProperty);
@@ -44,8 +44,12 @@ class TesttakerIndexDocumentBuilder extends AbstractIndexDocumentBuilder
             'login' => $login
         ];
 
-        $resourceType = current(array_keys($resource->getTypes()));
-        $body['type'] = $resourceType;
+        if ($rootResourceType) {
+            $body['type'] = $rootResourceType;
+        } else {
+            $resourceType = current(array_keys($resource->getTypes()));
+            $body['type'] = $resourceType;
+        }
     
         return new IndexDocument(
             $resource->getUri(),

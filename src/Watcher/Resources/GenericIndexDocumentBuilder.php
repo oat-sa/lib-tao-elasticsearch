@@ -29,7 +29,7 @@ class GenericIndexDocumentBuilder extends AbstractIndexDocumentBuilder
     /**
      * {@inheritdoc}
      */
-    public function createDocumentFromResource(\core_kernel_classes_Resource $resource): IndexDocument
+    public function createDocumentFromResource(\core_kernel_classes_Resource $resource, string $rootResourceType = ""): IndexDocument
     {
         $classProperty = $resource->getOnePropertyValue($this->getProperty(self::TYPE_PROPERTY));
         $classResource = $this->getProperty($classProperty);
@@ -38,9 +38,13 @@ class GenericIndexDocumentBuilder extends AbstractIndexDocumentBuilder
             'class' => $classResource->getLabel(),
             'label' => $resource->getLabel(),
         ];
-
-        $resourceType = current(array_keys($resource->getTypes()));
-        $body['type'] = $resourceType;
+    
+        if ($rootResourceType) {
+            $body['type'] = $rootResourceType;
+        } else {
+            $resourceType = current(array_keys($resource->getTypes()));
+            $body['type'] = $resourceType;
+        }
     
         return new IndexDocument(
             $resource->getUri(),
