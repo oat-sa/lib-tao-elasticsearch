@@ -24,8 +24,19 @@ declare(strict_types=1);
 namespace oat\tao\elasticsearch;
 
 use Exception;
+use Throwable;
 
 class FailToUpdatePropertiesException extends Exception
 {
-
+    public function __construct(string $message = '', int $code = 0, Throwable $previous = null)
+    {
+        parent::__construct(
+            sprintf(
+                'Error During Update the Properties %s. Please, check previous exception for more details.',
+                $message
+            ),
+            $code,
+            $previous
+        );
+    }
 }

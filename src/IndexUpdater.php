@@ -108,7 +108,7 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
         } catch (Throwable $e) {
             throw new FailToUpdatePropertiesException(
                 sprintf(
-                    'Error During Update the Properties by script: %s AND type: %s. Please, check previous exception for more details.',
+                    'by script: %s AND type: %s',
                     $result,
                     $type
                 ),
