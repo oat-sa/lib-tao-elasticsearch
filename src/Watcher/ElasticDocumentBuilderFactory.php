@@ -42,9 +42,7 @@ class ElasticDocumentBuilderFactory implements DocumentBuilderFactoryInterface
     ];
 
     /**
-     * Get the IndexDocument builder based on resource type property
-     * @param string $resourceType
-     * @return IndexDocumentBuilderInterface
+     * {@inheritdoc}
      */
     public function getDocumentBuilderByResourceType(string $resourceType = ""): IndexDocumentBuilderInterface
     {
