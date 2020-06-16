@@ -25,7 +25,7 @@ use Elasticsearch\Common\Exceptions\BadRequest400Exception;
 use oat\tao\elasticsearch\ElasticSearch;
 use common_report_Report as Report;
 use oat\tao\elasticsearch\IndexUpdater;
-use oat\tao\model\search\index\IndexUpdater as IndexUpdaterInterface;
+use oat\tao\model\search\index\IndexUpdaterInterface;
 use oat\tao\model\search\SyntaxException;
 use oat\oatbox\extension\InstallAction;
 use oat\tao\model\search\Search;

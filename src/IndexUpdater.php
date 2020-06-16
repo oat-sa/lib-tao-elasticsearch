@@ -28,7 +28,7 @@ use Elasticsearch\Client;
 use Elasticsearch\ClientBuilder;
 use oat\generis\model\WidgetRdf;
 use oat\oatbox\service\ConfigurableService;
-use oat\tao\model\search\index\IndexUpdater as IndexUpdaterInterface;
+use oat\tao\model\search\index\IndexUpdaterInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
