@@ -122,7 +122,52 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
 
     public function deleteProperty(core_kernel_classes_Class $class, core_kernel_classes_Property $property): void
     {
-        $debug = true;
+        $type = $class->getUri();
+        $parentClasses = array_map(function($currentClass) {
+            return $currentClass->getUri();
+        }, $class->getParentClasses(true));
+
+        $index = $this->findIndex($parentClasses, $type);
+
+        $propertyType = $property->getOnePropertyValue(new core_kernel_classes_Property(WidgetRdf::PROPERTY_WIDGET));
+        $propertyType = parse_url($propertyType->getUri());
+
+        $script = sprintf(
+            'ctx._source.remove(\'%s_%s\');',
+            $propertyType['fragment'],
+            $property->getLabel()
+        );
+
+        try {
+            $this->getClient()->updateByQuery(
+                [
+                    'index' => $index,
+                    'type' => '_doc',
+                    'conflicts' => 'proceed',
+                    'wait_for_completion' => true,
+                    'body' => [
+                        'query' => [
+                            'match' => [
+                                'type' => $type
+                            ]
+                        ],
+                        'script' => [
+                            'source' => $script
+                        ]
+                    ]
+                ]
+            );
+        } catch (Throwable $e) {
+            throw new FailToUpdatePropertiesException(
+                sprintf(
+                    'by script: %s AND type: %s',
+                    $result,
+                    $type
+                ),
+                $e->getCode(),
+                $e
+            );
+        }
     }
 
 
