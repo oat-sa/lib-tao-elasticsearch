@@ -24,6 +24,8 @@ declare(strict_types=1);
 
 namespace oat\tao\elasticsearch;
 
+use core_kernel_classes_Class;
+use core_kernel_classes_Property;
 use Elasticsearch\Client;
 use Elasticsearch\ClientBuilder;
 use oat\generis\model\WidgetRdf;
@@ -118,7 +120,7 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
         }
     }
 
-    public function deleteProperty(string $propertyName, array $resources): void
+    public function deleteProperty(core_kernel_classes_Class $class, core_kernel_classes_Property $property): void
     {
         $debug = true;
     }
