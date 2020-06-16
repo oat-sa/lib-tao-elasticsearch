@@ -118,6 +118,12 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
         }
     }
 
+    public function deleteProperty(string $propertyName, array $resources): void
+    {
+        $debug = true;
+    }
+
+
     private function findIndex(array $parentClasses, string $type): string
     {
         if (isset(IndexerInterface::AVAILABLE_INDEXES[$type])) {
