@@ -106,10 +106,18 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
     public function deleteProperty(array $property): void
     {
         $name = $property['name'];
-        $parentClasses = $property['parentClasses'];
         $type = $property['type'];
+        $parentClasses = $property['parentClasses'];
+
+        if (empty($name) || empty($type)) {
+            return;
+        }
 
         $index = $this->findIndex($parentClasses, $type);
+
+        if ($index === IndexerInterface::UNCLASSIFIEDS_DOCUMENTS_INDEX) {
+            return;
+        }
 
         $script = sprintf(
             'ctx._source.remove(\'%s\');',
