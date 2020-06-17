@@ -24,8 +24,6 @@ declare(strict_types=1);
 
 namespace oat\tao\elasticsearch;
 
-use core_kernel_classes_Class;
-use core_kernel_classes_Property;
 use Elasticsearch\Client;
 use Elasticsearch\ClientBuilder;
 use oat\generis\model\WidgetRdf;
@@ -120,22 +118,17 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
         }
     }
 
-    public function deleteProperty(core_kernel_classes_Class $class, core_kernel_classes_Property $property): void
+    public function deleteProperty(array $property): void
     {
-        $type = $class->getUri();
-        $parentClasses = array_map(function($currentClass) {
-            return $currentClass->getUri();
-        }, $class->getParentClasses(true));
+        $name = $property['name'];
+        $parentClasses = $property['parentClasses'];
+        $type = $property['type'];
 
         $index = $this->findIndex($parentClasses, $type);
 
-        $propertyType = $property->getOnePropertyValue(new core_kernel_classes_Property(WidgetRdf::PROPERTY_WIDGET));
-        $propertyType = parse_url($propertyType->getUri());
-
         $script = sprintf(
-            'ctx._source.remove(\'%s_%s\');',
-            $propertyType['fragment'],
-            $property->getLabel()
+            'ctx._source.remove(\'%s\');',
+            $name
         );
 
         try {
