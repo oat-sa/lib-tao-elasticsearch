@@ -28,6 +28,8 @@ use Elasticsearch\Client;
 use Elasticsearch\ClientBuilder;
 use oat\generis\model\WidgetRdf;
 use oat\oatbox\service\ConfigurableService;
+use oat\tao\elasticsearch\Exception\FailToRemovePropertyException;
+use oat\tao\elasticsearch\Exception\FailToUpdatePropertiesException;
 use oat\tao\model\search\index\IndexUpdaterInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -87,24 +89,7 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
         $result = implode(' ', array_merge($queryNewProperty, $queryRemoveOldProperty));
 
         try {
-            $this->getClient()->updateByQuery(
-                [
-                    'index' => $index,
-                    'type' => '_doc',
-                    'conflicts' => 'proceed',
-                    'wait_for_completion' => true,
-                    'body' => [
-                        'query' => [
-                            'match' => [
-                                'type' => $type
-                            ]
-                        ],
-                        'script' => [
-                            'source' => $result
-                        ]
-                    ]
-                ]
-            );
+            $this->executeUpdateQuery($index, $type, $result);
         } catch (Throwable $e) {
             throw new FailToUpdatePropertiesException(
                 sprintf(
@@ -132,26 +117,9 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
         );
 
         try {
-            $this->getClient()->updateByQuery(
-                [
-                    'index' => $index,
-                    'type' => '_doc',
-                    'conflicts' => 'proceed',
-                    'wait_for_completion' => true,
-                    'body' => [
-                        'query' => [
-                            'match' => [
-                                'type' => $type
-                            ]
-                        ],
-                        'script' => [
-                            'source' => $script
-                        ]
-                    ]
-                ]
-            );
+            $this->executeUpdateQuery($index, $type, $script);
         } catch (Throwable $e) {
-            throw new FailToUpdatePropertiesException(
+            throw new FailToRemovePropertyException(
                 sprintf(
                     'by script: %s AND type: %s',
                     $result,
@@ -162,7 +130,6 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
             );
         }
     }
-
 
     private function findIndex(array $parentClasses, string $type): string
     {
@@ -177,5 +144,27 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
         }
 
         return IndexerInterface::UNCLASSIFIEDS_DOCUMENTS_INDEX;
+    }
+
+    private function executeUpdateQuery(string $index, string $type, string $script): void
+    {
+        $this->getClient()->updateByQuery(
+            [
+                'index' => $index,
+                'type' => '_doc',
+                'conflicts' => 'proceed',
+                'wait_for_completion' => true,
+                'body' => [
+                    'query' => [
+                        'match' => [
+                            'type' => $type
+                        ]
+                    ],
+                    'script' => [
+                        'source' => $script
+                    ]
+                ]
+            ]
+        );
     }
 }
