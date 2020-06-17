@@ -86,15 +86,15 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
             return;
         }
 
-        $result = implode(' ', array_merge($queryNewProperty, $queryRemoveOldProperty));
+        $script = implode(' ', array_merge($queryNewProperty, $queryRemoveOldProperty));
 
         try {
-            $this->executeUpdateQuery($index, $type, $result);
+            $this->executeUpdateQuery($index, $type, $script);
         } catch (Throwable $e) {
             throw new FailToUpdatePropertiesException(
                 sprintf(
                     'by script: %s AND type: %s',
-                    $result,
+                    $script,
                     $type
                 ),
                 $e->getCode(),
@@ -122,7 +122,7 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
             throw new FailToRemovePropertyException(
                 sprintf(
                     'by script: %s AND type: %s',
-                    $result,
+                    $script,
                     $type
                 ),
                 $e->getCode(),
