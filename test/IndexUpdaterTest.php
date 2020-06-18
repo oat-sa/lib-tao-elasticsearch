@@ -148,7 +148,8 @@ class IndexUpdaterTest extends TestCase
         $this->sut->deleteProperty($property);
     }
 
-    public function testExceptionWhenRemovingProperty(): void {
+    public function testExceptionWhenRemovingProperty(): void
+    {
         $this->expectException(FailToRemovePropertyException::class);
 
         $this->client->expects($this->once())
