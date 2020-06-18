@@ -126,9 +126,6 @@ return [
         'index' => 'tests',
         'body' => [
             'mappings' => [
-                '_source' => [
-                    'enabled' => false
-                ],
                 'properties' => [
                     'class' => [
                         'type' => 'text',
@@ -167,9 +164,6 @@ return [
         'index' => 'groups',
         'body' => [
             'mappings' => [
-                '_source' => [
-                    'enabled' => false
-                ],
                 'properties' => [
                     'class' => [
                         'type' => 'text',
@@ -208,9 +202,6 @@ return [
         'index' => 'deliveries',
         'body' => [
             'mappings' => [
-                '_source' => [
-                    'enabled' => false
-                ],
                 'properties' => [
                     'class' => [
                         'type' => 'text',
@@ -249,9 +240,6 @@ return [
         'index' => 'test-takers',
         'body' => [
             'mappings' => [
-                '_source' => [
-                    'enabled' => false
-                ],
                 'properties' => [
                     'class' => [
                         'type' => 'text',
