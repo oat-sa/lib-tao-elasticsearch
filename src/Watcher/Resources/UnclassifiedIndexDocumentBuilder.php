@@ -49,7 +49,9 @@ class UnclassifiedIndexDocumentBuilder extends AbstractIndexDocumentBuilder
     
         return new IndexDocument(
             $resource->getUri(),
-            $body
+            $body,
+            [],
+            $this->getDynamicProperties($body['type'], $resource)
         );
     }
 }
