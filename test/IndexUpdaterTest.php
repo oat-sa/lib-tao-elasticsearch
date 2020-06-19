@@ -25,8 +25,9 @@ namespace oat\tao\test\elasticsearch;
 
 use Elasticsearch\Client;
 use Elasticsearch\Common\Exceptions\BadMethodCallException;
-use oat\tao\elasticsearch\FailToUpdatePropertiesException;
 use oat\generis\test\TestCase;
+use oat\tao\elasticsearch\Exception\FailToUpdatePropertiesException;
+use oat\tao\elasticsearch\Exception\FailToRemovePropertyException;
 use oat\tao\elasticsearch\IndexUpdater;
 use oat\tao\model\TaoOntology;
 use ReflectionObject;
@@ -58,9 +59,9 @@ class IndexUpdaterTest extends TestCase
     }
 
     /**
-     * @dataProvider provideValidProperties
+     * @dataProvider provideValidPropertiesForUpdate
      */
-    public function testUpdatePropertiesSuccessfull(array $properties, string $source): void
+    public function testUpdatePropertiesSuccessfully(array $properties, string $source): void
     {
         $this->client->expects($this->once())
             ->method('updateByQuery')
@@ -87,7 +88,7 @@ class IndexUpdaterTest extends TestCase
         );
     }
 
-    public function testClientException(): void {
+    public function testExceptionWhenUpdatingProperties(): void {
         $this->expectException(FailToUpdatePropertiesException::class);
 
         $this->client->expects($this->once())
@@ -107,7 +108,7 @@ class IndexUpdaterTest extends TestCase
     }
 
     /**
-     * @dataProvider provideInvalidProperties
+     * @dataProvider provideInvalidPropertiesForUpdate
      */
     public function testDoNotUpdateProperties(array $properties): void
     {
@@ -119,7 +120,63 @@ class IndexUpdaterTest extends TestCase
         );
     }
 
-    public function provideValidProperties(): array
+    /**
+     * @dataProvider provideValidPropertiesForRemoval
+     */
+    public function testRemovePropertySuccessfully(array $property, string $source): void
+    {
+        $this->client->expects($this->once())
+            ->method('updateByQuery')
+            ->with(
+                [
+                    'index' => 'items',
+                    'type' => '_doc',
+                    'conflicts' => 'proceed',
+                    'wait_for_completion' => true,
+                    'body' => [
+                        'query' => [
+                            'match' => [
+                                'type' => TaoOntology::CLASS_URI_ITEM
+                            ]
+                        ],
+                        'script' => [
+                            'source' => $source
+                        ]
+                    ]
+                ]
+            );
+        $this->sut->deleteProperty($property);
+    }
+
+    public function testExceptionWhenRemovingProperty(): void
+    {
+        $this->expectException(FailToRemovePropertyException::class);
+
+        $this->client->expects($this->once())
+            ->method('updateByQuery')
+            ->willThrowException(new BadMethodCallException());
+
+        $this->sut->deleteProperty(
+            [
+                'name' => 'test',
+                'parentClasses' => ['someClass'],
+                'type' => TaoOntology::CLASS_URI_ITEM
+            ]
+        );
+    }
+
+    /**
+     * @dataProvider provideInvalidPropertiesForRemoval
+     */
+    public function testDoNotRemoveProperty(array $property): void
+    {
+        $this->client->expects($this->never())
+            ->method('updateByQuery');
+
+        $this->sut->deleteProperty($property);
+    }
+
+    public function provideValidPropertiesForUpdate(): array
     {
         return [
             'Single' => [
@@ -155,7 +212,7 @@ class IndexUpdaterTest extends TestCase
         ];
     }
 
-    public function provideInvalidProperties(): array
+    public function provideInvalidPropertiesForUpdate(): array
     {
         return [
             'With No OldName' => [
@@ -209,6 +266,55 @@ class IndexUpdaterTest extends TestCase
                         ]
                     ]
             ],
+        ];
+    }
+
+    public function provideValidPropertiesForRemoval(): array
+    {
+        return [
+            [
+                'property' => [
+                    'name' => 'prop1',
+                    'parentClasses' => [],
+                    'type' => TaoOntology::CLASS_URI_ITEM
+                ],
+                'source' => 'ctx._source.remove(\'prop1\');'
+            ],
+            [
+                'property' => [
+                    'name' => 'prop2',
+                    'parentClasses' => [],
+                    'type' => TaoOntology::CLASS_URI_ITEM
+                ],
+                'source' => 'ctx._source.remove(\'prop2\');'
+            ],
+        ];
+    }
+
+    public function provideInvalidPropertiesForRemoval(): array
+    {
+        return [
+            'with no name' => [
+                'property' => [
+                    'name' => '',
+                    'parentClasses' => [],
+                    'type' => TaoOntology::CLASS_URI_ITEM
+                ]
+            ],
+            'with no type' => [
+                'property' => [
+                    'name' => 'prop',
+                    'parentClasses' => [],
+                    'type' => ''
+                ]
+            ],
+            'with invalid type' => [
+                'property' => [
+                    'name' => 'prop',
+                    'parentClasses' => [],
+                    'type' => 'invalid'
+                ]
+            ]
         ];
     }
 }

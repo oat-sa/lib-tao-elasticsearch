@@ -21,12 +21,12 @@
 
 declare(strict_types=1);
 
-namespace oat\tao\elasticsearch;
+namespace oat\tao\elasticsearch\Exception;
 
 use Exception;
 use Throwable;
 
-class FailToUpdatePropertiesException extends Exception
+class FailToRemovePropertyException extends Exception
 {
     public function __construct(string $message = '', int $code = 0, Throwable $previous = null)
     {
