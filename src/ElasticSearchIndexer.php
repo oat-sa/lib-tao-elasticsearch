@@ -87,6 +87,8 @@ class ElasticSearchIndexer implements IndexerInterface
 
             // First step we trying to create document. If is exist, then skip this step
             $indexName = $this->getIndexNameByDocument($document);
+            
+            $this->logger->info('indexname:' . $indexName);
 
             if ($indexName === self::UNCLASSIFIEDS_DOCUMENTS_INDEX) {
                 $this->logger->info(sprintf('There is no proper index for the document "%s"', $document->getId()));
