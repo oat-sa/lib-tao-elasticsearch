@@ -37,7 +37,7 @@ class UnclassifiedIndexDocumentBuilder extends AbstractIndexDocumentBuilder
         $body = [
             'class' => $classResource->getLabel(),
             'label' => $resource->getLabel(),
-            'comment' => $resource->getComment()
+            'comment' => (string)$resource->getComment()
         ];
     
         if ($rootResourceType) {

@@ -41,7 +41,7 @@ class TesttakerIndexDocumentBuilder extends AbstractIndexDocumentBuilder
         $body = [
             'class' => $classResource->getLabel(),
             'label' => $resource->getLabel(),
-            'login' => $login
+            'login' => (string)$login
         ];
 
         if ($rootResourceType) {

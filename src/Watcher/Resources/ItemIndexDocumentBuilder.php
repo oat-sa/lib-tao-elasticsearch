@@ -44,9 +44,9 @@ class ItemIndexDocumentBuilder extends AbstractIndexDocumentBuilder
 
         $body = [
             'class' => $classResource->getLabel(),
-            'content' => $this->getItemContentXML($resource),
+            'content' => (string)$this->getItemContentXML($resource),
             'label' => $resource->getLabel(),
-            'model' => $resourceModel
+            'model' => (string)$resourceModel
         ];
     
         if ($rootResourceType) {

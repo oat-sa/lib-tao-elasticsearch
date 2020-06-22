@@ -109,6 +109,9 @@ class ElasticSearchIndexer implements IndexerInterface
 
             if ($blockSize === self::INDEXING_BLOCK_SIZE) {
                 $this->client->bulk($params);
+    
+                $this->logger->debug('client response: '. json_encode($clientResponse));
+                
                 $count += $blockSize;
                 $blockSize = 0;
                 $params = [];
@@ -116,7 +119,10 @@ class ElasticSearchIndexer implements IndexerInterface
         }
 
         if ($blockSize > 0) {
-            $this->client->bulk($params);
+            $clientResponse = $this->client->bulk($params);
+            
+            $this->logger->debug('client response: '. json_encode($clientResponse));
+            
             $count += $blockSize;
         }
 
