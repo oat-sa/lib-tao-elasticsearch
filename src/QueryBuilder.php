@@ -50,7 +50,7 @@ class QueryBuilder
     public function getSearchParams(string $queryString, string $type, int $start, int $count, string $order, string $dir): array
     {
         $qs = htmlspecialchars_decode($queryString);
-        $blocks = $output = preg_split( '/(AND)/i', $qs);
+        $blocks = $output = preg_split( '/( AND )/', $qs);
         $query = [];
 
         foreach ($blocks as $block) {

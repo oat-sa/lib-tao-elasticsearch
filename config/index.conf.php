@@ -81,9 +81,6 @@ return [
         'index' => 'items',
         'body' => [
             'mappings' => [
-                '_source' => [
-                    'enabled' => false
-                ],
                 'properties' => [
                     'class' => [
                         'type' => 'text',
@@ -92,8 +89,7 @@ return [
                         'type' => 'text',
                     ],
                     'label' => [
-                        'type' => 'text',
-                        'store' => true,
+                        'type' => 'text'
                     ],
                     'model' => [
                         'type' => 'keyword',
@@ -130,16 +126,12 @@ return [
         'index' => 'tests',
         'body' => [
             'mappings' => [
-                '_source' => [
-                    'enabled' => false
-                ],
                 'properties' => [
                     'class' => [
                         'type' => 'text',
                     ],
                     'label' => [
-                        'type' => 'text',
-                        'store' => true,
+                        'type' => 'text'
                     ],
                     'type' => [
                         'type' => 'keyword',
@@ -172,16 +164,12 @@ return [
         'index' => 'groups',
         'body' => [
             'mappings' => [
-                '_source' => [
-                    'enabled' => false
-                ],
                 'properties' => [
                     'class' => [
                         'type' => 'text',
                     ],
                     'label' => [
-                        'type' => 'text',
-                        'store' => true,
+                        'type' => 'text'
                     ],
                     'type' => [
                         'type' => 'keyword',
@@ -214,16 +202,12 @@ return [
         'index' => 'deliveries',
         'body' => [
             'mappings' => [
-                '_source' => [
-                    'enabled' => false
-                ],
                 'properties' => [
                     'class' => [
                         'type' => 'text',
                     ],
                     'label' => [
-                        'type' => 'text',
-                        'store' => true,
+                        'type' => 'text'
                     ],
                     'type' => [
                         'type' => 'keyword',
@@ -256,16 +240,12 @@ return [
         'index' => 'test-takers',
         'body' => [
             'mappings' => [
-                '_source' => [
-                    'enabled' => false
-                ],
                 'properties' => [
                     'class' => [
                         'type' => 'text',
                     ],
                     'label' => [
-                        'type' => 'text',
-                        'store' => true,
+                        'type' => 'text'
                     ],
                     'login' => [
                         'type' => 'keyword',
