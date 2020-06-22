@@ -43,15 +43,16 @@ class UnclassifiedIndexDocumentBuilder extends AbstractIndexDocumentBuilder
         if ($rootResourceType) {
             $body['type'] = $rootResourceType;
         } else {
-            $resourceType = current(array_keys($resource->getTypes()));
-            $body['type'] = $resourceType;
+            $body['type'] = $resource->getTypes();
         }
+    
+        $dynamicProperties = $this->getDynamicProperties($resource->getTypes(), $resource);
     
         return new IndexDocument(
             $resource->getUri(),
             $body,
             [],
-            $this->getDynamicProperties($body['type'], $resource)
+            $dynamicProperties
         );
     }
 }
