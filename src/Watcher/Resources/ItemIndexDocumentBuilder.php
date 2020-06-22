@@ -85,7 +85,11 @@ class ItemIndexDocumentBuilder extends AbstractIndexDocumentBuilder
         if ($itemResource->getOnePropertyValue($contentProperty) != "") {
             $itemService = Service::singleton();
 
-            $itemContent = $itemService->getXmlByRdfItem($itemResource);
+            try {
+                $itemContent = $itemService->getXmlByRdfItem($itemResource);
+            } catch (\Throwable $e) {
+                $itemContent = "";
+            }
         }
 
         return $itemContent;
