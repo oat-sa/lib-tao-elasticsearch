@@ -37,7 +37,7 @@ class UnclassifiedIndexDocumentBuilder extends AbstractIndexDocumentBuilder
         $body = [
             'class' => $classResource->getLabel(),
             'label' => $resource->getLabel(),
-            'comment' => $resource->getComment()
+            'comment' => (string)$resource->getComment()
         ];
     
         if ($rootResourceType) {
@@ -47,6 +47,10 @@ class UnclassifiedIndexDocumentBuilder extends AbstractIndexDocumentBuilder
         }
     
         $dynamicProperties = $this->getDynamicProperties($resource->getTypes(), $resource);
+    
+        if (!is_array($body['type'])) {
+            $body['type'] = [$body['type']];
+        }
     
         return new IndexDocument(
             $resource->getUri(),

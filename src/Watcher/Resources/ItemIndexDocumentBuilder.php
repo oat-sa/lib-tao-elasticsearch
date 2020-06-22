@@ -44,9 +44,9 @@ class ItemIndexDocumentBuilder extends AbstractIndexDocumentBuilder
 
         $body = [
             'class' => $classResource->getLabel(),
-            'content' => $this->getItemContentXML($resource),
+            'content' => (string)$this->getItemContentXML($resource),
             'label' => $resource->getLabel(),
-            'model' => $resourceModel
+            'model' => (string)$resourceModel
         ];
     
         if ($rootResourceType) {
@@ -56,6 +56,10 @@ class ItemIndexDocumentBuilder extends AbstractIndexDocumentBuilder
         }
         
         $dynamicProperties = $this->getDynamicProperties($resource->getTypes(), $resource);
+    
+        if (!is_array($body['type'])) {
+            $body['type'] = [$body['type']];
+        }
     
         return new IndexDocument(
             $resource->getUri(),

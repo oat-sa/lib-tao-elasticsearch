@@ -41,7 +41,7 @@ class TesttakerIndexDocumentBuilder extends AbstractIndexDocumentBuilder
         $body = [
             'class' => $classResource->getLabel(),
             'label' => $resource->getLabel(),
-            'login' => $login
+            'login' => (string)$login
         ];
 
         if ($rootResourceType) {
@@ -51,6 +51,10 @@ class TesttakerIndexDocumentBuilder extends AbstractIndexDocumentBuilder
         }
     
         $dynamicProperties = $this->getDynamicProperties($resource->getTypes(), $resource);
+    
+        if (!is_array($body['type'])) {
+            $body['type'] = [$body['type']];
+        }
     
         return new IndexDocument(
             $resource->getUri(),
