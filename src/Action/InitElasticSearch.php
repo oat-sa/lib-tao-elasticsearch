@@ -132,13 +132,7 @@ class InitElasticSearch extends InstallAction
 
             $search->createIndexes();
             $this->getServiceManager()->register(Search::SERVICE_ID, $search);
-
-            $message = "
-                In order for the ElasticSearch to work correctly please make sure that you will update config/tao/IndexService.conf.php
-                Providing `new oat\\tao\\elasticsearch\\Watcher\\ElasticDocumentBuilderFactory()` as a value for `documentBuilderFactory` option
-            ";
-
-            $report->add(new Report(Report::TYPE_WARNING, $message));
+            
             $report->add(new Report(Report::TYPE_SUCCESS, __('Switched search service implementation to ElasticSearch')));
             
             $this->getServiceManager()->register(IndexUpdaterInterface::SERVICE_ID, new IndexUpdater($config['hosts']));
