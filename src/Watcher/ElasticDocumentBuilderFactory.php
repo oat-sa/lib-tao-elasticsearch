@@ -31,27 +31,11 @@ use oat\tao\model\TaoOntology;
 
 class ElasticDocumentBuilderFactory implements DocumentBuilderFactoryInterface
 {
-    public const AVAILABLE_DOCUMENT_BUILDERS = [
-        TaoOntology::CLASS_URI_ITEM => GenericIndexDocumentBuilder::class,
-        TaoOntology::CLASS_URI_TEST => GenericIndexDocumentBuilder::class,
-        TaoOntology::CLASS_URI_GROUP => GenericIndexDocumentBuilder::class,
-        TaoOntology::CLASS_URI_DELIVERY => GenericIndexDocumentBuilder::class,
-        TaoOntology::CLASS_URI_SUBJECT => GenericIndexDocumentBuilder::class,
-        'http://www.tao.lu/Ontologies/TAOResult.rdf#DeliveryResult' => GenericIndexDocumentBuilder::class,
-        'unclassified' => GenericIndexDocumentBuilder::class
-    ];
-
     /**
      * {@inheritdoc}
      */
     public function getDocumentBuilderByResourceType(string $resourceType = ""): IndexDocumentBuilderInterface
     {
-        if (array_key_exists($resourceType, self::AVAILABLE_DOCUMENT_BUILDERS)) {
-            $indexer = self::AVAILABLE_DOCUMENT_BUILDERS[$resourceType];
-        } else {
-            $indexer = self::AVAILABLE_DOCUMENT_BUILDERS['unclassified'];
-        }
-
-        return new $indexer();
+        return new GenericIndexDocumentBuilder();
     }
 }
