@@ -72,7 +72,6 @@ class ElasticDocumentBuilderFactoryTest extends TestCase
         $documentBuilder = $this->factory->getDocumentBuilderByResourceType($resourceType);
     
         $this->assertInstanceOf(IndexDocumentBuilderInterface::class, $documentBuilder);
-        $this->assertInstanceOf(ItemIndexDocumentBuilder::class, $documentBuilder);
     }
     
     public function testGetDocumentBuilderByItemResourceType()
@@ -92,6 +91,5 @@ class ElasticDocumentBuilderFactoryTest extends TestCase
         $documentBuilder = $this->factory->getDocumentBuilderByResourceType($resourceType);
     
         $this->assertInstanceOf(IndexDocumentBuilderInterface::class, $documentBuilder);
-        $this->assertInstanceOf(UnclassifiedIndexDocumentBuilder::class, $documentBuilder);
     }
 }

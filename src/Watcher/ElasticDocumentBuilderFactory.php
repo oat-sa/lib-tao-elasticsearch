@@ -21,24 +21,24 @@ declare(strict_types=1);
 
 namespace oat\tao\elasticsearch\Watcher;
 
+use oat\tao\elasticsearch\Watcher\Resources\GenericIndexDocumentBuilder;
 use oat\tao\elasticsearch\Watcher\Resources\ItemIndexDocumentBuilder;
 use oat\tao\elasticsearch\Watcher\Resources\TesttakerIndexDocumentBuilder;
 use oat\tao\elasticsearch\Watcher\Resources\UnclassifiedIndexDocumentBuilder;
 use oat\tao\model\search\index\DocumentBuilder\DocumentBuilderFactoryInterface;
-use oat\tao\model\search\index\DocumentBuilder\GenerisIndexDocumentBuilder;
 use oat\tao\model\search\index\DocumentBuilder\IndexDocumentBuilderInterface;
 use oat\tao\model\TaoOntology;
 
 class ElasticDocumentBuilderFactory implements DocumentBuilderFactoryInterface
 {
     public const AVAILABLE_DOCUMENT_BUILDERS = [
-        TaoOntology::CLASS_URI_ITEM => ItemIndexDocumentBuilder::class,
-        TaoOntology::CLASS_URI_TEST => GenerisIndexDocumentBuilder::class,
-        TaoOntology::CLASS_URI_GROUP => GenerisIndexDocumentBuilder::class,
-        TaoOntology::CLASS_URI_DELIVERY => GenerisIndexDocumentBuilder::class,
-        TaoOntology::CLASS_URI_SUBJECT => TesttakerIndexDocumentBuilder::class,
-        'http://www.tao.lu/Ontologies/TAOResult.rdf#DeliveryResult' => GenerisIndexDocumentBuilder::class,
-        'unclassified' => UnclassifiedIndexDocumentBuilder::class
+        TaoOntology::CLASS_URI_ITEM => GenericIndexDocumentBuilder::class,
+        TaoOntology::CLASS_URI_TEST => GenericIndexDocumentBuilder::class,
+        TaoOntology::CLASS_URI_GROUP => GenericIndexDocumentBuilder::class,
+        TaoOntology::CLASS_URI_DELIVERY => GenericIndexDocumentBuilder::class,
+        TaoOntology::CLASS_URI_SUBJECT => GenericIndexDocumentBuilder::class,
+        'http://www.tao.lu/Ontologies/TAOResult.rdf#DeliveryResult' => GenericIndexDocumentBuilder::class,
+        'unclassified' => GenericIndexDocumentBuilder::class
     ];
 
     /**

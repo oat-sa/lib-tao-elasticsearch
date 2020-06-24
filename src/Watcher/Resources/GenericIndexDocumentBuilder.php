@@ -26,36 +26,4 @@ use oat\tao\model\search\index\DocumentBuilder\AbstractIndexDocumentBuilder;
 
 class GenericIndexDocumentBuilder extends AbstractIndexDocumentBuilder
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function createDocumentFromResource(\core_kernel_classes_Resource $resource, string $rootResourceType = ""): IndexDocument
-    {
-        $classProperty = $resource->getOnePropertyValue($this->getProperty(self::TYPE_PROPERTY));
-        $classResource = $this->getProperty($classProperty);
-
-        $body = [
-            'class' => $classResource->getLabel(),
-            'label' => $resource->getLabel(),
-        ];
-    
-        if ($rootResourceType) {
-            $body['type'] = $rootResourceType;
-        } else {
-            $body['type'] = $resource->getTypes();
-        }
-    
-        $dynamicProperties = $this->getDynamicProperties($resource->getTypes(), $resource);
-    
-        if (!is_array($body['type'])) {
-            $body['type'] = [$body['type']];
-        }
-    
-        return new IndexDocument(
-            $resource->getUri(),
-            $body,
-            [],
-            $dynamicProperties
-        );
-    }
 }
