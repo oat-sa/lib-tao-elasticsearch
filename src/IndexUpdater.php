@@ -139,6 +139,11 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
         }
     }
 
+    public function hasClassSupport(string $class): bool
+    {
+        return isset(IndexerInterface::AVAILABLE_INDEXES[$class]);
+    }
+
     private function findIndex(array $parentClasses, string $type): string
     {
         if (isset(IndexerInterface::AVAILABLE_INDEXES[$type])) {

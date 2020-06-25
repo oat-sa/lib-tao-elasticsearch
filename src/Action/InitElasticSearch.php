@@ -28,6 +28,7 @@ use oat\tao\elasticsearch\Watcher\IndexDocumentFactory;
 use oat\tao\model\search\index\IndexService;
 use oat\tao\elasticsearch\IndexUpdater;
 use oat\tao\model\search\index\IndexUpdaterInterface;
+use oat\tao\model\search\strategy\GenerisSearch;
 use oat\tao\model\search\SyntaxException;
 use oat\oatbox\extension\InstallAction;
 use oat\tao\model\search\Search;
@@ -127,14 +128,16 @@ class InitElasticSearch extends InstallAction
             $config['settings'] = $oldSettings['settings'];
         }
 
+        $config[GenerisSearch::class] = new GenerisSearch();
+
         try {
             $search = new ElasticSearch($config);
 
             $search->createIndexes();
             $this->getServiceManager()->register(Search::SERVICE_ID, $search);
-            
+
             $report->add(new Report(Report::TYPE_SUCCESS, __('Switched search service implementation to ElasticSearch')));
-            
+
             $this->getServiceManager()->register(IndexUpdaterInterface::SERVICE_ID, new IndexUpdater($config['hosts']));
         } catch (BadRequest400Exception $e) {
             $report->add(new Report(Report::TYPE_ERROR, 'Unable to create index: ' . $e->getMessage()));
