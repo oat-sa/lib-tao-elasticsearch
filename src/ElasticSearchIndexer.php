@@ -87,7 +87,7 @@ class ElasticSearchIndexer implements IndexerInterface
 
             // First step we trying to create document. If is exist, then skip this step
             $indexName = $this->getIndexNameByDocument($document);
-            
+
             $this->logger->info('indexname:' . $indexName);
 
             if ($indexName === self::UNCLASSIFIEDS_DOCUMENTS_INDEX) {
@@ -109,9 +109,9 @@ class ElasticSearchIndexer implements IndexerInterface
 
             if ($blockSize === self::INDEXING_BLOCK_SIZE) {
                 $clientResponse = $this->client->bulk($params);
-    
+
                 $this->logger->debug('client response: '. json_encode($clientResponse));
-                
+
                 $count += $blockSize;
                 $blockSize = 0;
                 $params = [];
@@ -120,9 +120,9 @@ class ElasticSearchIndexer implements IndexerInterface
 
         if ($blockSize > 0) {
             $clientResponse = $this->client->bulk($params);
-            
+
             $this->logger->debug('client response: '. json_encode($clientResponse));
-            
+
             $count += $blockSize;
         }
 
@@ -200,7 +200,11 @@ class ElasticSearchIndexer implements IndexerInterface
             return $params;
         }
 
-        $body = array_merge($document->getBody(), (array)$document->getDynamicProperties());
+        $body = array_merge(
+            $document->getBody(),
+            (array)$document->getDynamicProperties(),
+            (array)$document->getAccessProperties()
+        );
 
         if ($action === 'update') {
             $body = ['doc' => $body];
