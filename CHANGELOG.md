@@ -8,6 +8,7 @@ CHANGELOG
 - Creted separated indexes for Items, Tests, Test-Takers, Groups and Deliveries
 - Added a query builder to handle searches on different indexes
 - Updated indexes when custom properties are changed/deleted using IndexUpdater Interface.
+- Added DACL to indexation
 
 1.1.1
 -----
