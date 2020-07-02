@@ -27,6 +27,7 @@ use Elasticsearch\ClientBuilder;
 use Iterator;
 use oat\tao\model\search\index\IndexIterator;
 use oat\tao\model\search\Search;
+use oat\tao\model\search\strategy\GenerisSearch;
 use oat\tao\model\search\SyntaxException;
 use oat\tao\model\search\ResultSet;
 use oat\oatbox\service\ConfigurableService;
@@ -56,6 +57,7 @@ class ElasticSearch extends ConfigurableService implements Search
         return $this->client;
     }
 
+
     /** @return QueryBuilder */
     protected function getQueryBuilder(): QueryBuilder
     {
@@ -81,8 +83,12 @@ class ElasticSearch extends ConfigurableService implements Search
      * @return ResultSet
      * @throws SyntaxException
      */
-    public function query($queryString, $type, $start = 0, $count = 10, $order = '_id', $dir = 'DESC')
+    public function query($queryString, $type, $start = 0, $count = 10, $order = '_id', $dir = 'DESC'): ResultSet
     {
+        if (!isset(IndexerInterface::AVAILABLE_INDEXES[$type])) {
+            return $this->getGenerisSearch()->query($queryString, $type, $start, $count, $order, $dir);
+        }
+
         if ($order == 'id') {
             $order = '_id';
         }
@@ -100,7 +106,10 @@ class ElasticSearch extends ConfigurableService implements Search
             switch ($exception->getCode()) {
                 case 400:
                     $json = json_decode($exception->getMessage(), true);
-                    $message = __('There is an error in your search query, system returned: %s', $json['error']['reason']);
+                    $message = __(
+                        'There is an error in your search query, system returned: %s',
+                        $json['error']['reason']
+                    );
                     $this->getLogger()->error($message, [$exception->getMessage()]);
                     throw new SyntaxException($queryString, $message);
                 default:
@@ -148,12 +157,23 @@ class ElasticSearch extends ConfigurableService implements Search
 
     public function flush(): array
     {
-        return $this->getClient()->indices()->delete([
-            'index' => implode(',', IndexerInterface::AVAILABLE_INDEXES),
-            'client' => [
-                'ignore' => 404
+        return $this->getClient()->indices()->delete(
+            [
+                'index' => implode(',', IndexerInterface::AVAILABLE_INDEXES),
+                'client' => [
+                    'ignore' => 404
+                ]
             ]
-        ]);
+        );
+    }
+
+    private function getGenerisSearch(): GenerisSearch
+    {
+        /** @var GenerisSearch $generisSearch */
+        $generisSearch = $this->getOption(GenerisSearch::class);
+        $generisSearch->setServiceLocator($this->getServiceLocator());
+
+        return $generisSearch;
     }
 
     /**
