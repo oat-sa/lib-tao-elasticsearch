@@ -21,10 +21,16 @@ declare(strict_types=1);
 
 namespace oat\tao\elasticsearch;
 
+use oat\oatbox\service\ConfigurableService;
+use oat\oatbox\session\SessionService;
+use oat\oatbox\user\User;
 use tao_helpers_Slug;
+use common_ext_ExtensionsManager;
 
-class QueryBuilder
+class QueryBuilder extends ConfigurableService
 {
+    const SERVICE_ID = self::class;
+
     private const STANDARD_FIELDS = [
         'class',
         'content',
@@ -47,7 +53,14 @@ class QueryBuilder
         return new self();
     }
 
-    public function getSearchParams(string $queryString, string $type, int $start, int $count, string $order, string $dir): array
+    public function getSearchParams(
+        string $queryString,
+        string $type,
+        int $start,
+        int $count,
+        string $order,
+        string $dir
+    ): array
     {
         $qs = htmlspecialchars_decode($queryString);
         $blocks = $output = preg_split( '/( AND )/', $qs);
@@ -77,6 +90,8 @@ class QueryBuilder
             ],
             'sort' => [$order => ['order' => $dir]]
         ];
+
+        $query = $this->addAccessParameters($query);
 
         $params = [
             'index' => $this->getIndexByType($type),
@@ -116,5 +131,20 @@ class QueryBuilder
         }
 
         return '(' . implode(' OR ', $conditions). ')';
+    }
+
+    private function addAccessParameters(array $query): array
+    {
+        /** @var common_ext_ExtensionsManager $extensionManager */
+        $extensionManager = $this->getServiceLocator()->get(common_ext_ExtensionsManager::SERVICE_ID);
+        if (!$extensionManager->isEnabled('taoDacSimple')) {
+            return $query;
+        }
+
+        /** @var User $user */
+        $user = $this->getServiceLocator()->get(SessionService::SERVICE_ID)->getCurrentUser();
+        $roles = $user->getRoles();
+
+        return $query;
     }
 }
