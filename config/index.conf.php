@@ -99,17 +99,9 @@ return [
                         'type' => 'keyword',
                         'ignore_above' => 256,
                     ],
-                    'data_privileges' => [
-                        'properties' => [
-                            'privilege' => [
-                                'type' => 'keyword',
-                                'ignore_above' => 256,
-                            ],
-                            'user_id' => [
-                                'type' => 'keyword',
-                                'ignore_above' => 256,
-                            ],
-                        ],
+                    'read_access' => [
+                        'type' => 'keyword',
+                        'ignore_above' => 256,
                     ],
                 ],
                 'dynamic_templates' => $dynamicTemplates,
@@ -137,17 +129,9 @@ return [
                         'type' => 'keyword',
                         'ignore_above' => 256,
                     ],
-                    'data_privileges' => [
-                        'properties' => [
-                            'privilege' => [
-                                'type' => 'keyword',
-                                'ignore_above' => 256,
-                            ],
-                            'user_id' => [
-                                'type' => 'keyword',
-                                'ignore_above' => 256,
-                            ],
-                        ],
+                    'read_access' => [
+                        'type' => 'keyword',
+                        'ignore_above' => 256,
                     ],
                 ],
                 'dynamic_templates' => $dynamicTemplates,
@@ -175,18 +159,6 @@ return [
                         'type' => 'keyword',
                         'ignore_above' => 256,
                     ],
-                    'data_privileges' => [
-                        'properties' => [
-                            'privilege' => [
-                                'type' => 'keyword',
-                                'ignore_above' => 256,
-                            ],
-                            'user_id' => [
-                                'type' => 'keyword',
-                                'ignore_above' => 256,
-                            ],
-                        ],
-                    ],
                 ],
                 'dynamic_templates' => $dynamicTemplates,
             ],
@@ -212,18 +184,6 @@ return [
                     'type' => [
                         'type' => 'keyword',
                         'ignore_above' => 256,
-                    ],
-                    'data_privileges' => [
-                        'properties' => [
-                            'privilege' => [
-                                'type' => 'keyword',
-                                'ignore_above' => 256,
-                            ],
-                            'user_id' => [
-                                'type' => 'keyword',
-                                'ignore_above' => 256,
-                            ],
-                        ],
                     ],
                 ],
                 'dynamic_templates' => $dynamicTemplates,
@@ -255,17 +215,9 @@ return [
                         'type' => 'keyword',
                         'ignore_above' => 256,
                     ],
-                    'data_privileges' => [
-                        'properties' => [
-                            'privilege' => [
-                                'type' => 'keyword',
-                                'ignore_above' => 256,
-                            ],
-                            'user_id' => [
-                                'type' => 'keyword',
-                                'ignore_above' => 256,
-                            ],
-                        ],
+                    'read_access' => [
+                        'type' => 'keyword',
+                        'ignore_above' => 256,
                     ],
                 ],
                 'dynamic_templates' => $dynamicTemplates,
