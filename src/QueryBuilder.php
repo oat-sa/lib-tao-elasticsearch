@@ -31,6 +31,7 @@ class QueryBuilder
         'label',
         'model',
         'login',
+        'delivery',
     ];
 
     private const CUSTOM_FIELDS = [
@@ -54,9 +55,9 @@ class QueryBuilder
         $query = [];
 
         foreach ($blocks as $block) {
-            preg_match('/((?P<field>.*):)?(?P<term>.*)/', $block,$matches);
+            preg_match('/((?P<field>[^:]*):)?(?P<term>.*)/', $block,$matches);
             $field = tao_helpers_Slug::create(trim($matches['field']));
-            $term = $this->updateIfUri(trim($matches['term']));
+            $term = trim($matches['term']);
 
             if (empty($field)) {
                 $query[] = sprintf('("%s")', $term);
