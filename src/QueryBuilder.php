@@ -21,6 +21,8 @@ declare(strict_types=1);
 
 namespace oat\tao\elasticsearch;
 
+use oat\generis\model\data\permission\PermissionInterface;
+use oat\generis\model\data\permission\ReverseRightLookupInterface;
 use oat\oatbox\service\ConfigurableService;
 use oat\oatbox\session\SessionService;
 use oat\oatbox\user\User;
@@ -72,7 +74,9 @@ class QueryBuilder extends ConfigurableService
             }
         }
 
-        $query[] = $this->buildAccessConditions();
+        if ($this->includeAccessData()) {
+            $query[] = $this->buildAccessConditions();
+        }
 
         $query = [
             'query' => [
@@ -137,5 +141,11 @@ class QueryBuilder extends ConfigurableService
         }
 
         return '(' . implode(' OR ', $conditions). ')';
+    }
+
+    private function includeAccessData(): bool {
+        $permissionProvider = $this->getServiceLocator()->get(PermissionInterface::SERVICE_ID);
+
+        return $permissionProvider instanceof ReverseRightLookupInterface;
     }
 }
