@@ -62,7 +62,7 @@ class ElasticSearch extends ConfigurableService implements Search
     protected function getQueryBuilder(): QueryBuilder
     {
         if (is_null($this->queryBuilder)) {
-            $this->queryBuilder = QueryBuilder::create();
+            $this->queryBuilder = $this->getServiceLocator()->get(QueryBuilder::class);
         }
 
         return $this->queryBuilder;

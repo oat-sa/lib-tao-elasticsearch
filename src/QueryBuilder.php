@@ -21,10 +21,15 @@ declare(strict_types=1);
 
 namespace oat\tao\elasticsearch;
 
+use oat\oatbox\service\ConfigurableService;
+use oat\oatbox\session\SessionService;
+use oat\oatbox\user\User;
 use tao_helpers_Slug;
 
-class QueryBuilder
+class QueryBuilder extends ConfigurableService
 {
+    private const READ_ACCESS_FIELD = 'read_access';
+
     private const STANDARD_FIELDS = [
         'class',
         'content',
@@ -49,8 +54,8 @@ class QueryBuilder
 
     public function getSearchParams(string $queryString, string $type, int $start, int $count, string $order, string $dir): array
     {
-        $qs = htmlspecialchars_decode($queryString);
-        $blocks = $output = preg_split( '/( AND )/', $qs);
+        $decoded_query_string = htmlspecialchars_decode($queryString);
+        $blocks = preg_split( '/( AND )/i', $decoded_query_string);
         $query = [];
 
         foreach ($blocks as $block) {
@@ -66,6 +71,8 @@ class QueryBuilder
                 $query[] = $this->buildCustomConditions($field, $term);
             }
         }
+
+        $query[] = $this->buildAccessConditions();
 
         $query = [
             'query' => [
@@ -113,6 +120,20 @@ class QueryBuilder
 
         foreach (self::CUSTOM_FIELDS as $customField) {
             $conditions[] = sprintf('%s_%s:"%s"', $customField, $fieldName, $term);
+        }
+
+        return '(' . implode(' OR ', $conditions). ')';
+    }
+
+    private function buildAccessConditions(): string
+    {
+        $conditions = [];
+
+        /** @var User $current_user */
+        $current_user = $this->getServiceLocator()->get(SessionService::SERVICE_ID)->getCurrentUser();
+
+        foreach ($current_user->getRoles() as $role) {
+            $conditions[] = sprintf('%s:"%s"', self::READ_ACCESS_FIELD, $role);
         }
 
         return '(' . implode(' OR ', $conditions). ')';
