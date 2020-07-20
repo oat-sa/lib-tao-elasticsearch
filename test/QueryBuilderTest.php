@@ -6,6 +6,7 @@ use oat\generis\test\TestCase;
 use oat\tao\elasticsearch\IndexerInterface;
 use oat\tao\elasticsearch\QueryBuilder;
 use oat\tao\model\TaoOntology;
+use Zend\ServiceManager\ServiceLocatorInterface;
 
 class QueryBuilderTest extends TestCase
 {
@@ -14,7 +15,10 @@ class QueryBuilderTest extends TestCase
 
     protected function setUp(): void
     {
-       $this->subject = QueryBuilder::create();
+        $serviceLocator = $this->createMock(ServiceLocatorInterface::class);
+
+        $this->subject = QueryBuilder::create();
+        $this->subject->setServiceLocator($serviceLocator);
     }
 
     /**
