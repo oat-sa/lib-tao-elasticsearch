@@ -72,6 +72,14 @@ class QueryBuilderTest extends TestCase
             [
                 'label:test AND custom_field:test',
                 '{"query":{"query_string":{"default_operator":"AND","query":"(label:\"test\") AND (HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\")"}},"sort":{"_id":{"order":"DESC"}}}',
+            ],
+            [
+                'label:test and custom_field:test',
+                '{"query":{"query_string":{"default_operator":"AND","query":"(label:\"test\") AND (HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\")"}},"sort":{"_id":{"order":"DESC"}}}',
+            ],
+            [
+                'label:test aNd custom_field:test',
+                '{"query":{"query_string":{"default_operator":"AND","query":"(label:\"test\") AND (HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\")"}},"sort":{"_id":{"order":"DESC"}}}',
             ]
         ];
     }
