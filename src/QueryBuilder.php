@@ -143,7 +143,8 @@ class QueryBuilder extends ConfigurableService
         return '(' . implode(' OR ', $conditions). ')';
     }
 
-    private function includeAccessData(): bool {
+    private function includeAccessData(): bool
+    {
         $permissionProvider = $this->getServiceLocator()->get(PermissionInterface::SERVICE_ID);
 
         return $permissionProvider instanceof ReverseRightLookupInterface;
