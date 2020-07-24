@@ -40,6 +40,7 @@ class QueryBuilder
         'ComboBox',
         'CheckBox',
         'RadioBox',
+        'SearchTextBox',
     ];
 
     public static function create(): self
