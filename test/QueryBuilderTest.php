@@ -32,7 +32,8 @@ class QueryBuilderTest extends TestCase
     /**
      * @dataProvider queryResults
      */
-    public function testGetSearchParams(string $queryString, string $body): void {
+    public function testGetSearchParams(string $queryString, string $body): void
+    {
         $expected = [
             'index' => 'items',
             'size' => 10,
@@ -48,7 +49,8 @@ class QueryBuilderTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
-    public function queryResults() {
+    public function queryResults(): array
+    {
         return [
             [
                 'test',
@@ -95,7 +97,8 @@ class QueryBuilderTest extends TestCase
     /**
      * @dataProvider queryResultsWithAccessControl
      */
-    public function testGetSearchParamsWithAccessControl(string $queryString, string $body): void {
+    public function testGetSearchParamsWithAccessControl(string $queryString, string $body): void
+    {
         $this->createAccessControlMock();
 
         $expected = [
@@ -113,7 +116,8 @@ class QueryBuilderTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
-    public function queryResultsWithAccessControl() {
+    public function queryResultsWithAccessControl() : array
+    {
         return [
             [
                 'test',
