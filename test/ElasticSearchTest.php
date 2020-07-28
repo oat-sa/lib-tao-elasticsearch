@@ -27,6 +27,7 @@ use oat\generis\test\TestCase;
 use oat\oatbox\log\LoggerService;
 use oat\tao\elasticsearch\ElasticSearch;
 use oat\tao\elasticsearch\IndexUpdater;
+use oat\tao\elasticsearch\QueryBuilder;
 use oat\tao\model\search\ResultSet;
 use oat\tao\model\search\strategy\GenerisSearch;
 use oat\tao\model\search\SyntaxException;
@@ -45,6 +46,9 @@ class ElasticSearchTest extends TestCase
     /** @var GenerisSearch|MockObject */
     private $generisSearch;
 
+    /** @var QueryBuilder|MockObject */
+    private $queryBuilder;
+
     /** @var LoggerInterface|MockObject */
     private $logger;
 
@@ -52,6 +56,10 @@ class ElasticSearchTest extends TestCase
     {
         $this->generisSearch = $this->createMock(
             GenerisSearch::class
+        );
+
+        $this->queryBuilder = $this->createMock(
+            QueryBuilder::class
         );
 
         $this->sut = new ElasticSearch(
@@ -66,6 +74,7 @@ class ElasticSearchTest extends TestCase
         $serviceLocator = $this->getServiceLocatorMock(
             [
                 LoggerService::SERVICE_ID => $this->logger,
+                QueryBuilder::class => $this->queryBuilder
             ]
         );
 
@@ -183,18 +192,26 @@ class ElasticSearchTest extends TestCase
 
     private function mockDebugLogger(): void
     {
-        $this->logger->expects($this->once())->method('debug')->with(
+        $query = [
+            'index' => 'items',
+            'size' => 10,
+            'from' => 0,
+            'client' =>
+                [
+                    'ignore' => 404,
+                ],
+            'body' => '{"query":{"query_string":{"default_operator":"AND","query":"(\\"item\\")"}},"sort":{"_id":{"order":"DESC"}}}',
+        ];
+
+        $this->queryBuilder->expects($this->once())
+            ->method('getSearchParams')
+            ->willReturn($query);
+
+        $this->logger->expects($this->once())
+            ->method('debug')
+            ->with(
             'Query ',
-            [
-                'index' => 'items',
-                'size' => 10,
-                'from' => 0,
-                'client' =>
-                    [
-                        'ignore' => 404,
-                    ],
-                'body' => '{"query":{"query_string":{"default_operator":"AND","query":"(\\"item\\")"}},"sort":{"_id":{"order":"DESC"}}}',
-            ]
+            $query
         );
     }
 }
