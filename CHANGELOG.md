@@ -9,6 +9,7 @@ CHANGELOG
 - Added a query builder to handle searches on different indexes
 - Updated indexes when custom properties are changed/deleted using IndexUpdater Interface.
 - Added DACL to indexation
+- Added User roles to the search query
 
 1.1.1
 -----
