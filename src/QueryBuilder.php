@@ -68,23 +68,23 @@ class QueryBuilder extends ConfigurableService
         $queryString = str_replace(['"', '\''], '', $queryString);
         $queryString = htmlspecialchars_decode($queryString);
         $blocks = preg_split( '/( AND )/i', $queryString);
-        $query = [];
+        $conditions = [];
 
         foreach ($blocks as $block) {
-            [$field, $term] = $this->parseBlock($block);
+            /** @var QueryBlock $queryBlock */
+            $queryBlock = $this->parseBlock($block);
 
-            if (empty($field)) {
-                $query[] = sprintf('("%s")', $term);
-            } elseif ($this->isStandardField($field)) {
-                $query[] = sprintf('(%s:"%s")', $field, $term);
+            if (empty($queryBlock->getField())) {
+                $conditions[] = sprintf('("%s")', $queryBlock->getTerm());
+            } elseif ($this->isStandardField($queryBlock->getField())) {
+                $conditions[] = sprintf('(%s:"%s")', $queryBlock->getField(), $queryBlock->getTerm());
             } else {
-                $field_slug = tao_helpers_Slug::create($field);
-                $query[] = $this->buildCustomConditions($field_slug, $term);
+                $conditions[] = $this->buildCustomConditions($queryBlock);
             }
         }
 
         if ($this->includeAccessData()) {
-            $query[] = $this->buildAccessConditions();
+            $conditions[] = $this->buildAccessConditions();
         }
 
         $query = [
@@ -92,7 +92,7 @@ class QueryBuilder extends ConfigurableService
                 'query_string' =>
                     [
                         'default_operator' => 'AND',
-                        'query' => implode(' AND ', $query)
+                        'query' => implode(' AND ', $conditions)
                     ]
             ],
             'sort' => [$order => ['order' => $dir]]
@@ -119,12 +119,14 @@ class QueryBuilder extends ConfigurableService
         return IndexerInterface::AVAILABLE_INDEXES[$type] ?? IndexerInterface::UNCLASSIFIEDS_DOCUMENTS_INDEX;
     }
 
-    private function buildCustomConditions(string $fieldName, string $term): string
+    private function buildCustomConditions(QueryBlock $queryBlock): string
     {
         $conditions = [];
 
+        $field_slug = tao_helpers_Slug::create($queryBlock->getField());
+
         foreach (self::CUSTOM_FIELDS as $customField) {
-            $conditions[] = sprintf('%s_%s:"%s"', $customField, $fieldName, $term);
+            $conditions[] = sprintf('%s_%s:"%s"', $customField, $field_slug, $queryBlock->getTerm());
         }
 
         return '(' . implode(' OR ', $conditions). ')';
@@ -151,16 +153,16 @@ class QueryBuilder extends ConfigurableService
         return $permissionProvider instanceof ReverseRightLookupInterface;
     }
 
-    private function parseBlock(string $block): array
+    private function parseBlock(string $block): QueryBlock
     {
         if (\common_Utils::isUri($block)) {
-            return ['', $block];
+            return new QueryBlock(null, $block);
         }
 
         preg_match('/((?P<field>[^:]*):)?(?P<term>.*)/', $block,$matches);
         $field = trim($matches['field']);
         $term = trim($matches['term']);
 
-        return [$field, $term];
+        return new QueryBlock($field, $term);
     }
 }
