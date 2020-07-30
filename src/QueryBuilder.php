@@ -55,6 +55,7 @@ class QueryBuilder extends ConfigurableService
         'ComboBox',
         'CheckBox',
         'RadioBox',
+        'SearchTextBox',
     ];
 
     public static function create(): self

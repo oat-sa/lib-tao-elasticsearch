@@ -48,6 +48,15 @@ $dynamicTemplates = [
         ]
     ],
     [
+        "SearchTextBox" => [
+            "match" => "SearchTextBox_*",
+            "match_mapping_type" => "string",
+            "mapping" => [
+                "type" => "text"
+            ]
+        ]
+    ],
+    [
         "CheckBox" => [
             "match" => "CheckBox_*",
             "match_mapping_type" => "string",
