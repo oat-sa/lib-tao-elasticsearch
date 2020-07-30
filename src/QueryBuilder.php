@@ -71,9 +71,7 @@ class QueryBuilder extends ConfigurableService
         $query = [];
 
         foreach ($blocks as $block) {
-            preg_match('/((?P<field>[^:]*):)?(?P<term>.*)/', $block,$matches);
-            $term = trim($matches['term']);
-            $field = trim($matches['field']);
+            [$field, $term] = $this->parseBlock($block);
 
             if (empty($field)) {
                 $query[] = sprintf('("%s")', $term);
@@ -151,5 +149,18 @@ class QueryBuilder extends ConfigurableService
         $permissionProvider = $this->getServiceLocator()->get(PermissionInterface::SERVICE_ID);
 
         return $permissionProvider instanceof ReverseRightLookupInterface;
+    }
+
+    private function parseBlock(string $block): array
+    {
+        if (\common_Utils::isUri($block)) {
+            return ['', $block];
+        }
+
+        preg_match('/((?P<field>[^:]*):)?(?P<term>.*)/', $block,$matches);
+        $field = trim($matches['field']);
+        $term = trim($matches['term']);
+
+        return [$field, $term];
     }
 }
