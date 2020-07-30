@@ -39,6 +39,13 @@ class QueryBuilder extends ConfigurableService
         'model',
         'login',
         'delivery',
+        'test_taker',
+        'test_taker_name',
+        'delivery_execution',
+        'custom_tag',
+        'context_id',
+        'context_label',
+        'resource_link_id'
     ];
 
     private const CUSTOM_FIELDS = [
@@ -57,21 +64,23 @@ class QueryBuilder extends ConfigurableService
 
     public function getSearchParams(string $queryString, string $type, int $start, int $count, string $order, string $dir): array
     {
-        $decoded_query_string = htmlspecialchars_decode($queryString);
-        $blocks = preg_split( '/( AND )/i', $decoded_query_string);
+        $queryString = str_replace(['"', '\''], '', $queryString);
+        $queryString = htmlspecialchars_decode($queryString);
+        $blocks = preg_split( '/( AND )/i', $queryString);
         $query = [];
 
         foreach ($blocks as $block) {
             preg_match('/((?P<field>[^:]*):)?(?P<term>.*)/', $block,$matches);
-            $field = tao_helpers_Slug::create(trim($matches['field']));
             $term = trim($matches['term']);
+            $field = trim($matches['field']);
 
             if (empty($field)) {
                 $query[] = sprintf('("%s")', $term);
             } elseif ($this->isStandardField($field)) {
                 $query[] = sprintf('(%s:"%s")', $field, $term);
             } else {
-                $query[] = $this->buildCustomConditions($field, $term);
+                $field_slug = tao_helpers_Slug::create($field);
+                $query[] = $this->buildCustomConditions($field_slug, $term);
             }
         }
 
