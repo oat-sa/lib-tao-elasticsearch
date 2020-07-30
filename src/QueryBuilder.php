@@ -121,14 +121,6 @@ class QueryBuilder extends ConfigurableService
         return IndexerInterface::AVAILABLE_INDEXES[$type] ?? IndexerInterface::UNCLASSIFIEDS_DOCUMENTS_INDEX;
     }
 
-    private function updateIfUri(string $query): string
-    {
-        if (\common_Utils::isUri($query)) {
-            $query = '"' . $query . '"';
-        }
-        return $query;
-    }
-
     private function buildCustomConditions(string $fieldName, string $term): string
     {
         $conditions = [];
