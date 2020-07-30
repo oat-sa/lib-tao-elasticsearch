@@ -160,7 +160,7 @@ class QueryBuilder extends ConfigurableService
         }
 
         preg_match('/((?P<field>[^:]*):)?(?P<term>.*)/', $block,$matches);
-        $field = trim($matches['field']);
+        $field = strtolower(trim($matches['field']));
         $term = trim($matches['term']);
 
         return new QueryBlock($field, $term);

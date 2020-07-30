@@ -55,7 +55,6 @@ class QueryBuilderTest extends TestCase
             'Simple query' => [
                 'test',
                 '{"query":{"query_string":{"default_operator":"AND","query":"(\"test\")"}},"sort":{"_id":{"order":"DESC"}}}'
-
             ],
             'Query specific field' => [
                 'label:test',
@@ -79,18 +78,26 @@ class QueryBuilderTest extends TestCase
                 'custom field:test',
                 'body' => '{"query":{"query_string":{"default_operator":"AND","query":"(HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\" OR SearchTextBox_custom-field:\"test\")"}},"sort":{"_id":{"order":"DESC"}}}',
             ],
-            'Query logic operator' => [
+            'Query logic operator (Uppercase)' => [
                 'label:test AND custom_field:test',
-                '{"query":{"query_string":{"default_operator":"AND","query":"(label:\"test\") AND (HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\")"}},"sort":{"_id":{"order":"DESC"}}}',
+                '{"query":{"query_string":{"default_operator":"AND","query":"(label:\"test\") AND (HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\" OR SearchTextBox_custom-field:\"test\")"}},"sort":{"_id":{"order":"DESC"}}}',
             ],
-            [
+            'Query logic operator (Lowercase)' => [
                 'label:test and custom_field:test',
-                '{"query":{"query_string":{"default_operator":"AND","query":"(label:\"test\") AND (HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\")"}},"sort":{"_id":{"order":"DESC"}}}',
+                '{"query":{"query_string":{"default_operator":"AND","query":"(label:\"test\") AND (HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\" OR SearchTextBox_custom-field:\"test\")"}},"sort":{"_id":{"order":"DESC"}}}',
             ],
-            [
+            'Query logic operator (Mixed)' => [
                 'label:test aNd custom_field:test',
-                '{"query":{"query_string":{"default_operator":"AND","query":"(label:\"test\") AND (HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\")"}},"sort":{"_id":{"order":"DESC"}}}',
-            ]
+                '{"query":{"query_string":{"default_operator":"AND","query":"(label:\"test\") AND (HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\" OR SearchTextBox_custom-field:\"test\")"}},"sort":{"_id":{"order":"DESC"}}}',
+            ],
+            'Query URIs' => [
+                'https://test-act.docker.localhost/ontologies/tao.rdf#i5f200ed20e80a8c259ebe410db7f6a',
+                '{"query":{"query_string":{"default_operator":"AND","query":"(\"https:\/\/test-act.docker.localhost\/ontologies\/tao.rdf#i5f200ed20e80a8c259ebe410db7f6a\")"}},"sort":{"_id":{"order":"DESC"}}}'
+            ],
+            'Query Field with URI' => [
+                'delivery: https://test-act.docker.localhost/ontologies/tao.rdf#i5f200ed20e80a8c259ebe410db7f6a',
+                '{"query":{"query_string":{"default_operator":"AND","query":"(delivery:\"https:\/\/test-act.docker.localhost\/ontologies\/tao.rdf#i5f200ed20e80a8c259ebe410db7f6a\")"}},"sort":{"_id":{"order":"DESC"}}}'
+            ],
         ];
     }
 
