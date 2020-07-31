@@ -60,7 +60,7 @@ class ElasticSearchIndexer implements IndexerInterface
             throw new RuntimeException('type property is undefined on the document');
         }
 
-        $documentType = $documentBody['type'];
+        $documentType = is_string($documentBody['type']) ? [$documentBody['type']] : $documentBody['type'];
 
         foreach (self::AVAILABLE_INDEXES as $ontology => $indexName) {
             if (in_array($ontology, $documentType)) {
