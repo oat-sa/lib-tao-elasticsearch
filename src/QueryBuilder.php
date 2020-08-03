@@ -69,9 +69,9 @@ class QueryBuilder extends ConfigurableService
         $queryString = htmlspecialchars_decode($queryString);
         $blocks = preg_split( '/( AND )/i', $queryString);
         $conditions = [];
+        $index = $this->getIndexByType($type);
 
         foreach ($blocks as $block) {
-            /** @var QueryBlock $queryBlock */
             $queryBlock = $this->parseBlock($block);
 
             if (empty($queryBlock->getField())) {
@@ -83,7 +83,7 @@ class QueryBuilder extends ConfigurableService
             }
         }
 
-        if ($this->includeAccessData()) {
+        if ($this->includeAccessData($index)) {
             $conditions[] = $this->buildAccessConditions();
         }
 
@@ -99,12 +99,15 @@ class QueryBuilder extends ConfigurableService
         ];
 
         $params = [
-            'index' => $this->getIndexByType($type),
+            'index' => $index,
             'size' => $count,
             'from' => $start,
             'client' => ['ignore' => 404],
             'body' => json_encode($query)
         ];
+
+        $this->getLogger()->debug('Input Query: ' . $queryString);
+        $this->getLogger()->debug('Elastic Query: ' . json_encode($params));
 
         return $params;
     }
@@ -146,8 +149,12 @@ class QueryBuilder extends ConfigurableService
         return '(' . implode(' OR ', $conditions). ')';
     }
 
-    private function includeAccessData(): bool
+    private function includeAccessData(string $index): bool
     {
+        if (!in_array($index, IndexerInterface::INDEXES_WITH_ACCESS_CONTROL)) {
+            return false;
+        }
+
         $permissionProvider = $this->getServiceLocator()->get(PermissionInterface::SERVICE_ID);
 
         return $permissionProvider instanceof ReverseRightLookupInterface;

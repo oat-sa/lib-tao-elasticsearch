@@ -48,6 +48,11 @@ interface IndexerInterface
         TaoOntology::CLASS_URI_SUBJECT => self::TEST_TAKERS_INDEX,
         TaoOntology::CLASS_URI_TEST => self::TESTS_INDEX,
     ];
+    public const INDEXES_WITH_ACCESS_CONTROL = [
+        self::ITEMS_INDEX,
+        self::TESTS_INDEX,
+        self::TEST_TAKERS_INDEX
+    ];
 
     /**
      * Returns name of current using index
