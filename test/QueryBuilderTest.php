@@ -1,4 +1,24 @@
 <?php
+/**
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; under version 2
+ * of the License (non-upgradable).
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ * Copyright (c) 2020 (original work) Open Assessment Technologies SA;
+ *
+ */
+
+declare(strict_types=1);
 
 namespace oat\tao\test\elasticsearch;
 
@@ -55,7 +75,6 @@ class QueryBuilderTest extends TestCase
             'Simple query' => [
                 'test',
                 '{"query":{"query_string":{"default_operator":"AND","query":"(\"test\")"}},"sort":{"_id":{"order":"DESC"}}}'
-
             ],
             'Query specific field' => [
                 'label:test',
@@ -79,18 +98,26 @@ class QueryBuilderTest extends TestCase
                 'custom field:test',
                 'body' => '{"query":{"query_string":{"default_operator":"AND","query":"(HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\" OR SearchTextBox_custom-field:\"test\")"}},"sort":{"_id":{"order":"DESC"}}}',
             ],
-            'Query logic operator' => [
+            'Query logic operator (Uppercase)' => [
                 'label:test AND custom_field:test',
-                '{"query":{"query_string":{"default_operator":"AND","query":"(label:\"test\") AND (HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\")"}},"sort":{"_id":{"order":"DESC"}}}',
+                '{"query":{"query_string":{"default_operator":"AND","query":"(label:\"test\") AND (HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\" OR SearchTextBox_custom-field:\"test\")"}},"sort":{"_id":{"order":"DESC"}}}',
             ],
-            [
+            'Query logic operator (Lowercase)' => [
                 'label:test and custom_field:test',
-                '{"query":{"query_string":{"default_operator":"AND","query":"(label:\"test\") AND (HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\")"}},"sort":{"_id":{"order":"DESC"}}}',
+                '{"query":{"query_string":{"default_operator":"AND","query":"(label:\"test\") AND (HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\" OR SearchTextBox_custom-field:\"test\")"}},"sort":{"_id":{"order":"DESC"}}}',
             ],
-            [
+            'Query logic operator (Mixed)' => [
                 'label:test aNd custom_field:test',
-                '{"query":{"query_string":{"default_operator":"AND","query":"(label:\"test\") AND (HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\")"}},"sort":{"_id":{"order":"DESC"}}}',
-            ]
+                '{"query":{"query_string":{"default_operator":"AND","query":"(label:\"test\") AND (HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\" OR SearchTextBox_custom-field:\"test\")"}},"sort":{"_id":{"order":"DESC"}}}',
+            ],
+            'Query URIs' => [
+                'https://test-act.docker.localhost/ontologies/tao.rdf#i5f200ed20e80a8c259ebe410db7f6a',
+                '{"query":{"query_string":{"default_operator":"AND","query":"(\"https:\/\/test-act.docker.localhost\/ontologies\/tao.rdf#i5f200ed20e80a8c259ebe410db7f6a\")"}},"sort":{"_id":{"order":"DESC"}}}'
+            ],
+            'Query Field with URI' => [
+                'delivery: https://test-act.docker.localhost/ontologies/tao.rdf#i5f200ed20e80a8c259ebe410db7f6a',
+                '{"query":{"query_string":{"default_operator":"AND","query":"(delivery:\"https:\/\/test-act.docker.localhost\/ontologies\/tao.rdf#i5f200ed20e80a8c259ebe410db7f6a\")"}},"sort":{"_id":{"order":"DESC"}}}'
+            ],
         ];
     }
 

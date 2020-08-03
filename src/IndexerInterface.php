@@ -24,6 +24,7 @@ namespace oat\tao\elasticsearch;
 use Iterator;
 use oat\tao\model\search\index\IndexDocument;
 use oat\tao\model\TaoOntology;
+use oat\taoResultServer\models\classes\ResultService;
 
 /**
  * Interface IndexerInterface
@@ -34,16 +35,18 @@ interface IndexerInterface
     public const TESTS_INDEX = 'tests';
     public const TEST_TAKERS_INDEX = 'test-takers';
     public const DELIVERIES_INDEX = 'deliveries';
+    public const DELIVERY_RESULTS_INDEX = 'delivery-results';
     public const GROUPS_INDEX = 'groups';
     public const UNCLASSIFIEDS_DOCUMENTS_INDEX = 'unclassifieds';
     public const AVAILABLE_INDEXES = [
-        TaoOntology::CLASS_URI_ITEM => self::ITEMS_INDEX,
-        TaoOntology::CLASS_URI_TEST => self::TESTS_INDEX,
-        TaoOntology::CLASS_URI_SUBJECT => self::TEST_TAKERS_INDEX,
+        ResultService::DELIVERY_RESULT_CLASS_URI => self::DELIVERY_RESULTS_INDEX,
+        TaoOntology::CLASS_URI_ASSEMBLED_DELIVERY => self::DELIVERIES_INDEX,
         TaoOntology::CLASS_URI_DELIVERY => self::DELIVERIES_INDEX,
         TaoOntology::CLASS_URI_GROUP => self::GROUPS_INDEX,
-        TaoOntology::CLASS_URI_ASSEMBLED_DELIVERY => self::DELIVERIES_INDEX,
+        TaoOntology::CLASS_URI_ITEM => self::ITEMS_INDEX,
         TaoOntology::CLASS_URI_RESULT => self::DELIVERIES_INDEX,
+        TaoOntology::CLASS_URI_SUBJECT => self::TEST_TAKERS_INDEX,
+        TaoOntology::CLASS_URI_TEST => self::TESTS_INDEX,
     ];
 
     /**

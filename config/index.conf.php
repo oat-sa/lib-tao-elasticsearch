@@ -195,7 +195,54 @@ return [
                         'ignore_above' => 256,
                     ],
                 ],
-                'dynamic_templates' => $dynamicTemplates,
+            ],
+            'settings' => [
+                'index' => [
+                    'number_of_shards' => '1',
+                    'number_of_replicas' => '1',
+                ],
+            ],
+        ],
+    ],
+    'delivery-results' => [
+        'index' => 'delivery-results',
+        'body' => [
+            'mappings' => [
+                'properties' => [
+                    'label' => [
+                        'type' => 'text'
+                    ],
+                    'delivery' => [
+                        'type' => 'text'
+                    ],
+                    'type' => [
+                        'type' => 'keyword',
+                        'ignore_above' => 256,
+                    ],
+                    'test_taker' => [
+                        'type' => 'text'
+                    ],
+                    'test_taker_name' => [
+                        'type' => 'text'
+                    ],
+                    'delivery_execution' => [
+                        'type' => 'text'
+                    ],
+                    'custom_tag' => [
+                        'type' => 'text'
+                    ],
+                    'context_label' => [
+                        'type' => 'text'
+                    ],
+                    'context_id' => [
+                        'type' => 'keyword',
+                        'ignore_above' => 256,
+                    ],
+                    'resource_link_id' => [
+                        'type' => 'keyword',
+                        'ignore_above' => 256,
+                    ],
+                ],
             ],
             'settings' => [
                 'index' => [
