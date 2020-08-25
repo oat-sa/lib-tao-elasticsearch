@@ -286,4 +286,34 @@ return [
             ],
         ],
     ],
+    'assets' => [
+        'index' => 'assets',
+        'body' => [
+            'mappings' => [
+                'properties' => [
+                    'class' => [
+                        'type' => 'text',
+                    ],
+                    'label' => [
+                        'type' => 'text'
+                    ],
+                    'type' => [
+                        'type' => 'keyword',
+                        'ignore_above' => 256,
+                    ],
+                    'read_access' => [
+                        'type' => 'keyword',
+                        'ignore_above' => 256,
+                    ],
+                ],
+                'dynamic_templates' => $dynamicTemplates,
+            ],
+            'settings' => [
+                'index' => [
+                    'number_of_shards' => '1',
+                    'number_of_replicas' => '1',
+                ],
+            ],
+        ],
+    ],
 ];
