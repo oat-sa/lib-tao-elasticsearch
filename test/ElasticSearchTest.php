@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace oat\tao\test\elasticsearch;
 
 use Elasticsearch\Client;
+use Elasticsearch\Namespaces\IndicesNamespace;
 use Exception;
 use oat\generis\test\TestCase;
 use oat\oatbox\log\LoggerService;
@@ -64,7 +65,33 @@ class ElasticSearchTest extends TestCase
 
         $this->sut = new ElasticSearch(
             [
-                GenerisSearch::class => $this->generisSearch
+                GenerisSearch::class => $this->generisSearch,
+                'indexes' => [
+                    [
+                        'index' => 'items',
+                        'body' => [
+                            'mappings' => [
+                                'properties' => [
+                                    'class' => [
+                                        'type' => 'text',
+                                    ],
+                                ]
+                            ]
+                        ]
+                    ],
+                    [
+                        'index' => 'tests',
+                        'body' => [
+                            'mappings' => [
+                                'properties' => [
+                                    'use' => [
+                                        'type' => 'keyword',
+                                    ],
+                                ]
+                            ]
+                        ]
+                    ],
+                ]
             ]
         );
 
@@ -190,6 +217,49 @@ class ElasticSearchTest extends TestCase
         $resultSet = $this->sut->query('item', $validType);
     }
 
+    public function testCreateIndexes_callIndexCreationBasedOnIndexOption(): void
+    {
+        $indexMock = $this->createMock(IndicesNamespace::class);
+        $indexMock->expects($this->at(0))
+            ->method('create')
+            ->with(
+                [
+                    'index' => 'items',
+                    'body' => [
+                        'mappings' => [
+                            'properties' => [
+                                'class' => [
+                                    'type' => 'text',
+                                ],
+                            ]
+                        ]
+                    ]
+                ]
+            );
+        $indexMock->expects($this->at(1))
+            ->method('create')
+            ->with(
+                [
+                    'index' => 'tests',
+                    'body' => [
+                        'mappings' => [
+                            'properties' => [
+                                'use' => [
+                                    'type' => 'keyword',
+                                ],
+                            ]
+                        ]
+                    ]
+                ]
+            );
+
+        $this->client->expects($this->any())
+            ->method('indices')
+            ->willReturn($indexMock);
+
+        $this->sut->createIndexes();
+    }
+
     private function mockDebugLogger(): void
     {
         $query = [
@@ -210,8 +280,8 @@ class ElasticSearchTest extends TestCase
         $this->logger->expects($this->once())
             ->method('debug')
             ->with(
-            'Query ',
-            $query
-        );
+                'Query ',
+                $query
+            );
     }
 }
