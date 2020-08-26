@@ -148,12 +148,9 @@ class ElasticSearch extends ConfigurableService implements Search
     {
         $indexes = $this->getOption('indexes');
 
-        $this->getClient()->indices()->create($indexes['items']);
-        $this->getClient()->indices()->create($indexes['tests']);
-        $this->getClient()->indices()->create($indexes['groups']);
-        $this->getClient()->indices()->create($indexes['deliveries']);
-        $this->getClient()->indices()->create($indexes['delivery-results']);
-        $this->getClient()->indices()->create($indexes['test-takers']);
+        foreach ($indexes as $index) {
+            $this->getClient()->indices()->create($index);
+        }
     }
 
     public function flush(): array

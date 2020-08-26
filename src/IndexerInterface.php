@@ -38,6 +38,10 @@ interface IndexerInterface
     public const DELIVERY_RESULTS_INDEX = 'delivery-results';
     public const GROUPS_INDEX = 'groups';
     public const UNCLASSIFIEDS_DOCUMENTS_INDEX = 'unclassifieds';
+    public const ASSETS_INDEX = 'assets';
+
+    public const MEDIA_CLASS_URI = 'http://www.tao.lu/Ontologies/TAOMedia.rdf#Media';
+
     public const AVAILABLE_INDEXES = [
         ResultService::DELIVERY_RESULT_CLASS_URI => self::DELIVERY_RESULTS_INDEX,
         TaoOntology::CLASS_URI_ASSEMBLED_DELIVERY => self::DELIVERIES_INDEX,
@@ -47,6 +51,7 @@ interface IndexerInterface
         TaoOntology::CLASS_URI_RESULT => self::DELIVERIES_INDEX,
         TaoOntology::CLASS_URI_SUBJECT => self::TEST_TAKERS_INDEX,
         TaoOntology::CLASS_URI_TEST => self::TESTS_INDEX,
+        self::MEDIA_CLASS_URI => self::ASSETS_INDEX,
     ];
     public const INDEXES_WITH_ACCESS_CONTROL = [
         self::ITEMS_INDEX,
