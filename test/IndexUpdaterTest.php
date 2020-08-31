@@ -73,9 +73,10 @@ class IndexUpdaterTest extends TestCase
                     'wait_for_completion' => true,
                     'body' => [
                         'query' => [
-                            'match' => [
-                                'type' => TaoOntology::CLASS_URI_ITEM
-                            ]
+                            'multi_match' => [
+                                'query' => TaoOntology::CLASS_URI_ITEM,
+                                'fields' => ['type', '_id'],
+                            ],
                         ],
                         'script' => [
                             'source' => $source
@@ -83,7 +84,7 @@ class IndexUpdaterTest extends TestCase
                     ]
                 ]
             );
-        $this->sut->updateProperties(
+        $this->sut->updatePropertiesName(
             $properties
         );
     }
@@ -95,7 +96,7 @@ class IndexUpdaterTest extends TestCase
             ->method('updateByQuery')
             ->willThrowException(new BadMethodCallException());
 
-        $this->sut->updateProperties(
+        $this->sut->updatePropertiesName(
             [
                 [
                     'newName' => 'test',
@@ -115,7 +116,7 @@ class IndexUpdaterTest extends TestCase
         $this->client->expects($this->never())
             ->method('updateByQuery');
 
-        $this->sut->updateProperties(
+        $this->sut->updatePropertiesName(
             $properties
         );
     }
@@ -135,9 +136,10 @@ class IndexUpdaterTest extends TestCase
                     'wait_for_completion' => true,
                     'body' => [
                         'query' => [
-                            'match' => [
-                                'type' => TaoOntology::CLASS_URI_ITEM
-                            ]
+                            'multi_match' => [
+                                'query' => TaoOntology::CLASS_URI_ITEM,
+                                'fields' => ['type', '_id'],
+                            ],
                         ],
                         'script' => [
                             'source' => $source
