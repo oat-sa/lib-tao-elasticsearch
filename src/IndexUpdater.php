@@ -124,7 +124,7 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
                 sprintf(
                     'by script: %s AND type: %s',
                     $script,
-                    $type
+                    $typeOrId
                 ),
                 $e->getCode(),
                 $e
