@@ -148,7 +148,7 @@ class QueryBuilderTest extends TestCase
         return [
             [
                 'test',
-                '{"query":{"query_string":{"default_operator":"AND","query":"(\"test\") AND (read_access:\"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#BackOfficeRole\" OR read_access:\"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#ItemsManagerRole\")"}},"sort":{"_id":{"order":"DESC"}}}'
+                '{"query":{"query_string":{"default_operator":"AND","query":"(\"test\") AND (read_access:(\"https:\/\/tao.docker.localhost\/ontologies\/tao.rdf#i5f64514f1c36110793759fc28c0105b\" OR \"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#BackOfficeRole\" OR \"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#ItemsManagerRole\"))"}},"sort":{"_id":{"order":"DESC"}}}'
 
             ],
         ];
@@ -159,6 +159,9 @@ class QueryBuilderTest extends TestCase
         $permissionProvider = $this->createMock(ReverseRightLookupInterface::class);
         $sessionService = $this->createMock(SessionService::class);
         $user = $this->createMock(User::class);
+        $user->expects($this->once())->method('getIdentifier')->willReturn(
+            'https://tao.docker.localhost/ontologies/tao.rdf#i5f64514f1c36110793759fc28c0105b'
+        );
 
         $this->serviceLocator->expects($this->at(0))
             ->method('get')
