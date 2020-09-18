@@ -62,7 +62,7 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
                 continue;
             }
 
-            $typeOrId = $propertyData['type'];
+            $type = $propertyData['type'];
             $parentClasses = $propertyData['parentClasses'];
 
             $queryNewProperty[] = sprintf(
@@ -76,11 +76,11 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
             );
         }
 
-        if (!isset($typeOrId, $parentClasses)) {
+        if (!isset($type, $parentClasses)) {
             return;
         }
 
-        $index = $this->findIndex($parentClasses, $typeOrId);
+        $index = $this->findIndex($parentClasses, $type);
 
         if ($index === IndexerInterface::UNCLASSIFIEDS_DOCUMENTS_INDEX) {
             return;
@@ -89,13 +89,13 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
         $script = implode(' ', array_merge($queryNewProperty, $queryRemoveOldProperty));
 
         try {
-            $this->executeUpdateQuery($index, $typeOrId, $script);
+            $this->executeUpdateQuery($index, $type, $script);
         } catch (Throwable $e) {
             throw new FailToUpdatePropertiesException(
                 sprintf(
                     'by script: %s AND type: %s',
                     $script,
-                    $typeOrId
+                    $type
                 ),
                 $e->getCode(),
                 $e
@@ -135,14 +135,14 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
     public function deleteProperty(array $property): void
     {
         $name = $property['name'];
-        $typeOrId = $property['type'];
+        $type = $property['type'];
         $parentClasses = $property['parentClasses'];
 
-        if (empty($name) || empty($typeOrId)) {
+        if (empty($name) || empty($type)) {
             return;
         }
 
-        $index = $this->findIndex($parentClasses, $typeOrId);
+        $index = $this->findIndex($parentClasses, $type);
 
         if ($index === IndexerInterface::UNCLASSIFIEDS_DOCUMENTS_INDEX) {
             return;
@@ -154,13 +154,13 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
         );
 
         try {
-            $this->executeUpdateQuery($index, $typeOrId, $script);
+            $this->executeUpdateQuery($index, $type, $script);
         } catch (Throwable $e) {
             throw new FailToRemovePropertyException(
                 sprintf(
                     'by script: %s AND type: %s',
                     $script,
-                    $typeOrId
+                    $type
                 ),
                 $e->getCode(),
                 $e
@@ -173,10 +173,10 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
         return isset(IndexerInterface::AVAILABLE_INDEXES[$class]);
     }
 
-    private function findIndex(array $parentClasses, string $typeOrId): string
+    private function findIndex(array $parentClasses, string $type): string
     {
-        if (isset(IndexerInterface::AVAILABLE_INDEXES[$typeOrId])) {
-            return IndexerInterface::AVAILABLE_INDEXES[$typeOrId];
+        if (isset(IndexerInterface::AVAILABLE_INDEXES[$type])) {
+            return IndexerInterface::AVAILABLE_INDEXES[$type];
         }
 
         foreach ($parentClasses as $parentClass) {
