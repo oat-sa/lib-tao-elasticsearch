@@ -146,7 +146,7 @@ class QueryBuilderTest extends TestCase
     public function queryResultsWithAccessControl() : array
     {
         return [
-            [
+           'with user access control and role access control' => [
                 'test',
                 '{"query":{"query_string":{"default_operator":"AND","query":"(\"test\") AND (read_access:(\"https:\/\/tao.docker.localhost\/ontologies\/tao.rdf#i5f64514f1c36110793759fc28c0105b\" OR \"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#BackOfficeRole\" OR \"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#ItemsManagerRole\"))"}},"sort":{"_id":{"order":"DESC"}}}'
 
