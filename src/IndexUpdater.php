@@ -53,7 +53,7 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
     /**
      * @inheritDoc
      */
-    public function updateProperties(array $properties): void
+    public function updatePropertiesName(array $properties): void
     {
         $queryNewProperty = [];
         $queryRemoveOldProperty = [];
@@ -96,6 +96,35 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
                     'by script: %s AND type: %s',
                     $script,
                     $type
+                ),
+                $e->getCode(),
+                $e
+            );
+        }
+    }
+
+    public function updatePropertyValue(string $typeOrId, array $parentClasses, string $propertyName, array $value): void
+    {
+        $index = $this->findIndex($parentClasses, $typeOrId);
+
+        if ($index === IndexerInterface::UNCLASSIFIEDS_DOCUMENTS_INDEX) {
+            return;
+        }
+
+        $script = sprintf(
+            'ctx._source[\'%s\'] = [\'%s\'];',
+            $propertyName,
+            implode('\', \'', $value)
+        );
+
+        try {
+            $this->executeUpdateQuery($index, $typeOrId, $script);
+        } catch (Throwable $e) {
+            throw new FailToUpdatePropertiesException(
+                sprintf(
+                    'by script: %s AND type: %s',
+                    $script,
+                    $typeOrId
                 ),
                 $e->getCode(),
                 $e
@@ -159,7 +188,7 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
         return IndexerInterface::UNCLASSIFIEDS_DOCUMENTS_INDEX;
     }
 
-    private function executeUpdateQuery(string $index, string $type, string $script): void
+    private function executeUpdateQuery(string $index, string $typeOrId, string $script): void
     {
         $this->getClient()->updateByQuery(
             [
@@ -169,8 +198,9 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
                 'wait_for_completion' => true,
                 'body' => [
                     'query' => [
-                        'match' => [
-                            'type' => $type
+                        'multi_match' => [
+                            'query' => $typeOrId,
+                            'fields' => ['type', '_id'],
                         ]
                     ],
                     'script' => [

@@ -139,14 +139,19 @@ class QueryBuilder extends ConfigurableService
     {
         $conditions = [];
 
-        /** @var User $current_user */
-        $current_user = $this->getServiceLocator()->get(SessionService::SERVICE_ID)->getCurrentUser();
+        /** @var User $currentUser */
+        $currentUser = $this->getServiceLocator()->get(SessionService::SERVICE_ID)->getCurrentUser();
 
-        foreach ($current_user->getRoles() as $role) {
-            $conditions[] = sprintf('%s:"%s"', self::READ_ACCESS_FIELD, $role);
+        $conditions[] = $currentUser->getIdentifier();
+        foreach ($currentUser->getRoles() as $role) {
+            $conditions[] = $role;
         }
 
-        return '(' . implode(' OR ', $conditions). ')';
+        return sprintf(
+            '(%s:("%s"))',
+            self::READ_ACCESS_FIELD,
+            implode('" OR "', $conditions)
+        );
     }
 
     private function includeAccessData(string $index): bool

@@ -73,9 +73,10 @@ class IndexUpdaterTest extends TestCase
                     'wait_for_completion' => true,
                     'body' => [
                         'query' => [
-                            'match' => [
-                                'type' => TaoOntology::CLASS_URI_ITEM
-                            ]
+                            'multi_match' => [
+                                'query' => TaoOntology::CLASS_URI_ITEM,
+                                'fields' => ['type', '_id'],
+                            ],
                         ],
                         'script' => [
                             'source' => $source
@@ -83,7 +84,7 @@ class IndexUpdaterTest extends TestCase
                     ]
                 ]
             );
-        $this->sut->updateProperties(
+        $this->sut->updatePropertiesName(
             $properties
         );
     }
@@ -95,7 +96,7 @@ class IndexUpdaterTest extends TestCase
             ->method('updateByQuery')
             ->willThrowException(new BadMethodCallException());
 
-        $this->sut->updateProperties(
+        $this->sut->updatePropertiesName(
             [
                 [
                     'newName' => 'test',
@@ -115,7 +116,7 @@ class IndexUpdaterTest extends TestCase
         $this->client->expects($this->never())
             ->method('updateByQuery');
 
-        $this->sut->updateProperties(
+        $this->sut->updatePropertiesName(
             $properties
         );
     }
@@ -135,9 +136,10 @@ class IndexUpdaterTest extends TestCase
                     'wait_for_completion' => true,
                     'body' => [
                         'query' => [
-                            'match' => [
-                                'type' => TaoOntology::CLASS_URI_ITEM
-                            ]
+                            'multi_match' => [
+                                'query' => TaoOntology::CLASS_URI_ITEM,
+                                'fields' => ['type', '_id'],
+                            ],
                         ],
                         'script' => [
                             'source' => $source
@@ -174,6 +176,74 @@ class IndexUpdaterTest extends TestCase
             ->method('updateByQuery');
 
         $this->sut->deleteProperty($property);
+    }
+
+    public function testUpdatePropertyValueSuccessfuly()
+    {
+        $documentUri = 'https://tao.docker.localhost/ontologies/tao.rdf#i5ef45f413088c8e7901a84708e84ec';
+        $validType = 'http://www.tao.lu/Ontologies/TAOItem.rdf#Item';
+        $source = 'ctx._source[\'RadioBox_isTest\'] = [\'123456\'];';
+
+        $this->client->expects($this->once())
+            ->method('updateByQuery')
+            ->with(
+                [
+                    'index' => 'items',
+                    'type' => '_doc',
+                    'conflicts' => 'proceed',
+                    'wait_for_completion' => true,
+                    'body' => [
+                        'query' => [
+                            'multi_match' => [
+                                'query' => $documentUri,
+                                'fields' => ['type', '_id'],
+                            ],
+                        ],
+                        'script' => [
+                            'source' => $source
+                        ]
+                    ]
+                ]
+            );
+
+        $this->sut->updatePropertyValue(
+            $documentUri,
+            [
+                $validType
+            ],
+            'RadioBox_isTest',
+            ['123456']
+        );
+    }
+
+    public function testUpdatePropertyValueDoNothingInCaseUnclassifiedIndex()
+    {
+        $this->client->expects($this->never())
+            ->method('updateByQuery');
+
+        $invalidType = 'https://tao.docker.localhost/ontologies/tao.rdf#Invalid';
+
+        $this->sut->updatePropertyValue($invalidType, [], 'RadioBox_isTest', ['123456']);
+    }
+
+    public function testExceptionWhenUpdatingPropertyValue()
+    {
+        $this->expectException(FailToUpdatePropertiesException::class);
+
+        $this->client->expects($this->once())
+            ->method('updateByQuery')
+            ->willThrowException(new BadMethodCallException());
+        $documentUri = 'https://tao.docker.localhost/ontologies/tao.rdf#i5ef45f413088c8e7901a84708e84ec';
+        $validType = 'http://www.tao.lu/Ontologies/TAOItem.rdf#Item';
+
+        $this->sut->updatePropertyValue(
+            $documentUri,
+            [
+                $validType
+            ],
+            'RadioBox_isTest',
+            ['123456']
+        );
     }
 
     public function provideValidPropertiesForUpdate(): array
