@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.3.0
+-----
+- lib for `elasticsearch` bumped to next major version
+
+ 
 1.2.0
 -----
 - README.md updated with indexing script
