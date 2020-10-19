@@ -167,11 +167,7 @@ class ElasticSearch extends ConfigurableService implements Search
 
     private function getGenerisSearch(): GenerisSearch
     {
-        /** @var GenerisSearch $generisSearch */
-        $generisSearch = $this->getOption(GenerisSearch::class);
-        $generisSearch->setServiceLocator($this->getServiceLocator());
-
-        return $generisSearch;
+        return $this->getSubService(GenerisSearch::class);
     }
 
     /**
