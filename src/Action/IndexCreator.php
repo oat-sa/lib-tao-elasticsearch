@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,7 +22,6 @@ declare(strict_types=1);
 
 namespace oat\tao\elasticsearch\Action;
 
-
 use common_report_Report as Report;
 use Exception;
 use oat\oatbox\extension\script\ScriptAction;
@@ -41,7 +41,7 @@ class IndexCreator extends ScriptAction
                     'prefix' => 'f',
                     'longPrefix' => self::INDICES_FILES,
                     'required' => true,
-                    'description' => 'File path location.',
+                    'description' => 'Absolute path to indices declaration.',
                 ],
             ];
     }
@@ -67,7 +67,7 @@ class IndexCreator extends ScriptAction
                     )
                 );
             }
-            return new Report(Report::TYPE_SUCCESS, 'Indexes created');
+            return new Report(Report::TYPE_SUCCESS, 'Elastic indices created successfully');
         }
         return new Report(Report::TYPE_ERROR, 'No proper service found');
     }
