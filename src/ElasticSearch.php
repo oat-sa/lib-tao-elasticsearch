@@ -146,7 +146,10 @@ class ElasticSearch extends ConfigurableService implements Search
 
     public function createIndexes(): void
     {
-        $indexes = $this->getOption('indexes');
+        $indicesFiles = $this->getOption('indicesFiles', '');
+        if ($indicesFiles && is_readable($indicesFiles)) {
+            $indexes[] = require $indicesFiles;
+        }
 
         foreach ($indexes as $index) {
             $this->getClient()->indices()->create($index);
