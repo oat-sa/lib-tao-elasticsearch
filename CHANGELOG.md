@@ -1,9 +1,9 @@
 CHANGELOG
 =========
 
-1.2.1
+1.3.0
 -----
-- Support seedable installation 
+- Added seedable installation support 
 
 1.2.0
 -----
