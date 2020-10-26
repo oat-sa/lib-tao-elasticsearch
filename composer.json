@@ -26,7 +26,7 @@
   "require" : {
     "php" : ">=7.1",
     "oat-sa/tao-core" : ">=18.1.0||dev-develop",
-    "elasticsearch/elasticsearch": "~6.0"
+    "elasticsearch/elasticsearch": "~7.0"
   },
   "autoload" : {
     "psr-4" : {
