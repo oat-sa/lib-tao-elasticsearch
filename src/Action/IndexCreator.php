@@ -28,18 +28,21 @@ use oat\oatbox\extension\script\ScriptAction;
 use oat\tao\elasticsearch\ElasticSearch;
 use oat\tao\model\search\Search;
 
+/**
+ * @deprecated  tobe moved to core during upcoming huge refactroing
+ */
 class IndexCreator extends ScriptAction
 {
 
-    private const INDICES_FILES = 'indicesFiles';
+    private const INDEX_FILES = 'indexFiles';
 
     protected function provideOptions()
     {
         return
             [
-                self::INDICES_FILES => [
+                self::INDEX_FILES => [
                     'prefix' => 'f',
-                    'longPrefix' => self::INDICES_FILES,
+                    'longPrefix' => self::INDEX_FILES,
                     'required' => true,
                     'description' => 'Absolute path to indices declaration.',
                 ],
@@ -55,7 +58,7 @@ class IndexCreator extends ScriptAction
     {
         $elasticService = $this->getServiceLocator()->get(Search::SERVICE_ID);
         if ($elasticService instanceof ElasticSearch) {
-            $elasticService->setOption('indicesFiles', $this->getOption(self::INDICES_FILES) ?? []);
+            $elasticService->setOption('indicesFiles', $this->getOption(self::INDEX_FILES) ?? []);
             try {
                 $elasticService->createIndexes();
             } catch (Exception $exception) {
