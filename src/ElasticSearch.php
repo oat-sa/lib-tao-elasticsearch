@@ -148,7 +148,7 @@ class ElasticSearch extends ConfigurableService implements Search
     {
         $indexFiles = $this->getOption('indexFiles', '');
         if ($indexFiles && is_readable($indexFiles)) {
-            $indexes[] = require $indexFiles;
+            $indexes = require $indexFiles;
         }
 
         foreach ($indexes as $index) {

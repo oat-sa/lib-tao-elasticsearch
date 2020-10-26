@@ -68,7 +68,7 @@ where `indexFiles` contains the absolute path to the declaration, sample provide
       "class": "\\oat\\tao\\elasticsearch\\Action\\IndexCreator",
       "params": [
         "--indexFiles",
-        "/var/www/html/lib-tao-elasticsearch/config/index.conf.php"
+        "/var/www/html/vendor/oat-sa/lib-tao-elasticsearch/config/index.conf.php"
       ]
     }
   ]
