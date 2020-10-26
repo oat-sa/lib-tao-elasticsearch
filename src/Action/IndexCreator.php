@@ -58,7 +58,7 @@ class IndexCreator extends ScriptAction
     {
         $elasticService = $this->getServiceLocator()->get(Search::SERVICE_ID);
         if ($elasticService instanceof ElasticSearch) {
-            $elasticService->setOption('indicesFiles', $this->getOption(self::INDEX_FILES) ?? []);
+            $elasticService->setOption('indexFiles', $this->getOption(self::INDEX_FILES) ?? []);
             try {
                 $elasticService->createIndexes();
             } catch (Exception $exception) {
@@ -70,7 +70,7 @@ class IndexCreator extends ScriptAction
                     )
                 );
             }
-            return new Report(Report::TYPE_SUCCESS, 'Elastic indices created successfully');
+            return new Report(Report::TYPE_SUCCESS, 'Elastic indexes created successfully');
         }
         return new Report(Report::TYPE_ERROR, 'No proper service found');
     }
