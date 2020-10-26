@@ -60,14 +60,14 @@ Following section to be included into seed file and describes an engine, connect
 ```
 
 For the proper index structure creation on installation stage following may be used, 
-where `indicesFiles` contains the absolute path to the declaration, sample provided within this lib (@TODO should be decoupled) 
+where `indexFiles` contains the absolute path to the declaration, sample provided within this lib (@TODO should be decoupled) 
 
 ```
 "postInstall": [
     {
       "class": "\\oat\\tao\\elasticsearch\\Action\\IndexCreator",
       "params": [
-        "--indicesFiles",
+        "--indexFiles",
         "/var/www/html/lib-tao-elasticsearch/config/index.conf.php"
       ]
     }
