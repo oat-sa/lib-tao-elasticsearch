@@ -146,7 +146,10 @@ class ElasticSearch extends ConfigurableService implements Search
 
     public function createIndexes(): void
     {
-        $indexes = $this->getOption('indexes');
+        $indexFiles = $this->getOption('indexFiles', '');
+        if ($indexFiles && is_readable($indexFiles)) {
+            $indexes = require $indexFiles;
+        }
 
         foreach ($indexes as $index) {
             $this->getClient()->indices()->create($index);
@@ -167,11 +170,7 @@ class ElasticSearch extends ConfigurableService implements Search
 
     private function getGenerisSearch(): GenerisSearch
     {
-        /** @var GenerisSearch $generisSearch */
-        $generisSearch = $this->getOption(GenerisSearch::class);
-        $generisSearch->setServiceLocator($this->getServiceLocator());
-
-        return $generisSearch;
+        return $this->getSubService(GenerisSearch::class);
     }
 
     /**
