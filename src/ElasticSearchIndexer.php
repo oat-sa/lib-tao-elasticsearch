@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace oat\tao\elasticsearch;
 
 use Elasticsearch\Client;
+use Elasticsearch\Common\Exceptions\ClientErrorResponseException;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Iterator;
@@ -101,7 +102,6 @@ class ElasticSearchIndexer implements IndexerInterface
 
             $params = $this->extendBatch('delete', $indexName, $document, $params);
             $params = $this->extendBatch('create', $indexName, $document, $params);
-            $params = $this->extendBatch('update', $indexName, $document, $params);
 
             $documents->next();
 
@@ -121,7 +121,12 @@ class ElasticSearchIndexer implements IndexerInterface
         if ($blockSize > 0) {
             $clientResponse = $this->client->bulk($params);
 
-            $this->logger->debug('client response: '. json_encode($clientResponse));
+            if ($clientResponse['errors'] === true) {
+                $errors = $this->checkErrors($clientResponse);
+                throw new ClientErrorResponseException($errors);
+            }
+
+            $this->logger->debug('client response: ' . json_encode($clientResponse));
 
             $count += $blockSize;
         }
@@ -141,7 +146,7 @@ class ElasticSearchIndexer implements IndexerInterface
             $deleteParams = [
                 'type' => '_doc',
                 'index' => $document['_index'],
-                'id' => $document['_id']
+                'id' => $document['_id'],
             ];
             $this->getClient()->delete($deleteParams);
 
@@ -154,6 +159,7 @@ class ElasticSearchIndexer implements IndexerInterface
     /**
      * @param array $ids
      * @param string $type
+     *
      * @return array
      */
     public function searchResourceByIds($ids = [])
@@ -213,5 +219,16 @@ class ElasticSearchIndexer implements IndexerInterface
         $params['body'][] = $body;
 
         return $params;
+    }
+
+    private function checkErrors(array $clientResponse): string
+    {
+        $errors = '';
+        
+        foreach ($clientResponse['items'] as $response) {
+            $response = reset($response);
+            $errors .= $response['error']['reason'];
+        }
+        return $errors;
     }
 }

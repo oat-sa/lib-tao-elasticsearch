@@ -31,6 +31,7 @@ use oat\tao\model\search\strategy\GenerisSearch;
 use oat\tao\model\search\SyntaxException;
 use oat\tao\model\search\ResultSet;
 use oat\oatbox\service\ConfigurableService;
+use common_report_Report;
 
 /**
  * Class ElasticSearch
@@ -131,7 +132,11 @@ class ElasticSearch extends ConfigurableService implements Search
             ? $documents
             : new ArrayIterator($documents);
 
-        return $this->getIndexer()->buildIndex($documents);
+        try {
+            return $this->getIndexer()->buildIndex($documents);
+        } catch (ClientErrorResponseException $exception) {
+            return common_report_Report::createFailure($exception->getMessage());
+        }
     }
 
     public function remove($resourceId): bool
