@@ -110,6 +110,11 @@ class ElasticSearchIndexer implements IndexerInterface
             if ($blockSize === self::INDEXING_BLOCK_SIZE) {
                 $clientResponse = $this->client->bulk($params);
 
+                if ($clientResponse['errors'] === true) {
+                    $errors = $this->parseErrors($clientResponse);
+                    throw new ClientErrorResponseException($errors);
+                }
+
                 $this->logger->debug('client response: '. json_encode($clientResponse));
 
                 $count += $blockSize;
@@ -122,7 +127,7 @@ class ElasticSearchIndexer implements IndexerInterface
             $clientResponse = $this->client->bulk($params);
 
             if ($clientResponse['errors'] === true) {
-                $errors = $this->checkErrors($clientResponse);
+                $errors = $this->parseErrors($clientResponse);
                 throw new ClientErrorResponseException($errors);
             }
 
@@ -221,7 +226,7 @@ class ElasticSearchIndexer implements IndexerInterface
         return $params;
     }
 
-    private function checkErrors(array $clientResponse): string
+    private function parseErrors(array $clientResponse): string
     {
         $errors = '';
         
