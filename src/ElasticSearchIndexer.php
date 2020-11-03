@@ -111,8 +111,7 @@ class ElasticSearchIndexer implements IndexerInterface
                 $clientResponse = $this->client->bulk($params);
 
                 if ($clientResponse['errors'] === true) {
-                    $errors = $this->parseErrors($clientResponse);
-                    throw new ClientErrorResponseException($errors);
+                    throw new ClientErrorResponseException($this->parseErrors($clientResponse));
                 }
 
                 $this->logger->debug('client response: '. json_encode($clientResponse));
@@ -127,8 +126,7 @@ class ElasticSearchIndexer implements IndexerInterface
             $clientResponse = $this->client->bulk($params);
 
             if ($clientResponse['errors'] === true) {
-                $errors = $this->parseErrors($clientResponse);
-                throw new ClientErrorResponseException($errors);
+                throw new ClientErrorResponseException($this->parseErrors($clientResponse));
             }
 
             $this->logger->debug('client response: ' . json_encode($clientResponse));
