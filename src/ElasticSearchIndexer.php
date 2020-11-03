@@ -75,6 +75,7 @@ class ElasticSearchIndexer implements IndexerInterface
     /**
      * @param Iterator $documents
      * @return int The number of indexed documents
+     * @throws ClientErrorResponseException
      */
     public function buildIndex(Iterator $documents): int
     {
