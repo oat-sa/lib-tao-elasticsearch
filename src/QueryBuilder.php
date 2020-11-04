@@ -34,6 +34,7 @@ class QueryBuilder extends ConfigurableService
 
     private const STANDARD_FIELDS = [
         'class',
+        'parents',
         'content',
         'label',
         'model',
