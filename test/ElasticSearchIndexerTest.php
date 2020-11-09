@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace oat\tao\test\elasticsearch;
 
 use Elasticsearch\Client;
+use Elasticsearch\Common\Exceptions\ClientErrorResponseException;
 use oat\generis\test\TestCase;
 use oat\oatbox\log\LoggerService;
 use oat\tao\elasticsearch\ElasticSearchIndexer;
@@ -86,6 +87,49 @@ class ElasticSearchIndexerTest extends TestCase
         $indexName = $this->sut->getIndexNameByDocument($document);
 
         $this->assertSame(IndexerInterface::UNCLASSIFIEDS_DOCUMENTS_INDEX, $indexName);
+    }
+
+    public function testBuildIndexBulkErrorResponse(): void
+    {
+        $this->expectException(ClientErrorResponseException::class);
+        $this->expectExceptionMessage('some reasonsome other reason');
+        $document = $this->createMock(IndexDocument::class);
+        $document->expects($this->any())
+            ->method('getBody')
+            ->willReturn([
+                'type' => [
+                    TaoOntology::CLASS_URI_ITEM,
+                ],
+            ]);
+
+        $document->expects($this->any())
+            ->method('getId')
+            ->willReturn('some_id');
+
+        $this->client
+            ->method('bulk')
+            ->willReturn([
+                'errors' => true,
+                'items' => [
+                    [
+                        [
+                            'error' => [
+                                'reason' => 'some reason',
+                            ],
+                        ],
+                    ],
+                    [
+                        [
+                            'error' => [
+                                'reason' => 'some other reason',
+                            ],
+                        ],
+                    ],
+                ],
+            ]);
+        $iterator = $this->createIterator([$document]);
+
+        $this->sut->buildIndex($iterator);
     }
 
     public function testBuildIndex(): void
