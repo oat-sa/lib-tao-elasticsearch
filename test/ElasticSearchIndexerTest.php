@@ -147,7 +147,6 @@ class ElasticSearchIndexerTest extends TestCase
         return $bigArray;
     }
 
-
     public function testBuildIndexBulkErrorResponse(): void
     {
         $this->expectException(ClientErrorResponseException::class);
