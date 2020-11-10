@@ -31,6 +31,7 @@ use oat\tao\elasticsearch\IndexerInterface;
 use oat\tao\model\search\index\IndexDocument;
 use oat\tao\model\TaoOntology;
 use ArrayIterator;
+use PHPUnit\Framework\MockObject\MockObject;
 
 /**
  * ElasticSearchIndexerTest
@@ -89,10 +90,68 @@ class ElasticSearchIndexerTest extends TestCase
         $this->assertSame(IndexerInterface::UNCLASSIFIEDS_DOCUMENTS_INDEX, $indexName);
     }
 
+    public function testBuildIndexBulkErrorResponseAfter100(): void
+    {
+        $this->expectException(ClientErrorResponseException::class);
+        $this->expectExceptionMessage('some reason; some other reason');
+
+        $document = $this->createMock(IndexDocument::class);
+        $document->expects($this->any())
+            ->method('getBody')
+            ->willReturn([
+                'type' => [
+                    TaoOntology::CLASS_URI_ITEM,
+                ],
+            ]);
+
+        $document->expects($this->any())
+            ->method('getId')
+            ->willReturn('some_id');
+
+        $this->client
+            ->expects($this->atMost(100))
+            ->method('bulk')
+            ->willReturn([
+                'errors' => true,
+                'items' => [
+                    [
+                        [
+                            'error' => [
+                                'reason' => 'some reason',
+                            ],
+                        ],
+                    ],
+                    [
+                        [
+                            'error' => [
+                                'reason' => 'some other reason',
+                            ],
+                        ],
+                    ],
+                ],
+            ]);
+
+        $iterator = $this->createIterator($this->getMultipleDocs($document, 101));
+
+
+        $this->sut->buildIndex($iterator);
+    }
+
+    private function getMultipleDocs(MockObject $doc, $quantity)
+    {
+        $bigArray = [];
+        for ($i = 1; $i <= $quantity; $i++) {
+            array_push($bigArray, $doc);
+        }
+
+        return $bigArray;
+    }
+
+
     public function testBuildIndexBulkErrorResponse(): void
     {
         $this->expectException(ClientErrorResponseException::class);
-        $this->expectExceptionMessage('some reasonsome other reason');
+        $this->expectExceptionMessage('some reason; some other reason');
         $document = $this->createMock(IndexDocument::class);
         $document->expects($this->any())
             ->method('getBody')

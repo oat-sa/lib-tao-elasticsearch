@@ -103,6 +103,7 @@ class ElasticSearchIndexer implements IndexerInterface
 
             $params = $this->extendBatch('delete', $indexName, $document, $params);
             $params = $this->extendBatch('create', $indexName, $document, $params);
+            $params = $this->extendBatch('update', $indexName, $document, $params);
 
             $documents->next();
 
@@ -231,7 +232,7 @@ class ElasticSearchIndexer implements IndexerInterface
         
         foreach ($clientResponse['items'] as $response) {
             $response = reset($response);
-            $errors .= $response['error']['reason'];
+            $errors .= $response['error']['reason'] . '; ';
         }
         return $errors;
     }
