@@ -116,19 +116,6 @@ class ElasticSearchTest extends TestCase
         );
     }
 
-    public function testQuery_callGenerisSearchCaseClassIsNotSupported(): void
-    {
-        $invalidType = 'https://tao.docker.localhost/ontologies/tao.rdf#Invalid';
-        $this->generisSearch->expects($this->once())
-            ->method('query')
-            ->with('item', $invalidType, 0, 10, '_id', 'DESC')
-            ->willReturn(
-                $this->createMock(ResultSet::class)
-            );
-
-        $this->sut->query('item', $invalidType);
-    }
-
     public function testQuery_callElasticSearchCaseClassIsSupported(): void
     {
         $validType = 'http://www.tao.lu/Ontologies/TAOItem.rdf#Item';
