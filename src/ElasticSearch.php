@@ -85,10 +85,6 @@ class ElasticSearch extends ConfigurableService implements Search
      */
     public function query($queryString, $type, $start = 0, $count = 10, $order = '_id', $dir = 'DESC'): ResultSet
     {
-        if (!isset(IndexerInterface::AVAILABLE_INDEXES[$type])) {
-            return $this->getGenerisSearch()->query($queryString, $type, $start, $count, $order, $dir);
-        }
-
         if ($order == 'id') {
             $order = '_id';
         }

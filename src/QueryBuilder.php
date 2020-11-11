@@ -70,7 +70,8 @@ class QueryBuilder extends ConfigurableService
         $queryString = htmlspecialchars_decode($queryString);
         $blocks = preg_split( '/( AND )/i', $queryString);
         $conditions = [];
-        $index = $this->getIndexByType($type);
+
+        $conditions[] = sprintf('parent_classes: "%s"', $type);
 
         foreach ($blocks as $block) {
             $queryBlock = $this->parseBlock($block);
@@ -82,10 +83,6 @@ class QueryBuilder extends ConfigurableService
             } else {
                 $conditions[] = $this->buildCustomConditions($queryBlock);
             }
-        }
-
-        if ($this->includeAccessData($index)) {
-            $conditions[] = $this->buildAccessConditions();
         }
 
         $query = [
@@ -120,6 +117,7 @@ class QueryBuilder extends ConfigurableService
 
     private function getIndexByType(string $type): string
     {
+        //todo we should never check against hardcoded list of available indexes
         return IndexerInterface::AVAILABLE_INDEXES[$type] ?? IndexerInterface::UNCLASSIFIEDS_DOCUMENTS_INDEX;
     }
 
