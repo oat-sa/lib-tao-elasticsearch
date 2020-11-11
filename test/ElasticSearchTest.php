@@ -257,6 +257,7 @@ class ElasticSearchTest extends TestCase
             ->method('indices')
             ->willReturn($indexMock);
 
+        $this->sut->setOption('indexFiles', './testIndexes.conf.php');
         $this->sut->createIndexes();
     }
 
