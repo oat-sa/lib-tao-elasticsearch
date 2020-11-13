@@ -73,6 +73,21 @@ class ElasticSearch extends ConfigurableService implements Search
         return new ElasticSearchIndexer($this->getClient(), $this->getLogger());
     }
 
+    private function getIndexByType(string $type)
+    {
+        return IndexerInterface::ITEMS_INDEX;
+        $rootResourceUri = $type->getIndexedRootResourceUri($type);
+//        $this->getOption(self::OPTION_INDEX_MAP);
+    }
+
+    private function getIndexedRootResourceUri(string $type) {
+        if (in_array($type, $this->getOption(self::OPTION_INDEX_MAP))) {
+            return $type;
+        }
+
+        $this->getServiceLocator();
+    }
+    
     /**
      * @param $queryString
      * @param $type
