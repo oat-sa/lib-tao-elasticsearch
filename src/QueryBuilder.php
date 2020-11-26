@@ -69,24 +69,8 @@ class QueryBuilder extends ConfigurableService
         $queryString = str_replace(['"', '\''], '', $queryString);
         $queryString = htmlspecialchars_decode($queryString);
         $blocks = preg_split( '/( AND )/i', $queryString);
-        $conditions = [];
         $index = $this->getIndexByType($type);
-
-        foreach ($blocks as $block) {
-            $queryBlock = $this->parseBlock($block);
-
-            if (empty($queryBlock->getField())) {
-                $conditions[] = sprintf('("%s")', $queryBlock->getTerm());
-            } elseif ($this->isStandardField($queryBlock->getField())) {
-                $conditions[] = sprintf('(%s:"%s")', $queryBlock->getField(), $queryBlock->getTerm());
-            } else {
-                $conditions[] = $this->buildCustomConditions($queryBlock);
-            }
-        }
-
-        if ($this->includeAccessData($index)) {
-            $conditions[] = $this->buildAccessConditions();
-        }
+        $conditions = $this->buildConditions($index, $blocks);
 
         $query = [
             'query' => [
@@ -111,6 +95,30 @@ class QueryBuilder extends ConfigurableService
         $this->getLogger()->debug('Elastic Query: ' . json_encode($params));
 
         return $params;
+    }
+
+    /**
+     * @param string[] $blocks
+     */
+    private function buildConditions(string $index, array $blocks): array
+    {
+        foreach ($blocks as $block) {
+            $queryBlock = $this->parseBlock($block);
+
+            if (empty($queryBlock->getField())) {
+                $conditions[] = sprintf('("%s")', $queryBlock->getTerm());
+            } elseif ($this->isStandardField($queryBlock->getField())) {
+                $conditions[] = sprintf('(%s:"%s")', $queryBlock->getField(), $queryBlock->getTerm());
+            } else {
+                $conditions[] = $this->buildCustomConditions($queryBlock);
+            }
+        }
+
+        if ($this->includeAccessData($index)) {
+            $conditions[] = $this->buildAccessConditions();
+        }
+
+        return $conditions;
     }
 
     private function isStandardField(string $field): bool
