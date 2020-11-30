@@ -257,6 +257,8 @@ class ElasticSearchTest extends TestCase
             ->method('indices')
             ->willReturn($indexMock);
 
+        $this->sut->setOption('indexFiles', './vendor/oat-sa/lib-tao-elasticsearch/test/sample/testIndexes.conf.php');
+
         $this->sut->createIndexes();
     }
 
