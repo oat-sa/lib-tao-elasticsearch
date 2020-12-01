@@ -118,6 +118,8 @@ class QueryBuilder extends ConfigurableService
      */
     private function getResultsConditions(array $blocks): array
     {
+        $conditions = [];
+
         foreach ($blocks as $block) {
             $block  = $this->parseBlock($block);
             if ($block->getField() === '') {
