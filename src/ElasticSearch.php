@@ -183,7 +183,7 @@ class ElasticSearch extends ConfigurableService implements Search
         $total = 0;
         if ($elasticResult && isset($elasticResult['hits'])) {
             foreach ($elasticResult['hits']['hits'] as $document) {
-                $uris[$document['_id']] = $document['_source'];
+                $uris[] = $document['_source'];
             }
             // Starts from Elasticsearch 7.0 the `total` attribute is object with two parameters [value,relation]
             $total = is_array($elasticResult['hits']['total'])
