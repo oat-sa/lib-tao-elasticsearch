@@ -121,10 +121,12 @@ class QueryBuilder extends ConfigurableService
         $conditions = [];
 
         foreach ($blocks as $block) {
-            $block  = $this->parseBlock($block);
-            if ($block->getField() === '') {
-                $conditions[] = sprintf('("%s")', $block->getTerm());
+            $block = $this->parseBlock($block);
+            if ($block->getField() === 'parent_classes') {
+                continue;
             }
+
+            $conditions[] = sprintf('("%s")', $block->getTerm());
         }
 
         return $conditions;
