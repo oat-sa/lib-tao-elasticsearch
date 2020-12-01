@@ -56,6 +56,7 @@ class QueryBuilderTest extends TestCase
         $this->sessionServiceMock = $this->createMock(SessionService::class);
         $this->permissionMock = $this->createMock(ReverseRightLookupInterface::class);
         $this->loggerService = $this->createMock(LoggerService::class);
+        $this->user = $this->createMock(User::class);
 
         $this->subject = new QueryBuilder();
         $this->subject->setServiceLocator(
@@ -89,6 +90,49 @@ class QueryBuilderTest extends TestCase
         $result = $this->subject->getSearchParams($queryString, TaoOntology::CLASS_URI_ITEM, 0, 10, '_id', 'DESC');
 
         $this->assertSame($expected, $result);
+    }
+
+    /**
+     * @dataProvider getTypeAndResultQuerie
+     */
+    public function testGetSearchParamsResultsIndex(string $query, string $type, string $resultingQuery)
+    {
+        $this->sessionServiceMock
+            ->method('getCurrentUser')
+            ->willReturn($this->user);
+
+        $this->user
+            ->method('getRoles')
+            ->willReturn([
+                'role'
+            ]);
+
+        $result = $this->subject
+            ->getSearchParams($query, $type, 0, 10, '_id', 'DESC');
+
+        $this->assertEquals($resultingQuery, $result['body']);
+    }
+
+    public function getTypeAndResultQuerie()
+    {
+        return [
+            'Assembled Delivery Type' => [
+                'query_string',
+                TaoOntology::CLASS_URI_ASSEMBLED_DELIVERY,
+                '{"query":{"query_string":{"default_operator":"AND","query":"(\"query_string\")"}},"sort":{"_id":{"order":"DESC"}}}'
+            ],
+            'Item Type' => [
+                'query_string AND parent_classes: "http://www.tao.lu/Ontologies/TAODelivery.rdf#AssembledDelivery"',
+                TaoOntology::CLASS_URI_ITEM,
+                '{"query":{"query_string":{"default_operator":"AND","query":"(\"query_string\") AND (parent_classes:\"http:\/\/www.tao.lu\/Ontologies\/TAODelivery.rdf#AssembledDelivery\") AND (read_access:(\"\" OR \"role\"))"}},"sort":{"_id":{"order":"DESC"}}}'
+
+            ],
+            'Item Type Parent Class' => [
+                'query_string AND parent_classes: "http://www.tao.lu/Ontologies/TAODelivery.rdf#AssembledDelivery"',
+                TaoOntology::CLASS_URI_ASSEMBLED_DELIVERY,
+                '{"query":{"query_string":{"default_operator":"AND","query":"(\"query_string\")"}},"sort":{"_id":{"order":"DESC"}}}'
+            ],
+        ];
     }
 
     public function queryResults(): array
@@ -178,16 +222,15 @@ class QueryBuilderTest extends TestCase
 
     private function createAccessControlMock(): void
     {
-        $user = $this->createMock(User::class);
-        $user->expects($this->once())->method('getIdentifier')->willReturn(
+        $this->user->expects($this->once())->method('getIdentifier')->willReturn(
             'https://tao.docker.localhost/ontologies/tao.rdf#i5f64514f1c36110793759fc28c0105b'
         );
 
         $this->sessionServiceMock->expects($this->once())
             ->method('getCurrentUser')
-            ->willReturn($user);
+            ->willReturn($this->user);
 
-        $user->expects($this->once())
+        $this->user->expects($this->once())
             ->method('getRoles')
             ->willReturn([
                 'http://www.tao.lu/Ontologies/TAOItem.rdf#BackOfficeRole',
