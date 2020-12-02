@@ -147,7 +147,12 @@ class ElasticSearchTest extends TestCase
                     'hits' => [
                         'hits' => [
                             [
-                                '_id' => $documentUri
+                                '_id' => $documentUri,
+                                '_source' => [
+                                    'attr1' => 'attr1 Value',
+                                    'attr2' => 'attr2 Value',
+                                    'attr3' => 'attr3 Value',
+                                ],
                             ]
                         ],
                         'total' => [
@@ -159,7 +164,9 @@ class ElasticSearchTest extends TestCase
 
         $resultSet = $this->sut->query('item', $validType);
 
-        $this->assertEquals(new ResultSet([$documentUri], 1), $resultSet);
+        $this->assertInstanceOf(ResultSet::class, $resultSet);
+        $this->assertCount(1, $resultSet->getArrayCopy());
+        $this->assertCount(4, $resultSet->getArrayCopy()[0]);
     }
 
     public function testQuery_callElasticSearchGenericError(): void
@@ -257,7 +264,7 @@ class ElasticSearchTest extends TestCase
             ->method('indices')
             ->willReturn($indexMock);
 
-        $this->sut->setOption('indexFiles', './vendor/oat-sa/lib-tao-elasticsearch/test/sample/testIndexes.conf.php');
+        $this->sut->setOption('indexFiles', __DIR__ . DIRECTORY_SEPARATOR . 'sample' . DIRECTORY_SEPARATOR . 'testIndexes.conf.php');
 
         $this->sut->createIndexes();
     }
