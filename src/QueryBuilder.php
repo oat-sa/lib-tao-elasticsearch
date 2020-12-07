@@ -32,6 +32,16 @@ class QueryBuilder extends ConfigurableService
 {
     private const READ_ACCESS_FIELD = 'read_access';
 
+    public const STRUCTURE_TO_INDEX_MAP = [
+        'results' => IndexerInterface::DELIVERY_RESULTS_INDEX,
+        'deliveries' => IndexerInterface::DELIVERIES_INDEX,
+        'groups' => IndexerInterface::GROUPS_INDEX,
+        'items' => IndexerInterface::ITEMS_INDEX,
+        'tests' => IndexerInterface::TESTS_INDEX,
+        'TestTaker' => IndexerInterface::TEST_TAKERS_INDEX,
+        'taoMediaManager' => IndexerInterface::ASSETS_INDEX,
+    ];
+
     private const STANDARD_FIELDS = [
         'class',
         'parent_classes',
@@ -165,7 +175,7 @@ class QueryBuilder extends ConfigurableService
 
     private function getIndexByType(string $type): string
     {
-        return IndexerInterface::AVAILABLE_INDEXES[$type] ?? IndexerInterface::UNCLASSIFIEDS_DOCUMENTS_INDEX;
+        return self::STRUCTURE_TO_INDEX_MAP[$type] ?? IndexerInterface::UNCLASSIFIEDS_DOCUMENTS_INDEX;
     }
 
     private function buildCustomConditions(QueryBlock $queryBlock): string
