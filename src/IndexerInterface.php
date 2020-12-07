@@ -44,7 +44,7 @@ interface IndexerInterface
 
     public const AVAILABLE_INDEXES = [
         ResultService::DELIVERY_RESULT_CLASS_URI => self::DELIVERY_RESULTS_INDEX,
-        TaoOntology::CLASS_URI_ASSEMBLED_DELIVERY => self::DELIVERY_RESULTS_INDEX,
+        TaoOntology::CLASS_URI_ASSEMBLED_DELIVERY => self::DELIVERIES_INDEX,
         TaoOntology::CLASS_URI_DELIVERY => self::DELIVERIES_INDEX,
         TaoOntology::CLASS_URI_GROUP => self::GROUPS_INDEX,
         TaoOntology::CLASS_URI_ITEM => self::ITEMS_INDEX,
