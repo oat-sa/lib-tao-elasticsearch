@@ -242,6 +242,15 @@ return [
                         'type' => 'keyword',
                         'ignore_above' => 256,
                     ],
+                    'delivery_execution_start_time' => [
+                        'type' => 'text'
+                    ],
+                    'test_taker_first_name' => [
+                        'type' => 'text'
+                    ],
+                    'test_taker_first_last_name' => [
+                        'type' => 'text'
+                    ],
                 ],
             ],
             'settings' => [

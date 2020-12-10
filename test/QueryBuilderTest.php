@@ -26,6 +26,7 @@ use oat\generis\model\data\permission\PermissionInterface;
 use oat\generis\model\data\permission\ReverseRightLookupInterface;
 use oat\generis\test\MockObject;
 use oat\generis\test\TestCase;
+use oat\oatbox\log\LoggerService;
 use oat\oatbox\session\SessionService;
 use oat\oatbox\user\User;
 use oat\tao\elasticsearch\IndexerInterface;
@@ -38,15 +39,35 @@ class QueryBuilderTest extends TestCase
     /** @var QueryBuilder */
     private $subject;
 
-    /** @var ServiceLocatorInterface|MockObject  */
+    /** @var ServiceLocatorInterface|MockObject */
     private $serviceLocator;
+
+    /** @var SessionService|MockObject */
+    private $sessionServiceMock;
+
+    /** @var PermissionInterface|MockObject */
+    private $permissionMock;
+
+    /** @var LoggerService|MockObject */
+    private $loggerService;
 
     protected function setUp(): void
     {
-        $this->serviceLocator = $this->createMock(ServiceLocatorInterface::class);
+        $this->sessionServiceMock = $this->createMock(SessionService::class);
+        $this->permissionMock = $this->createMock(ReverseRightLookupInterface::class);
+        $this->loggerService = $this->createMock(LoggerService::class);
+        $this->user = $this->createMock(User::class);
 
-        $this->subject = QueryBuilder::create();
-        $this->subject->setServiceLocator($this->serviceLocator);
+        $this->subject = new QueryBuilder();
+        $this->subject->setServiceLocator(
+            $this->getServiceLocatorMock(
+                [
+                    SessionService::SERVICE_ID => $this->sessionServiceMock,
+                    PermissionInterface::SERVICE_ID => $this->permissionMock,
+                    LoggerService::SERVICE_ID => $this->loggerService
+                ]
+            )
+        );
     }
 
     /**
@@ -54,6 +75,8 @@ class QueryBuilderTest extends TestCase
      */
     public function testGetSearchParams(string $queryString, string $body): void
     {
+        $this->createAccessControlMock();
+
         $expected = [
             'index' => 'items',
             'size' => 10,
@@ -69,54 +92,97 @@ class QueryBuilderTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @dataProvider getTypeAndResultQuerie
+     */
+    public function testGetSearchParamsResultsIndex(string $query, string $type, string $resultingQuery)
+    {
+        $this->sessionServiceMock
+            ->method('getCurrentUser')
+            ->willReturn($this->user);
+
+        $this->user
+            ->method('getRoles')
+            ->willReturn([
+                'role'
+            ]);
+
+        $result = $this->subject
+            ->getSearchParams($query, $type, 0, 10, '_id', 'DESC');
+
+        $this->assertEquals($resultingQuery, $result['body']);
+    }
+
+    public function getTypeAndResultQuerie()
+    {
+        return [
+            'Assembled Delivery Type' => [
+                'query_string',
+                TaoOntology::CLASS_URI_ASSEMBLED_DELIVERY,
+                '{"query":{"query_string":{"default_operator":"AND","query":"(\"query_string\")"}},"sort":{"_id":{"order":"DESC"}}}'
+            ],
+            'Item Type' => [
+                'query_string AND parent_classes: "http://www.tao.lu/Ontologies/TAODelivery.rdf#AssembledDelivery"',
+                TaoOntology::CLASS_URI_ITEM,
+                '{"query":{"query_string":{"default_operator":"AND","query":"(\"query_string\") AND (parent_classes:\"http:\/\/www.tao.lu\/Ontologies\/TAODelivery.rdf#AssembledDelivery\") AND (read_access:(\"\" OR \"role\"))"}},"sort":{"_id":{"order":"DESC"}}}'
+
+            ],
+            'Item Type Parent Class' => [
+                'query_string AND parent_classes: "http://www.tao.lu/Ontologies/TAODelivery.rdf#AssembledDelivery"',
+                TaoOntology::CLASS_URI_ASSEMBLED_DELIVERY,
+                '{"query":{"query_string":{"default_operator":"AND","query":"(\"query_string\")"}},"sort":{"_id":{"order":"DESC"}}}'
+            ],
+        ];
+    }
+
     public function queryResults(): array
     {
         return [
             'Simple query' => [
                 'test',
-                '{"query":{"query_string":{"default_operator":"AND","query":"(\"test\")"}},"sort":{"_id":{"order":"DESC"}}}'
+                '{"query":{"query_string":{"default_operator":"AND","query":"(\"test\") AND (read_access:(\"https:\/\/tao.docker.localhost\/ontologies\/tao.rdf#i5f64514f1c36110793759fc28c0105b\" OR \"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#BackOfficeRole\" OR \"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#ItemsManagerRole\"))"}},"sort":{"_id":{"order":"DESC"}}}'
             ],
             'Query specific field' => [
                 'label:test',
-                '{"query":{"query_string":{"default_operator":"AND","query":"(label:\"test\")"}},"sort":{"_id":{"order":"DESC"}}}'
+                '{"query":{"query_string":{"default_operator":"AND","query":"(label:\"test\") AND (read_access:(\"https:\/\/tao.docker.localhost\/ontologies\/tao.rdf#i5f64514f1c36110793759fc28c0105b\" OR \"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#BackOfficeRole\" OR \"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#ItemsManagerRole\"))"}},"sort":{"_id":{"order":"DESC"}}}'
 
             ],
             'Query specific field (variating case)' => [
                 'LaBeL:test',
-                '{"query":{"query_string":{"default_operator":"AND","query":"(label:\"test\")"}},"sort":{"_id":{"order":"DESC"}}}'
+                '{"query":{"query_string":{"default_operator":"AND","query":"(label:\"test\") AND (read_access:(\"https:\/\/tao.docker.localhost\/ontologies\/tao.rdf#i5f64514f1c36110793759fc28c0105b\" OR \"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#BackOfficeRole\" OR \"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#ItemsManagerRole\"))"}},"sort":{"_id":{"order":"DESC"}}}'
 
             ],
             'Query custom field (using underscore)' => [
                 'custom_field:test',
-                'body' => '{"query":{"query_string":{"default_operator":"AND","query":"(HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\" OR SearchTextBox_custom-field:\"test\")"}},"sort":{"_id":{"order":"DESC"}}}',
+                'body' => '{"query":{"query_string":{"default_operator":"AND","query":"(HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\" OR SearchTextBox_custom-field:\"test\") AND (read_access:(\"https:\/\/tao.docker.localhost\/ontologies\/tao.rdf#i5f64514f1c36110793759fc28c0105b\" OR \"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#BackOfficeRole\" OR \"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#ItemsManagerRole\"))"}},"sort":{"_id":{"order":"DESC"}}}',
             ],
             'Query custom field (using dash)' => [
                 'custom-field:test',
-                'body' => '{"query":{"query_string":{"default_operator":"AND","query":"(HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\" OR SearchTextBox_custom-field:\"test\")"}},"sort":{"_id":{"order":"DESC"}}}',
+                'body' => '{"query":{"query_string":{"default_operator":"AND","query":"(HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\" OR SearchTextBox_custom-field:\"test\") AND (read_access:(\"https:\/\/tao.docker.localhost\/ontologies\/tao.rdf#i5f64514f1c36110793759fc28c0105b\" OR \"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#BackOfficeRole\" OR \"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#ItemsManagerRole\"))"}},"sort":{"_id":{"order":"DESC"}}}',
             ],
             'Query custom field (using space)' => [
                 'custom field:test',
-                'body' => '{"query":{"query_string":{"default_operator":"AND","query":"(HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\" OR SearchTextBox_custom-field:\"test\")"}},"sort":{"_id":{"order":"DESC"}}}',
+                'body' => '{"query":{"query_string":{"default_operator":"AND","query":"(HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\" OR SearchTextBox_custom-field:\"test\") AND (read_access:(\"https:\/\/tao.docker.localhost\/ontologies\/tao.rdf#i5f64514f1c36110793759fc28c0105b\" OR \"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#BackOfficeRole\" OR \"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#ItemsManagerRole\"))"}},"sort":{"_id":{"order":"DESC"}}}',
             ],
             'Query logic operator (Uppercase)' => [
                 'label:test AND custom_field:test',
-                '{"query":{"query_string":{"default_operator":"AND","query":"(label:\"test\") AND (HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\" OR SearchTextBox_custom-field:\"test\")"}},"sort":{"_id":{"order":"DESC"}}}',
+                '{"query":{"query_string":{"default_operator":"AND","query":"(label:\"test\") AND (HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\" OR SearchTextBox_custom-field:\"test\") AND (read_access:(\"https:\/\/tao.docker.localhost\/ontologies\/tao.rdf#i5f64514f1c36110793759fc28c0105b\" OR \"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#BackOfficeRole\" OR \"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#ItemsManagerRole\"))"}},"sort":{"_id":{"order":"DESC"}}}',
             ],
             'Query logic operator (Lowercase)' => [
                 'label:test and custom_field:test',
-                '{"query":{"query_string":{"default_operator":"AND","query":"(label:\"test\") AND (HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\" OR SearchTextBox_custom-field:\"test\")"}},"sort":{"_id":{"order":"DESC"}}}',
+                '{"query":{"query_string":{"default_operator":"AND","query":"(label:\"test\") AND (HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\" OR SearchTextBox_custom-field:\"test\") AND (read_access:(\"https:\/\/tao.docker.localhost\/ontologies\/tao.rdf#i5f64514f1c36110793759fc28c0105b\" OR \"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#BackOfficeRole\" OR \"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#ItemsManagerRole\"))"}},"sort":{"_id":{"order":"DESC"}}}',
             ],
             'Query logic operator (Mixed)' => [
                 'label:test aNd custom_field:test',
-                '{"query":{"query_string":{"default_operator":"AND","query":"(label:\"test\") AND (HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\" OR SearchTextBox_custom-field:\"test\")"}},"sort":{"_id":{"order":"DESC"}}}',
+                '{"query":{"query_string":{"default_operator":"AND","query":"(label:\"test\") AND (HTMLArea_custom-field:\"test\" OR TextArea_custom-field:\"test\" OR TextBox_custom-field:\"test\" OR ComboBox_custom-field:\"test\" OR CheckBox_custom-field:\"test\" OR RadioBox_custom-field:\"test\" OR SearchTextBox_custom-field:\"test\") AND (read_access:(\"https:\/\/tao.docker.localhost\/ontologies\/tao.rdf#i5f64514f1c36110793759fc28c0105b\" OR \"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#BackOfficeRole\" OR \"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#ItemsManagerRole\"))"}},"sort":{"_id":{"order":"DESC"}}}',
             ],
             'Query URIs' => [
                 'https://test-act.docker.localhost/ontologies/tao.rdf#i5f200ed20e80a8c259ebe410db7f6a',
-                '{"query":{"query_string":{"default_operator":"AND","query":"(\"https:\/\/test-act.docker.localhost\/ontologies\/tao.rdf#i5f200ed20e80a8c259ebe410db7f6a\")"}},"sort":{"_id":{"order":"DESC"}}}'
+                '{"query":{"query_string":{"default_operator":"AND","query":"(\"https:\/\/test-act.docker.localhost\/ontologies\/tao.rdf#i5f200ed20e80a8c259ebe410db7f6a\") AND (read_access:(\"https:\/\/tao.docker.localhost\/ontologies\/tao.rdf#i5f64514f1c36110793759fc28c0105b\" OR \"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#BackOfficeRole\" OR \"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#ItemsManagerRole\"))"}},"sort":{"_id":{"order":"DESC"}}}'
             ],
             'Query Field with URI' => [
                 'delivery: https://test-act.docker.localhost/ontologies/tao.rdf#i5f200ed20e80a8c259ebe410db7f6a',
-                '{"query":{"query_string":{"default_operator":"AND","query":"(delivery:\"https:\/\/test-act.docker.localhost\/ontologies\/tao.rdf#i5f200ed20e80a8c259ebe410db7f6a\")"}},"sort":{"_id":{"order":"DESC"}}}'
+                '{"query":{"query_string":{"default_operator":"AND","query":"(delivery:\"https:\/\/test-act.docker.localhost\/ontologies\/tao.rdf#i5f200ed20e80a8c259ebe410db7f6a\") AND (read_access:(\"https:\/\/tao.docker.localhost\/ontologies\/tao.rdf#i5f64514f1c36110793759fc28c0105b\" OR \"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#BackOfficeRole\" OR \"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#ItemsManagerRole\"))"}},"sort":{"_id":{"order":"DESC"}}}'
             ],
         ];
     }
@@ -143,10 +209,10 @@ class QueryBuilderTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
-    public function queryResultsWithAccessControl() : array
+    public function queryResultsWithAccessControl(): array
     {
         return [
-           'with user access control and role access control' => [
+            'with user access control and role access control' => [
                 'test',
                 '{"query":{"query_string":{"default_operator":"AND","query":"(\"test\") AND (read_access:(\"https:\/\/tao.docker.localhost\/ontologies\/tao.rdf#i5f64514f1c36110793759fc28c0105b\" OR \"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#BackOfficeRole\" OR \"http:\/\/www.tao.lu\/Ontologies\/TAOItem.rdf#ItemsManagerRole\"))"}},"sort":{"_id":{"order":"DESC"}}}'
 
@@ -156,28 +222,15 @@ class QueryBuilderTest extends TestCase
 
     private function createAccessControlMock(): void
     {
-        $permissionProvider = $this->createMock(ReverseRightLookupInterface::class);
-        $sessionService = $this->createMock(SessionService::class);
-        $user = $this->createMock(User::class);
-        $user->expects($this->once())->method('getIdentifier')->willReturn(
+        $this->user->expects($this->once())->method('getIdentifier')->willReturn(
             'https://tao.docker.localhost/ontologies/tao.rdf#i5f64514f1c36110793759fc28c0105b'
         );
 
-        $this->serviceLocator->expects($this->at(0))
-            ->method('get')
-            ->with(PermissionInterface::SERVICE_ID)
-            ->willReturn($permissionProvider);
-
-        $this->serviceLocator->expects($this->at(1))
-            ->method('get')
-            ->with(SessionService::SERVICE_ID)
-            ->willReturn($sessionService);
-
-        $sessionService->expects($this->once())
+        $this->sessionServiceMock->expects($this->once())
             ->method('getCurrentUser')
-            ->willReturn($user);
+            ->willReturn($this->user);
 
-        $user->expects($this->once())
+        $this->user->expects($this->once())
             ->method('getRoles')
             ->willReturn([
                 'http://www.tao.lu/Ontologies/TAOItem.rdf#BackOfficeRole',

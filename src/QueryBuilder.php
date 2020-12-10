@@ -32,6 +32,16 @@ class QueryBuilder extends ConfigurableService
 {
     private const READ_ACCESS_FIELD = 'read_access';
 
+    public const STRUCTURE_TO_INDEX_MAP = [
+        'results' => IndexerInterface::DELIVERY_RESULTS_INDEX,
+        'deliveries' => IndexerInterface::DELIVERIES_INDEX,
+        'groups' => IndexerInterface::GROUPS_INDEX,
+        'items' => IndexerInterface::ITEMS_INDEX,
+        'tests' => IndexerInterface::TESTS_INDEX,
+        'TestTaker' => IndexerInterface::TEST_TAKERS_INDEX,
+        'taoMediaManager' => IndexerInterface::ASSETS_INDEX,
+    ];
+
     private const STANDARD_FIELDS = [
         'class',
         'parent_classes',
@@ -69,24 +79,8 @@ class QueryBuilder extends ConfigurableService
         $queryString = str_replace(['"', '\''], '', $queryString);
         $queryString = htmlspecialchars_decode($queryString);
         $blocks = preg_split( '/( AND )/i', $queryString);
-        $conditions = [];
         $index = $this->getIndexByType($type);
-
-        foreach ($blocks as $block) {
-            $queryBlock = $this->parseBlock($block);
-
-            if (empty($queryBlock->getField())) {
-                $conditions[] = sprintf('("%s")', $queryBlock->getTerm());
-            } elseif ($this->isStandardField($queryBlock->getField())) {
-                $conditions[] = sprintf('(%s:"%s")', $queryBlock->getField(), $queryBlock->getTerm());
-            } else {
-                $conditions[] = $this->buildCustomConditions($queryBlock);
-            }
-        }
-
-        if ($this->includeAccessData($index)) {
-            $conditions[] = $this->buildAccessConditions();
-        }
+        $conditions = $this->buildConditions($index, $blocks);
 
         $query = [
             'query' => [
@@ -113,6 +107,67 @@ class QueryBuilder extends ConfigurableService
         return $params;
     }
 
+    /**
+     * @param string[] $blocks
+     */
+    private function buildConditions(string $index, array $blocks): array
+    {
+        $conditions = $this->buildConditionsByType($index, $blocks);
+
+        if ($this->includeAccessData($index)) {
+            $conditions[] = $this->buildAccessConditions();
+        }
+
+        return $conditions;
+    }
+
+    /**
+     * Use only simple input
+     * @param string[] $blocks
+     * @return string[]
+     */
+    private function getResultsConditions(array $blocks): array
+    {
+        $conditions = [];
+
+        foreach ($blocks as $block) {
+            $block = $this->parseBlock($block);
+            if ($block->getField() === 'parent_classes') {
+                continue;
+            }
+
+            $conditions[] = sprintf('("%s")', $block->getTerm());
+        }
+
+        return $conditions;
+    }
+
+    private function buildConditionsByType(string $type, array $blocks): array
+    {
+        if ($type === IndexerInterface::DELIVERY_RESULTS_INDEX) {
+            return $this->getResultsConditions($blocks);
+        }
+
+        return $this->getResourceConditions($blocks);
+    }
+
+    private function getResourceConditions($blocks): array
+    {
+        foreach ($blocks as $block) {
+            $queryBlock = $this->parseBlock($block);
+
+            if (empty($queryBlock->getField())) {
+                $conditions[] = sprintf('("%s")', $queryBlock->getTerm());
+            } elseif ($this->isStandardField($queryBlock->getField())) {
+                $conditions[] = sprintf('(%s:"%s")', $queryBlock->getField(), $queryBlock->getTerm());
+            } else {
+                $conditions[] = $this->buildCustomConditions($queryBlock);
+            }
+        }
+
+        return $conditions;
+    }
+
     private function isStandardField(string $field): bool
     {
         return in_array(strtolower($field), self::STANDARD_FIELDS);
@@ -120,7 +175,7 @@ class QueryBuilder extends ConfigurableService
 
     private function getIndexByType(string $type): string
     {
-        return IndexerInterface::AVAILABLE_INDEXES[$type] ?? IndexerInterface::UNCLASSIFIEDS_DOCUMENTS_INDEX;
+        return self::STRUCTURE_TO_INDEX_MAP[$type] ?? IndexerInterface::UNCLASSIFIEDS_DOCUMENTS_INDEX;
     }
 
     private function buildCustomConditions(QueryBlock $queryBlock): string
