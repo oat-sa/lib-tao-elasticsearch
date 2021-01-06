@@ -107,6 +107,31 @@ class QueryBuilder extends ConfigurableService
         return $params;
     }
 
+    public function getAvailableMetadataQuery(string $type)
+    {
+        $query = [
+            'query' => [
+                'query_string' => [
+                        "fields" => [
+                            "TextBox_*", "HTMLArea_*", "TextArea_*", "ComboBox_*","RadioBox_*", "SearchTextBox_*", //Fixme
+                        ],
+                        "query" => '*'
+                    ]
+            ],
+        ];
+
+        $params = [
+            'index' => 'items',
+            'size' => 100,
+            'from' => 0,
+            'client' => ['ignore' => 404],
+            "_source" =>  ["TextBox_*", "HTMLArea_*", "TextArea_*", "ComboBox_*", "CheckBox_*", "RadioBox_*", "SearchTextBox_*"],
+            'body' => json_encode($query)
+        ];
+
+        return $params;
+    }
+
     /**
      * @param string[] $blocks
      */

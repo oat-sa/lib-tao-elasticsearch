@@ -1,0 +1,10 @@
+<?php
+
+
+namespace ;
+
+
+class QueryObject
+{
+
+}

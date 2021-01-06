@@ -85,35 +85,43 @@ class ElasticSearch extends ConfigurableService implements Search
      */
     public function query($queryString, $type, $start = 0, $count = 10, $order = '_id', $dir = 'DESC'): ResultSet
     {
+        if (is_array($queryString) && $this->isQueryBuilderArray($queryString)) {
+            return $this->getMetadataList(
+                $this->getSearchResult(
+                    $this->getQueryBuilder()->getAvailableMetadataQuery($type->getUri())
+                )
+            );
+
+        } else {
+            $query = $this->getQueryBuilder()->getSearchParams($queryString, $type, $start, $count, $order, $dir);
+        }
+
         if ($order == 'id') {
             $order = '_id';
         }
+    }
 
-        try {
-            $query = $this->getQueryBuilder()->getSearchParams($queryString, $type, $start, $count, $order, $dir);
-            $this->getLogger()->debug('Query ', $query);
-
-            return $this->buildResultSet(
-                $this->getClient()->search(
-                    $query
-                )
-            );
-        } catch (\Exception $exception) {
-            switch ($exception->getCode()) {
-                case 400:
-                    $json = json_decode($exception->getMessage(), true);
-                    $message = __(
-                        'There is an error in your search query, system returned: %s',
-                        $json['error']['reason']
-                    );
-                    $this->getLogger()->error($message, [$exception->getMessage()]);
-                    throw new SyntaxException($queryString, $message);
-                default:
-                    $message = 'An unknown error occured during search';
-                    $this->getLogger()->error($message, [$exception->getMessage()]);
-                    throw new SyntaxException($queryString, __($message));
-            }
+    private function getMetadataList(array $data)
+    {
+        $metadataList = [];
+        foreach ($data['hits']['hits'] as $element) {
+            $metadataList = array_merge($metadataList, array_keys($element['_source']));
         }
+        return array_unique($metadataList);
+    }
+
+    private function getSearchResult(array $query): array
+    {
+        try {
+            return $this->getClient()->search($query);
+        } catch (\Exception $exception) {
+            $this->decodeElasticSearchError($exception, $queryString);
+        }
+    }
+
+    private function isQueryBuilderArray(array $queryString)
+    {
+        return isset($queryString['queryType']) && $queryString['queryType'] === 'allMetadata';
     }
 
     /**
@@ -164,6 +172,29 @@ class ElasticSearch extends ConfigurableService implements Search
         );
     }
 
+    /**
+     * @param \Exception $exception
+     * @param string $queryString
+     * @throws SyntaxException
+     */
+    public function decodeElasticSearchError(Exception $exception, string $queryString): void
+    {
+        switch ($exception->getCode()) {
+            case 400:
+                $json = json_decode($exception->getMessage(), true);
+                $message = __(
+                    'There is an error in your search query, system returned: %s',
+                    $json['error']['reason']
+                );
+                $this->getLogger()->error($message, [$exception->getMessage()]);
+                throw new SyntaxException($queryString, $message);
+            default:
+                $message = 'An unknown error occured during search';
+                $this->getLogger()->error($message, [$exception->getMessage()]);
+                throw new SyntaxException($queryString, __($message));
+        }
+    }
+
     private function getGenerisSearch(): GenerisSearch
     {
         return $this->getSubService(GenerisSearch::class);
@@ -179,7 +210,7 @@ class ElasticSearch extends ConfigurableService implements Search
         $total = 0;
         if ($elasticResult && isset($elasticResult['hits'])) {
             foreach ($elasticResult['hits']['hits'] as $document) {
-                $document['_source']['id'] =  $document['_id'];
+                $document['_source']['id'] = $document['_id'];
                 $uris[] = $document['_source'];
             }
             // Starts from Elasticsearch 7.0 the `total` attribute is object with two parameters [value,relation]
