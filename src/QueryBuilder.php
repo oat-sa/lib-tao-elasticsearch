@@ -34,7 +34,7 @@ class QueryBuilder extends ConfigurableService
 
     public const STRUCTURE_TO_INDEX_MAP = [
         'results' => IndexerInterface::DELIVERY_RESULTS_INDEX,
-        'deliveries' => IndexerInterface::DELIVERIES_INDEX,
+        'delivery' => IndexerInterface::DELIVERIES_INDEX,
         'groups' => IndexerInterface::GROUPS_INDEX,
         'items' => IndexerInterface::ITEMS_INDEX,
         'tests' => IndexerInterface::TESTS_INDEX,
