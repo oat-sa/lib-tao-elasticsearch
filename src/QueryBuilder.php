@@ -41,10 +41,10 @@ class QueryBuilder extends ConfigurableService
         'tests' => IndexerInterface::TESTS_INDEX,
         'TestTaker' => IndexerInterface::TEST_TAKERS_INDEX,
         'taoMediaManager' => IndexerInterface::ASSETS_INDEX,
-        PropertyCachingService::PROPERTY_ITEM => PropertyCachingService::PROPERTY_ITEM,
-        PropertyCachingService::PROPERTY_ASSEMBLED_DELIVERY => PropertyCachingService::PROPERTY_ASSEMBLED_DELIVERY,
-        PropertyCachingService::PROPERTY_GROUP => PropertyCachingService::PROPERTY_GROUP,
-        PropertyCachingService::PROPERTY_TEST => PropertyCachingService::PROPERTY_TEST,
+        IndexerInterface::PROPERTY_ITEM => IndexerInterface::PROPERTY_ITEM,
+        IndexerInterface::PROPERTY_ASSEMBLED_DELIVERY => IndexerInterface::PROPERTY_ASSEMBLED_DELIVERY,
+        IndexerInterface::PROPERTY_GROUP => IndexerInterface::PROPERTY_GROUP,
+        IndexerInterface::PROPERTY_TEST => IndexerInterface::PROPERTY_TEST,
     ];
 
     private const STANDARD_FIELDS = [

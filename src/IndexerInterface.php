@@ -24,8 +24,6 @@ namespace oat\tao\elasticsearch;
 use Iterator;
 use oat\tao\model\search\index\IndexDocument;
 use oat\tao\model\TaoOntology;
-use oat\taoAdvancedSearch\model\Cache\PropertyCachingService; //FIXME
-use oat\taoAdvancedSearch\model\Cache\PropertyTreeGenerator; //FIXME
 use oat\taoResultServer\models\classes\ResultService;
 
 /**
@@ -42,6 +40,12 @@ interface IndexerInterface
     public const UNCLASSIFIEDS_DOCUMENTS_INDEX = 'unclassifieds';
     public const ASSETS_INDEX = 'assets';
 
+    //Properties
+    public const PROPERTY_ITEM = 'property_item';
+    public const PROPERTY_ASSEMBLED_DELIVERY = 'property_assembled_delivery';
+    public const PROPERTY_GROUP = 'property_group';
+    public const PROPERTY_TEST = 'property_test';
+
     public const MEDIA_CLASS_URI = 'http://www.tao.lu/Ontologies/TAOMedia.rdf#Media';
 
     public const AVAILABLE_INDEXES = [
@@ -54,10 +58,11 @@ interface IndexerInterface
         TaoOntology::CLASS_URI_SUBJECT => self::TEST_TAKERS_INDEX,
         TaoOntology::CLASS_URI_TEST => self::TESTS_INDEX,
         self::MEDIA_CLASS_URI => self::ASSETS_INDEX,
-        PropertyCachingService::PROPERTY_ITEM => PropertyCachingService::PROPERTY_ITEM,
-        PropertyCachingService::PROPERTY_ASSEMBLED_DELIVERY => PropertyCachingService::PROPERTY_ASSEMBLED_DELIVERY,
-        PropertyCachingService::PROPERTY_GROUP => PropertyCachingService::PROPERTY_GROUP,
-        PropertyCachingService::PROPERTY_TEST => PropertyCachingService::PROPERTY_TEST,
+        //Properties
+        self::PROPERTY_ITEM => self::PROPERTY_ITEM,
+        self::PROPERTY_ASSEMBLED_DELIVERY => self::PROPERTY_ASSEMBLED_DELIVERY,
+        self::PROPERTY_GROUP => self::PROPERTY_GROUP,
+        self::PROPERTY_TEST => self::PROPERTY_TEST,
     ];
     public const INDEXES_WITH_ACCESS_CONTROL = [
         self::ITEMS_INDEX,
