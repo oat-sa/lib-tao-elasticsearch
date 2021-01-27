@@ -24,6 +24,8 @@ namespace oat\tao\elasticsearch;
 use Iterator;
 use oat\tao\model\search\index\IndexDocument;
 use oat\tao\model\TaoOntology;
+use oat\taoAdvancedSearch\model\Cache\PropertyCachingService; //FIXME
+use oat\taoAdvancedSearch\model\Cache\PropertyTreeGenerator; //FIXME
 use oat\taoResultServer\models\classes\ResultService;
 
 /**
@@ -52,6 +54,10 @@ interface IndexerInterface
         TaoOntology::CLASS_URI_SUBJECT => self::TEST_TAKERS_INDEX,
         TaoOntology::CLASS_URI_TEST => self::TESTS_INDEX,
         self::MEDIA_CLASS_URI => self::ASSETS_INDEX,
+        PropertyCachingService::PROPERTY_ITEM => PropertyCachingService::PROPERTY_ITEM,
+        PropertyCachingService::PROPERTY_ASSEMBLED_DELIVERY => PropertyCachingService::PROPERTY_ASSEMBLED_DELIVERY,
+        PropertyCachingService::PROPERTY_GROUP => PropertyCachingService::PROPERTY_GROUP,
+        PropertyCachingService::PROPERTY_TEST => PropertyCachingService::PROPERTY_TEST,
     ];
     public const INDEXES_WITH_ACCESS_CONTROL = [
         self::ITEMS_INDEX,

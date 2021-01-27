@@ -27,6 +27,7 @@ use oat\oatbox\service\ConfigurableService;
 use oat\oatbox\session\SessionService;
 use oat\oatbox\user\User;
 use tao_helpers_Slug;
+use oat\taoAdvancedSearch\model\Cache\PropertyCachingService;
 
 class QueryBuilder extends ConfigurableService
 {
@@ -40,6 +41,10 @@ class QueryBuilder extends ConfigurableService
         'tests' => IndexerInterface::TESTS_INDEX,
         'TestTaker' => IndexerInterface::TEST_TAKERS_INDEX,
         'taoMediaManager' => IndexerInterface::ASSETS_INDEX,
+        PropertyCachingService::PROPERTY_ITEM => PropertyCachingService::PROPERTY_ITEM,
+        PropertyCachingService::PROPERTY_ASSEMBLED_DELIVERY => PropertyCachingService::PROPERTY_ASSEMBLED_DELIVERY,
+        PropertyCachingService::PROPERTY_GROUP => PropertyCachingService::PROPERTY_GROUP,
+        PropertyCachingService::PROPERTY_TEST => PropertyCachingService::PROPERTY_TEST,
     ];
 
     private const STANDARD_FIELDS = [
@@ -146,6 +151,10 @@ class QueryBuilder extends ConfigurableService
     {
         if ($type === IndexerInterface::DELIVERY_RESULTS_INDEX) {
             return $this->getResultsConditions($blocks);
+        }
+
+        if (str_contains($type, 'property_')) {
+            return $blocks;
         }
 
         return $this->getResourceConditions($blocks);
