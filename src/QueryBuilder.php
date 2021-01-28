@@ -150,10 +150,6 @@ class QueryBuilder extends ConfigurableService
             return $this->getResultsConditions($blocks);
         }
 
-        if (str_contains($type, 'property_')) {
-            return $blocks;
-        }
-
         return $this->getResourceConditions($blocks);
     }
 
