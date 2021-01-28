@@ -58,11 +58,7 @@ interface IndexerInterface
         TaoOntology::CLASS_URI_SUBJECT => self::TEST_TAKERS_INDEX,
         TaoOntology::CLASS_URI_TEST => self::TESTS_INDEX,
         self::MEDIA_CLASS_URI => self::ASSETS_INDEX,
-        //Properties
-        self::PROPERTY_ITEM => self::PROPERTY_ITEM,
-        self::PROPERTY_ASSEMBLED_DELIVERY => self::PROPERTY_ASSEMBLED_DELIVERY,
-        self::PROPERTY_GROUP => self::PROPERTY_GROUP,
-        self::PROPERTY_TEST => self::PROPERTY_TEST,
+        'property-list' => 'property-list'
     ];
     public const INDEXES_WITH_ACCESS_CONTROL = [
         self::ITEMS_INDEX,
