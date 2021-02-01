@@ -39,6 +39,7 @@ interface IndexerInterface
     public const GROUPS_INDEX = 'groups';
     public const UNCLASSIFIEDS_DOCUMENTS_INDEX = 'unclassifieds';
     public const ASSETS_INDEX = 'assets';
+    public const PROPERTY_LIST = 'property-list';
 
     public const MEDIA_CLASS_URI = 'http://www.tao.lu/Ontologies/TAOMedia.rdf#Media';
 
@@ -52,6 +53,7 @@ interface IndexerInterface
         TaoOntology::CLASS_URI_SUBJECT => self::TEST_TAKERS_INDEX,
         TaoOntology::CLASS_URI_TEST => self::TESTS_INDEX,
         self::MEDIA_CLASS_URI => self::ASSETS_INDEX,
+        self::PROPERTY_LIST => self::PROPERTY_LIST
     ];
     public const INDEXES_WITH_ACCESS_CONTROL = [
         self::ITEMS_INDEX,
