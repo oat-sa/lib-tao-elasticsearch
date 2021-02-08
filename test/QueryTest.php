@@ -30,14 +30,14 @@ class QueryTest extends TestCase
 {
     public function testGetters(): void
     {
-        $queryBlock = (new Query('indexName'))
+        $query = (new Query('indexName'))
             ->setOffset(7)
             ->setLimit(777)
             ->addCondition('a:"b"');
 
-        $this->assertSame('indexName', $queryBlock->getIndex());
-        $this->assertSame(7, $queryBlock->getOffset());
-        $this->assertSame(777, $queryBlock->getLimit());
-        $this->assertSame('a:"b"', $queryBlock->getQueryString());
+        $this->assertSame('indexName', $query->getIndex());
+        $this->assertSame(7, $query->getOffset());
+        $this->assertSame(777, $query->getLimit());
+        $this->assertSame('a:"b"', $query->getQueryString());
     }
 }

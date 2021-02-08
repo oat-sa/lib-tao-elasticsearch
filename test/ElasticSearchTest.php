@@ -28,7 +28,9 @@ use oat\generis\test\TestCase;
 use oat\oatbox\log\LoggerService;
 use oat\tao\elasticsearch\ElasticSearch;
 use oat\tao\elasticsearch\IndexUpdater;
+use oat\tao\elasticsearch\Query;
 use oat\tao\elasticsearch\QueryBuilder;
+use oat\tao\elasticsearch\SearchResult;
 use oat\tao\model\search\ResultSet;
 use oat\tao\model\search\strategy\GenerisSearch;
 use oat\tao\model\search\SyntaxException;
@@ -114,6 +116,38 @@ class ElasticSearchTest extends TestCase
             $this->sut,
             $this->client
         );
+    }
+
+    public function testSearch(): void
+    {
+        $query = [
+            'index' => 'indexName',
+            'body' => json_encode(
+                [
+                    'query' => [
+                        'query_string' => [
+                            "default_operator" => "AND",
+                            "query" => 'a:"b"'
+                        ]
+                    ],
+                    "size" => 777,
+                    "from" => 7,
+                    "sort" => [],
+                ]
+            )
+        ];
+        
+        $this->client
+            ->method('search')
+            ->with($query)
+            ->willReturn([]);
+
+        $query = (new Query('indexName'))
+            ->setOffset(7)
+            ->setLimit(777)
+            ->addCondition('a:"b"');
+
+        $this->assertEquals(new SearchResult([], 0), $this->sut->search($query));
     }
 
     public function testQuery_callGenerisSearchCaseClassIsNotSupported(): void
