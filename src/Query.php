@@ -24,6 +24,8 @@ namespace oat\tao\elasticsearch;
 
 class Query
 {
+    private const LIMIT_DEFAULT = 1000;
+
     /** @var string */
     private $index;
 
@@ -40,7 +42,7 @@ class Query
     {
         $this->index = $index;
         $this->offset = 0;
-        $this->limit = 1000;
+        $this->limit = self::LIMIT_DEFAULT;
         $this->conditions = [];
     }
 
@@ -81,7 +83,7 @@ class Query
     public function addCondition(string $condition): self
     {
         $this->conditions[] = $condition;
-        
+
         return $this;
     }
 }
