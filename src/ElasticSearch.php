@@ -148,7 +148,7 @@ class ElasticSearch extends ConfigurableService implements Search, SearchInterfa
     /**
      * (Re)Generate the index for a given resource
      * @param IndexIterator|array $documents
-     * @return integer
+     * @throws ClientErrorResponseException
      */
     public function index($documents = []): int
     {
