@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
- * Copyright (c) 2018 (original work) Open Assessment Technologies SA;
+ * Copyright (c) 2018-2021 (original work) Open Assessment Technologies SA;
  */
 
 declare(strict_types=1);
@@ -37,13 +37,42 @@ use oat\oatbox\service\ConfigurableService;
  * @package oat\tao\elasticsearch
  * @todo Rename to ElasticSearchService according to our best practises
  */
-class ElasticSearch extends ConfigurableService implements Search
+class ElasticSearch extends ConfigurableService implements Search, SearchInterface
 {
     /** @var \Elasticsearch\Client */
     private $client;
 
     /** @var QueryBuilder */
     private $queryBuilder;
+
+    public function search(Query $query): SearchResult
+    {
+        $query = [
+            'index' => $query->getIndex(),
+            'body' => json_encode(
+                [
+                    'query' => [
+                        'query_string' => [
+                            'default_operator' => 'AND',
+                            'query' => $query->getQueryString()
+                        ]
+                    ],
+                    'size' => $query->getLimit(),
+                    'from' => $query->getOffset(),
+                    'sort' => [],
+                ]
+            )
+        ];
+
+        $results = $this->buildResultSet(
+            $this->getClient()->search($query)
+        );
+
+        return new SearchResult(
+            $results->getArrayCopy(),
+            $results->getTotalCount()
+        );
+    }
 
     /** @return \Elasticsearch\Client */
     protected function getClient(): Client
@@ -179,7 +208,7 @@ class ElasticSearch extends ConfigurableService implements Search
         $total = 0;
         if ($elasticResult && isset($elasticResult['hits'])) {
             foreach ($elasticResult['hits']['hits'] as $document) {
-                $document['_source']['id'] =  $document['_id'];
+                $document['_source']['id'] = $document['_id'];
                 $uris[] = $document['_source'];
             }
             // Starts from Elasticsearch 7.0 the `total` attribute is object with two parameters [value,relation]
