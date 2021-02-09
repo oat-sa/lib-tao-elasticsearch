@@ -126,13 +126,13 @@ class ElasticSearchTest extends TestCase
                 [
                     'query' => [
                         'query_string' => [
-                            "default_operator" => "AND",
-                            "query" => 'a:"b"'
+                            'default_operator' => 'AND',
+                            'query' => 'a:"b"'
                         ]
                     ],
-                    "size" => 777,
-                    "from" => 7,
-                    "sort" => [],
+                    'size' => 777,
+                    'from' => 7,
+                    'sort' => [],
                 ]
             )
         ];

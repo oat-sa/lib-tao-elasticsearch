@@ -53,13 +53,13 @@ class ElasticSearch extends ConfigurableService implements Search, SearchInterfa
                 [
                     'query' => [
                         'query_string' => [
-                            "default_operator" => "AND",
-                            "query" => $query->getQueryString()
+                            'default_operator' => 'AND',
+                            'query' => $query->getQueryString()
                         ]
                     ],
-                    "size" => $query->getLimit(),
-                    "from" => $query->getOffset(),
-                    "sort" => [],
+                    'size' => $query->getLimit(),
+                    'from' => $query->getOffset(),
+                    'sort' => [],
                 ]
             )
         ];
