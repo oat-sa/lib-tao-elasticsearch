@@ -115,12 +115,6 @@ class InitElasticSearch extends InstallAction
             $config['hosts'][0]['pass'] = array_shift($params);
         }
 
-        $taoVersion = $this->getServiceLocator()->get(\common_ext_ExtensionsManager::SERVICE_ID)->getInstalledVersion('tao');
-
-        if (version_compare($taoVersion, '7.8.0') < 0) {
-            return new Report(Report::TYPE_ERROR, 'Requires Tao 7.8.0 or higher');
-        }
-
         $oldSearchService = $this->getServiceLocator()->get(Search::SERVICE_ID);
         $oldSettings = $oldSearchService->getOptions();
 
