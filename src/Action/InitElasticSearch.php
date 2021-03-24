@@ -99,7 +99,7 @@ class InitElasticSearch extends InstallAction
 
         if (count($params) > 0) {
             $config['hosts'] = [];
-            $hosts = parse_url(array_shift($params));
+            $hosts = $this->parseConnectionParams($params);
             $config['hosts'][] = $hosts;
         }
 
@@ -140,5 +140,15 @@ class InitElasticSearch extends InstallAction
         }
 
         return $report;
+    }
+
+    private function parseConnectionParams(array &$params)
+    {
+        $parsed = parse_url(array_shift($params));
+        if (is_array($params) && !isset($parsed['host'])) {
+            $parsed['host'] = $parsed['path'] ?? null;
+            unset($parsed['path']);
+        }
+        return $parsed;
     }
 }
