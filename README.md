@@ -2,7 +2,7 @@
 
 Elastic Search engine
 
-###Install:
+### Install:
 
 ##### Cli script based approach
 ```
@@ -75,7 +75,7 @@ where `indexFiles` contains the absolute path to the declaration, sample provide
 ``` 
  
 
-####Setting Up:
+#### Setting Up:
 ```
 Add your elasticsearch host to the config/tao/search.conf.php like 
     'hosts' => array(
