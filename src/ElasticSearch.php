@@ -14,16 +14,20 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
- * Copyright (c) 2018 (original work) Open Assessment Technologies SA;
+ * Copyright (c) 2018-2021 (original work) Open Assessment Technologies SA;
  */
+
+declare(strict_types=1);
 
 namespace oat\tao\elasticsearch;
 
 use ArrayIterator;
+use Elasticsearch\Client;
 use Elasticsearch\ClientBuilder;
 use Iterator;
 use oat\tao\model\search\index\IndexIterator;
 use oat\tao\model\search\Search;
+use oat\tao\model\search\strategy\GenerisSearch;
 use oat\tao\model\search\SyntaxException;
 use oat\tao\model\search\ResultSet;
 use oat\oatbox\service\ConfigurableService;
@@ -33,33 +37,69 @@ use oat\oatbox\service\ConfigurableService;
  * @package oat\tao\elasticsearch
  * @todo Rename to ElasticSearchService according to our best practises
  */
-class ElasticSearch extends ConfigurableService implements Search
+class ElasticSearch extends ConfigurableService implements Search, SearchInterface
 {
-    /**
-     * @var \Elasticsearch\Client
-     */
+    /** @var \Elasticsearch\Client */
     private $client;
 
-    /**
-     * @return \Elasticsearch\Client
-     */
-    protected function getClient()
+    /** @var QueryBuilder */
+    private $queryBuilder;
+
+    public function search(Query $query): SearchResult
+    {
+        $query = [
+            'index' => $query->getIndex(),
+            'body' => json_encode(
+                [
+                    'query' => [
+                        'query_string' => [
+                            'default_operator' => 'AND',
+                            'query' => $query->getQueryString()
+                        ]
+                    ],
+                    'size' => $query->getLimit(),
+                    'from' => $query->getOffset(),
+                    'sort' => [],
+                ]
+            )
+        ];
+
+        $results = $this->buildResultSet(
+            $this->getClient()->search($query)
+        );
+
+        return new SearchResult(
+            $results->getArrayCopy(),
+            $results->getTotalCount()
+        );
+    }
+
+    /** @return \Elasticsearch\Client */
+    protected function getClient(): Client
     {
         if (is_null($this->client)) {
             $this->client = ClientBuilder::create()
-            ->setHosts($this->getOptions()['hosts'])
-            ->build();
+                ->setHosts($this->getOption('hosts'))
+                ->build();
         }
 
         return $this->client;
     }
 
-    /**
-     * @return ElasticSearchIndexer
-     */
-    protected function getIndexer()
+
+    /** @return QueryBuilder */
+    protected function getQueryBuilder(): QueryBuilder
     {
-        return new ElasticSearchIndexer($this->getClient(), 'documents', 'document');
+        if (is_null($this->queryBuilder)) {
+            $this->queryBuilder = $this->getServiceLocator()->get(QueryBuilder::class);
+        }
+
+        return $this->queryBuilder;
+    }
+
+    protected function getIndexer(): ElasticSearchIndexer
+    {
+        return new ElasticSearchIndexer($this->getClient(), $this->getLogger());
     }
 
     /**
@@ -72,28 +112,35 @@ class ElasticSearch extends ConfigurableService implements Search
      * @return ResultSet
      * @throws SyntaxException
      */
-    public function query($queryString, $type, $start = 0, $count = 10, $order = '_id', $dir = 'DESC')
+    public function query($queryString, $type, $start = 0, $count = 10, $order = '_id', $dir = 'DESC'): ResultSet
     {
         if ($order == 'id') {
             $order = '_id';
         }
 
         try {
+            $query = $this->getQueryBuilder()->getSearchParams($queryString, $type, $start, $count, $order, $dir);
+            $this->getLogger()->debug('Query ', $query);
+
             return $this->buildResultSet(
                 $this->getClient()->search(
-                    $this->getSearchParams($queryString, $type, $start, $count, $order, $dir)
+                    $query
                 )
             );
-        } catch (\Exception $e) {
-            switch ($e->getCode()) {
+        } catch (\Exception $exception) {
+            switch ($exception->getCode()) {
                 case 400:
-                    $json = json_decode($e->getMessage(), true);
-                    throw new SyntaxException(
-                        $queryString,
-                        __('There is an error in your search query, system returned: %s', $json['error']['reason'])
+                    $json = json_decode($exception->getMessage(), true);
+                    $message = __(
+                        'There is an error in your search query, system returned: %s',
+                        $json['error']['reason']
                     );
+                    $this->getLogger()->error($message, [$exception->getMessage()]);
+                    throw new SyntaxException($queryString, $message);
                 default:
-                    throw new SyntaxException($queryString, __('An unknown error occured during search'));
+                    $message = 'An unknown error occured during search';
+                    $this->getLogger()->error($message, [$exception->getMessage()]);
+                    throw new SyntaxException($queryString, __($message));
             }
         }
     }
@@ -103,7 +150,7 @@ class ElasticSearch extends ConfigurableService implements Search
      * @param IndexIterator|array $documents
      * @return integer
      */
-    public function index($documents = [])
+    public function index($documents = []): int
     {
         $documents = $documents instanceof Iterator
             ? $documents
@@ -112,153 +159,64 @@ class ElasticSearch extends ConfigurableService implements Search
         return $this->getIndexer()->buildIndex($documents);
     }
 
-    /**
-     * @param $resourceId
-     * @return bool
-     */
-    public function remove($resourceId)
+    public function remove($resourceId): bool
     {
-        return $this->getIndexer()->deleteIndex($resourceId);
+        return $this->getIndexer()->deleteDocument($resourceId);
     }
 
-    /**
-     * @return bool
-     */
-    public function supportCustomIndex()
+    public function supportCustomIndex(): bool
     {
         return true;
     }
 
-    /**
-     * @return bool
-     */
-    public function settingUpIndexes()
+    public function createIndexes(): void
     {
-        $this->getClient()->indices()->create([
-            'index' => $this->getIndexer()->getIndex(),
-            'body' => [
-                'settings' => $this->getOption('settings'),
-                'mappings' => $this->getMappings()
-            ]
-        ]);
-
-        return true;
-    }
-
-    /**
-     * @return array
-     */
-    protected function getMappings()
-    {
-        return [$this->getIndexer()->getType() => [
-            'dynamic_templates' => [[
-                'analysed_string_template' => [
-                    'path_match' => '*',
-                    'mapping' => [
-                        'type' => 'text',
-                        'analyzer' => 'autocomplete',
-                        'search_analyzer' => 'standard'
-                    ]
-                ]
-            ]]
-        ]];
-    }
-
-    /**
-     * @return array
-     */
-    public function flush()
-    {
-        return $this->getClient()->indices()->delete([
-            'index' => $this->getIndexer()->getIndex(),
-            'client' => [
-                'ignore' => 404
-            ]
-        ]);
-    }
-
-    /**
-     * @param string $queryString
-     * @param string $type
-     * @param int $start
-     * @param int $count
-     * @param $order
-     * @param $dir
-     * @return array
-     */
-    protected function getSearchParams($queryString, $type, $start, $count, $order, $dir)
-    {
-        $parts = explode(' ', htmlspecialchars_decode($queryString));
-
-        foreach ($parts as $key => $part) {
-            $matches = [];
-            $part = $this->updateIfUri($part);
-            if (preg_match('/^([^a-z_]*)([a-z_]+):(.*)/', $part, $matches) === 1) {
-                list($fullstring, $prefix, $fieldname, $value) = $matches;
-                $value = $this->updateIfUri($value);
-                if ($fieldname) {
-                    $parts[$key] = $prefix . $fieldname . ':' . str_replace(':', '\\:', $value);
-                }
-            }
+        $indexFiles = $this->getOption('indexFiles', '');
+        if ($indexFiles && is_readable($indexFiles)) {
+            $indexes = require $indexFiles;
         }
-        $queryString = implode(' ', $parts);
-        $queryString = (strlen($queryString) == 0 ? '' : '(' . $queryString . ') AND ')
-            .'type:' . str_replace(':', '\\:', '"'.$type.'"');
 
-        $query = [
-            'query' => [
-                'query_string' =>
-                    [
-                        "default_operator" => "AND",
-                        "query" => $queryString
-                    ]
-            ],
-            'sort' => [$order => ['order' => $dir]]
-        ];
+        foreach ($indexes as $index) {
+            $this->getClient()->indices()->create($index);
+        }
+    }
 
-        $params = [
-            "index" => $this->getIndexer()->getIndex(),
-            "type" => $this->getIndexer()->getType(),
-            "size" => $count,
-            "from" => $start,
-            "client" => [ "ignore" => 404 ],
-            "body" => json_encode($query)
-        ];
+    public function flush(): array
+    {
+        return $this->getClient()->indices()->delete(
+            [
+                'index' => implode(',', IndexerInterface::AVAILABLE_INDEXES),
+                'client' => [
+                    'ignore' => 404
+                ]
+            ]
+        );
+    }
 
-        return $params;
+    private function getGenerisSearch(): GenerisSearch
+    {
+        return $this->getSubService(GenerisSearch::class);
     }
 
     /**
      * @param array $elasticResult
      * @return ResultSet
      */
-    protected function buildResultSet($elasticResult = [])
+    protected function buildResultSet($elasticResult = []): ResultSet
     {
         $uris = [];
         $total = 0;
         if ($elasticResult && isset($elasticResult['hits'])) {
             foreach ($elasticResult['hits']['hits'] as $document) {
-                $uris[] = $document['_id'];
+                $document['_source']['id'] = $document['_id'];
+                $uris[] = $document['_source'];
             }
             // Starts from Elasticsearch 7.0 the `total` attribute is object with two parameters [value,relation]
             $total = is_array($elasticResult['hits']['total'])
                 ? $elasticResult['hits']['total']['value']
                 : $elasticResult['hits']['total'];
         }
-        $uris = array_unique($uris);
 
         return new ResultSet($uris, $total);
-    }
-
-    /**
-     * @param $query
-     * @return string
-     */
-    protected function updateIfUri($query)
-    {
-        if (\common_Utils::isUri($query)) {
-            $query = '"'.$query.'"';
-        }
-        return $query;
     }
 }

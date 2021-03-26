@@ -17,10 +17,14 @@
  * Copyright (c) 2018 (original work) Open Assessment Technologies SA;
  */
 
+declare(strict_types=1);
+
 namespace oat\tao\elasticsearch;
 
-use Iterator;
 use Elasticsearch\Client;
+use Psr\Log\LoggerInterface;
+use RuntimeException;
+use Iterator;
 use oat\tao\model\search\index\IndexDocument;
 
 /**
@@ -29,98 +33,97 @@ use oat\tao\model\search\index\IndexDocument;
  */
 class ElasticSearchIndexer implements IndexerInterface
 {
-    const INDEXING_BLOCK_SIZE = 100;
+    private const INDEXING_BLOCK_SIZE = 100;
 
-    /** @var Client|null  */
-    private $client = null;
+    /** @var Client */
+    private $client;
 
-    /** @var string */
-    private $index;
+    /** @var LoggerInterface */
+    private $logger;
 
-    /** @var string */
-    private $type;
-
-    /**
-     * ElasticSearchIndexer constructor.
-     * @param Client $client
-     * @param string $index
-     * @param string $type
-     */
-    public function __construct(Client $client, $index = 'documents', $type = 'document')
+    public function __construct(Client $client, LoggerInterface $logger)
     {
         $this->client = $client;
-        $this->index = $index;
-        $this->type = $type;
+        $this->logger = $logger;
     }
 
-    /**
-     * @return string
-     */
-    public function getIndex()
-    {
-        return $this->index;
-    }
-
-    /**
-     * @return string
-     */
-    public function getType()
-    {
-        return $this->type;
-    }
-
-    /**
-     * @return Client|null
-     */
-    protected function getClient()
+    protected function getClient(): Client
     {
         return $this->client;
     }
 
+    public function getIndexNameByDocument(IndexDocument $document): string
+    {
+        $documentBody = $document->getBody();
+
+        if (!isset($documentBody['type'])) {
+            throw new RuntimeException('type property is undefined on the document');
+        }
+
+        $documentType = is_string($documentBody['type']) ? [$documentBody['type']] : $documentBody['type'];
+
+        foreach (self::AVAILABLE_INDEXES as $ontology => $indexName) {
+            if (in_array($ontology, $documentType)) {
+                return $indexName;
+            }
+        }
+
+        return self::UNCLASSIFIEDS_DOCUMENTS_INDEX;
+    }
+
     /**
      * @param Iterator $documents
-     * @return int
+     * @return int The number of indexed documents
      */
-    public function buildIndex(Iterator $documents)
+    public function buildIndex(Iterator $documents): int
     {
         $count = 0;
+        $blockSize = 0;
+        $params = [];
+
         while ($documents->valid()) {
-            $blockSize = 0;
-            $params = ['body' => []];
+            /** @var IndexDocument $document */
+            $document = $documents->current();
 
-            while ($documents->valid() && $blockSize < self::INDEXING_BLOCK_SIZE) {
-                /** @var IndexDocument $document */
-                $document = $documents->current();
+            // First step we trying to create document. If is exist, then skip this step
+            $indexName = $this->getIndexNameByDocument($document);
 
-                // First step we trying to create document. If is exist, then skip this step
-                $params['body'][] = [
-                    'create' => [
-                        '_index' => $this->getIndex(),
-                        '_type' => $this->getType(),
-                        '_id' => $document->getId()
-                    ]
-                ];
+            $this->logger->info('indexname:' . $indexName);
 
-                $params['body'][] = $document->getBody();
+            if ($indexName === self::UNCLASSIFIEDS_DOCUMENTS_INDEX) {
+                $this->logger->info(sprintf('There is no proper index for the document "%s"', $document->getId()));
 
-                // Trying to update document
-                $params['body'][] = [
-                    'update' => [
-                        '_index' => $this->getIndex(),
-                        '_type' => $this->getType(),
-                        '_id' => $document->getId()
-                    ]
-                ];
-
-                $params['body'][]['doc'] = $document->getBody();
                 $documents->next();
-                $blockSize++;
+                continue;
             }
-            if ($blockSize > 0) {
-                $responses = $this->client->bulk($params);
+
+            $this->logger->info(sprintf('adding document "%s" to be indexed', $document->getId()));
+
+            $params = $this->extendBatch('delete', $indexName, $document, $params);
+            $params = $this->extendBatch('create', $indexName, $document, $params);
+            $params = $this->extendBatch('update', $indexName, $document, $params);
+
+            $documents->next();
+
+            $blockSize++;
+
+            if ($blockSize === self::INDEXING_BLOCK_SIZE) {
+                $clientResponse = $this->client->bulk($params);
+
+                $this->logger->debug('client response: '. json_encode($clientResponse));
+
                 $count += $blockSize;
-                unset($responses);
+                $blockSize = 0;
+                $params = [];
             }
+        }
+
+        if ($blockSize > 0) {
+            $clientResponse = $this->client->bulk($params);
+
+            $this->logger->debug('client response: '. json_encode($clientResponse));
+
+            $count += $blockSize;
         }
 
         return $count;
@@ -130,14 +133,14 @@ class ElasticSearchIndexer implements IndexerInterface
      * @param $id
      * @return bool
      */
-    public function deleteIndex($id)
+    public function deleteDocument($id): bool
     {
         $document = $this->searchResourceByIds([$id]);
 
         if ($document) {
             $deleteParams = [
+                'type' => '_doc',
                 'index' => $document['_index'],
-                'type' => $document['_type'],
                 'id' => $document['_id']
             ];
             $this->getClient()->delete($deleteParams);
@@ -149,17 +152,16 @@ class ElasticSearchIndexer implements IndexerInterface
     }
 
     /**
-     * @param array  $ids
+     * @param array $ids
      * @param string $type
      * @return array
      */
-    public function searchResourceByIds($ids = [], $type = 'document')
+    public function searchResourceByIds($ids = [])
     {
         $searchParams = [
             'body' => [
                 'query' => [
                     'ids' => [
-                        'type' => $type,
                         'values' => $ids
                     ]
                 ]
@@ -176,5 +178,40 @@ class ElasticSearchIndexer implements IndexerInterface
         }
 
         return $document;
+    }
+
+    /**
+     * @param string $indexName
+     * @param IndexDocument $document
+     * @param array $params
+     *
+     * @return array
+     */
+    private function extendBatch(string $action, string $indexName, IndexDocument $document, array $params): array
+    {
+        $params['body'][] = [
+            $action => [
+                '_index' => $indexName,
+                '_id' => $document->getId()
+            ]
+        ];
+
+        if ('delete' === $action) {
+            return $params;
+        }
+
+        $body = array_merge(
+            $document->getBody(),
+            (array)$document->getDynamicProperties(),
+            (array)$document->getAccessProperties()
+        );
+
+        if ($action === 'update') {
+            $body = ['doc' => $body];
+        }
+
+        $params['body'][] = $body;
+
+        return $params;
     }
 }

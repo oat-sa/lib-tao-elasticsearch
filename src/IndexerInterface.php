@@ -17,46 +17,83 @@
  * Copyright (c) 2018 (original work) Open Assessment Technologies SA;
  */
 
+declare(strict_types=1);
+
 namespace oat\tao\elasticsearch;
 
 use Iterator;
+use oat\tao\model\search\index\IndexDocument;
+use oat\tao\model\TaoOntology;
+use oat\taoResultServer\models\classes\ResultService;
 
 /**
  * Interface IndexerInterface
  */
 interface IndexerInterface
 {
-    /**
-     * Returns name of current using index
-     * @return mixed
-     */
-    public function getIndex();
+    public const ITEMS_INDEX = 'items';
+    public const TESTS_INDEX = 'tests';
+    public const TEST_TAKERS_INDEX = 'test-takers';
+    public const DELIVERIES_INDEX = 'deliveries';
+    public const DELIVERY_RESULTS_INDEX = 'delivery-results';
+    public const GROUPS_INDEX = 'groups';
+    public const UNCLASSIFIEDS_DOCUMENTS_INDEX = 'unclassifieds';
+    public const ASSETS_INDEX = 'assets';
+    public const PROPERTY_LIST = 'property-list';
+
+    public const MEDIA_CLASS_URI = 'http://www.tao.lu/Ontologies/TAOMedia.rdf#Media';
+
+    public const AVAILABLE_INDEXES = [
+        ResultService::DELIVERY_RESULT_CLASS_URI => self::DELIVERY_RESULTS_INDEX,
+        TaoOntology::CLASS_URI_ASSEMBLED_DELIVERY => self::DELIVERIES_INDEX,
+        TaoOntology::CLASS_URI_DELIVERY => self::DELIVERIES_INDEX,
+        TaoOntology::CLASS_URI_GROUP => self::GROUPS_INDEX,
+        TaoOntology::CLASS_URI_ITEM => self::ITEMS_INDEX,
+        TaoOntology::CLASS_URI_RESULT => self::DELIVERIES_INDEX,
+        TaoOntology::CLASS_URI_SUBJECT => self::TEST_TAKERS_INDEX,
+        TaoOntology::CLASS_URI_TEST => self::TESTS_INDEX,
+        self::MEDIA_CLASS_URI => self::ASSETS_INDEX,
+        self::PROPERTY_LIST => self::PROPERTY_LIST
+    ];
+    public const INDEXES_WITH_ACCESS_CONTROL = [
+        self::ITEMS_INDEX,
+        self::TESTS_INDEX,
+        self::TEST_TAKERS_INDEX
+    ];
 
     /**
-     * Returns name if current using type
-     * @return mixed
+     * Returns name of current using index
+     *
+     * @throws \Throwable
+     *
+     * @return string
      */
-    public function getType();
+    public function getIndexNameByDocument(IndexDocument $document): string;
 
     /**
      * Builds index for a given resources
+     *
      * @param Iterator $resources
-     * @return mixed
+     *
+     * @return int
      */
-    public function buildIndex(Iterator $resources);
+    public function buildIndex(Iterator $resources): int;
 
     /**
      * Deletes data from index for a resources with a given id
+     *
      * @param $id
-     * @return mixed
+     *
+     * @return bool
      */
-    public function deleteIndex($id);
+    public function deleteDocument($id): bool;
 
     /**
      * Searches and returns resources that matches a given list of identifiers
+     *
      * @param $ids array List of identifiers
-     * @param $type string Type of resources
+     *
      * @return mixed
      */
-    public function searchResourceByIds($ids, $type);
+    public function searchResourceByIds($ids);
 }
