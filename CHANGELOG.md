@@ -1,16 +1,10 @@
 CHANGELOG
 =========
 
-1.4.0
------
-- Added seedable installation support 
-
-1.3.0
------
-- lib for `elasticsearch` bumped to next major version
-
 1.2.0
 -----
+- Added seedable installation support 
+- lib for `elasticsearch` bumped to next major version
 - README.md updated with indexing script
 - Class properties automatically indexed
 - Created separated indexes for Items, Tests, Test-Takers, Groups and Deliveries
