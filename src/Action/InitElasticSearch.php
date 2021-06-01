@@ -28,6 +28,7 @@ use oat\tao\elasticsearch\Watcher\IndexDocumentFactory;
 use oat\tao\model\search\index\IndexService;
 use oat\tao\elasticsearch\IndexUpdater;
 use oat\tao\model\search\index\IndexUpdaterInterface;
+use oat\tao\model\search\SearchProxy;
 use oat\tao\model\search\strategy\GenerisSearch;
 use oat\tao\model\search\SyntaxException;
 use oat\oatbox\extension\InstallAction;
@@ -125,10 +126,24 @@ class InitElasticSearch extends InstallAction
         $config[GenerisSearch::class] = new GenerisSearch();
 
         try {
-            $search = new ElasticSearch($config);
+            //FIXME
+            //FIXME
+            //FIXME
+            //@FIXME @TODO Initialize in a proper way using taoAdvanceSearch
+            //FIXME
+            //FIXME
+            //FIXME
+            $elasticSearch = new ElasticSearch($config);
 
-            $search->createIndexes();
-            $this->getServiceManager()->register(Search::SERVICE_ID, $search);
+            $this->getServiceManager()->register(ElasticSearch::SERVICE_ID, $elasticSearch);
+
+            $elasticSearch->createIndexes();
+
+            /** @var SearchProxy $searchProxy */
+            $searchProxy = $this->getServiceManager()->get(Search::SERVICE_ID);
+            $searchProxy->setOption('main_search', $elasticSearch); //FIXME
+            
+            $this->getServiceManager()->register(Search::SERVICE_ID, $searchProxy);
 
             $report->add(new Report(Report::TYPE_SUCCESS, __('Switched search service implementation to ElasticSearch')));
 
