@@ -125,11 +125,18 @@ class InitElasticSearch extends InstallAction
             $elasticSearch = new ElasticSearch($config);
             $elasticSearch->createIndexes();
 
-            /** @var SearchProxy $searchProxy */
-            $searchProxy = $this->getServiceManager()->get(SearchProxy::SERVICE_ID);
-            $searchProxy->setOption(SearchProxy::OPTION_ADVANCED_SEARCH_CLASS, $elasticSearch);
-
-            $this->getServiceManager()->register(Search::SERVICE_ID, $searchProxy);
+            /** @var SearchProxy $search */
+            $search = $this->getServiceManager()->get(SearchProxy::SERVICE_ID);
+            
+            if ($search instanceof GenerisSearch) {
+                $this->getServiceManager()->register(Search::SERVICE_ID, $elasticSearch);
+            }
+            
+            if ($search instanceof SearchProxy) {
+                $search->setOption(SearchProxy::OPTION_ADVANCED_SEARCH_CLASS, $elasticSearch);
+                
+                $this->getServiceManager()->register(Search::SERVICE_ID, $search);
+            }
 
             $report->add(new Report(Report::TYPE_SUCCESS, __('Switched search service implementation to ElasticSearch')));
 
