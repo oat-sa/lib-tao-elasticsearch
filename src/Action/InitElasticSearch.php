@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
- * Copyright (c) 2018 (original work) Open Assessment Technologies SA;
+ * Copyright (c) 2018-2021 (original work) Open Assessment Technologies SA;
  */
 
 declare(strict_types=1);
@@ -34,10 +34,6 @@ use oat\tao\model\search\SyntaxException;
 use oat\oatbox\extension\InstallAction;
 use oat\tao\model\search\Search;
 
-/**
- * Class InitElasticSearch
- * @package oat\tao\elasticsearch\Action
- */
 class InitElasticSearch extends InstallAction
 {
     /**
@@ -126,23 +122,13 @@ class InitElasticSearch extends InstallAction
         $config[GenerisSearch::class] = new GenerisSearch();
 
         try {
-            //FIXME
-            //FIXME
-            //FIXME
-            //@FIXME @TODO Initialize in a proper way using taoAdvanceSearch
-            //FIXME
-            //FIXME
-            //FIXME
             $elasticSearch = new ElasticSearch($config);
-
-            $this->getServiceManager()->register(ElasticSearch::SERVICE_ID, $elasticSearch);
-
             $elasticSearch->createIndexes();
 
             /** @var SearchProxy $searchProxy */
-            $searchProxy = $this->getServiceManager()->get(Search::SERVICE_ID);
-            $searchProxy->setOption('main_search', $elasticSearch); //FIXME
-            
+            $searchProxy = $this->getServiceManager()->get(SearchProxy::SERVICE_ID);
+            $searchProxy->setOption(SearchProxy::OPTION_ADVANCED_SEARCH_CLASS, $elasticSearch);
+
             $this->getServiceManager()->register(Search::SERVICE_ID, $searchProxy);
 
             $report->add(new Report(Report::TYPE_SUCCESS, __('Switched search service implementation to ElasticSearch')));
