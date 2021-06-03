@@ -173,10 +173,12 @@ class ElasticSearch extends ConfigurableService implements SearchInterface, TaoS
     public function createIndexes(): void
     {
         $indexFiles = $this->getOption('indexFiles', '');
+        $indexes = [];
+        
         if ($indexFiles && is_readable($indexFiles)) {
             $indexes = require $indexFiles;
         }
-
+        
         foreach ($indexes as $index) {
             $this->getClient()->indices()->create($index);
         }
