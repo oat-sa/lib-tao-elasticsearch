@@ -28,6 +28,7 @@ use oat\tao\elasticsearch\Watcher\IndexDocumentFactory;
 use oat\tao\model\search\index\IndexService;
 use oat\tao\elasticsearch\IndexUpdater;
 use oat\tao\model\search\index\IndexUpdaterInterface;
+use oat\tao\model\search\SearchInterface;
 use oat\tao\model\search\SearchProxy;
 use oat\tao\model\search\strategy\GenerisSearch;
 use oat\tao\model\search\SyntaxException;
@@ -112,11 +113,19 @@ class InitElasticSearch extends InstallAction
             $config['hosts'][0]['pass'] = array_shift($params);
         }
 
-        $oldSearchService = $this->getServiceLocator()->get(Search::SERVICE_ID);
-        $oldSettings = $oldSearchService->getOptions();
-
-        if (isset($oldSettings['settings'])) {
-            $config['settings'] = $oldSettings['settings'];
+        /** @var SearchInterface $oldSearchService */
+        $oldSearchService = $this->getServiceLocator()->get(SearchProxy::SERVICE_ID);
+        
+        $currentElasticSearch = $oldSearchService instanceof ElasticSearch 
+            ? $oldSearchService 
+            : $oldSearchService->getAdvancedSearch();
+        
+        if ($currentElasticSearch instanceof ElasticSearch) {
+            $oldSettings = $oldSearchService->getOptions();
+            
+            if (isset($oldSettings['settings'])) {
+                $config['settings'] = $oldSettings['settings'];
+            }
         }
 
         $config[GenerisSearch::class] = new GenerisSearch();
@@ -133,9 +142,9 @@ class InitElasticSearch extends InstallAction
             }
             
             if ($search instanceof SearchProxy) {
-                $search->setOption(SearchProxy::OPTION_ADVANCED_SEARCH_CLASS, $elasticSearch);
+                $search->withAdvancedSearch($elasticSearch);
                 
-                $this->getServiceManager()->register(Search::SERVICE_ID, $search);
+                $this->getServiceManager()->register(SearchProxy::SERVICE_ID, $search);
             }
 
             $report->add(new Report(Report::TYPE_SUCCESS, __('Switched search service implementation to ElasticSearch')));

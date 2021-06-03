@@ -27,6 +27,7 @@ use Exception;
 use oat\oatbox\extension\script\ScriptAction;
 use oat\tao\elasticsearch\ElasticSearch;
 use oat\tao\model\search\Search;
+use oat\tao\model\search\SearchProxy;
 
 /**
  * @deprecated  tobe moved to core during upcoming huge refactroing
@@ -56,9 +57,15 @@ class IndexCreator extends ScriptAction
 
     protected function run()
     {
-        $elasticService = $this->getServiceLocator()->get(Search::SERVICE_ID);
+        /** @var SearchProxy $searchProxy */
+        $searchProxy = $this->getServiceLocator()->get(SearchProxy::SERVICE_ID);
+
+        /** @var ElasticSearch|null $elasticService */
+        $elasticService = $searchProxy->getAdvancedSearch();
+                
         if ($elasticService instanceof ElasticSearch) {
             $elasticService->setOption('indexFiles', $this->getOption(self::INDEX_FILES) ?? []);
+            
             try {
                 $elasticService->createIndexes();
             } catch (Exception $exception) {
@@ -70,8 +77,10 @@ class IndexCreator extends ScriptAction
                     )
                 );
             }
+            
             return new Report(Report::TYPE_SUCCESS, 'Elastic indexes created successfully');
         }
+        
         return new Report(Report::TYPE_ERROR, 'No proper service found');
     }
 }
