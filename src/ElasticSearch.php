@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,16 +27,16 @@ use Elasticsearch\Client;
 use Elasticsearch\ClientBuilder;
 use Exception;
 use Iterator;
-use oat\oatbox\service\ConfigurableService;
 use oat\tao\model\search\index\IndexIterator;
-use oat\tao\model\search\ResultSet;
-use oat\tao\model\search\Search;
+use \oat\tao\model\search\SearchInterface as TaoSearchInterface;
 use oat\tao\model\search\SyntaxException;
+use oat\tao\model\search\ResultSet;
+use oat\oatbox\service\ConfigurableService;
 
 /**
  * @todo Rename to ElasticSearchService according to our best practises
  */
-class ElasticSearch extends ConfigurableService implements Search, SearchInterface
+class ElasticSearch extends ConfigurableService implements SearchInterface, TaoSearchInterface
 {
     /** @var Client */
     private $client;
@@ -161,6 +162,8 @@ class ElasticSearch extends ConfigurableService implements Search, SearchInterfa
     public function createIndexes(): void
     {
         $indexFiles = $this->getOption('indexFiles', '');
+        $indexes = [];
+
         if ($indexFiles && is_readable($indexFiles)) {
             $indexes = require $indexFiles;
         }

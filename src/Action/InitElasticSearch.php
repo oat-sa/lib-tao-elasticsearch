@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
- * Copyright (c) 2018 (original work) Open Assessment Technologies SA;
+ * Copyright (c) 2018-2021 (original work) Open Assessment Technologies SA;
  */
 
 declare(strict_types=1);
@@ -28,15 +28,13 @@ use oat\tao\elasticsearch\Watcher\IndexDocumentFactory;
 use oat\tao\model\search\index\IndexService;
 use oat\tao\elasticsearch\IndexUpdater;
 use oat\tao\model\search\index\IndexUpdaterInterface;
+use oat\tao\model\search\SearchInterface;
+use oat\tao\model\search\SearchProxy;
 use oat\tao\model\search\strategy\GenerisSearch;
 use oat\tao\model\search\SyntaxException;
 use oat\oatbox\extension\InstallAction;
 use oat\tao\model\search\Search;
 
-/**
- * Class InitElasticSearch
- * @package oat\tao\elasticsearch\Action
- */
 class InitElasticSearch extends InstallAction
 {
     /**
@@ -115,20 +113,39 @@ class InitElasticSearch extends InstallAction
             $config['hosts'][0]['pass'] = array_shift($params);
         }
 
-        $oldSearchService = $this->getServiceLocator()->get(Search::SERVICE_ID);
-        $oldSettings = $oldSearchService->getOptions();
-
-        if (isset($oldSettings['settings'])) {
-            $config['settings'] = $oldSettings['settings'];
+        /** @var SearchInterface $oldSearchService */
+        $oldSearchService = $this->getServiceLocator()->get(SearchProxy::SERVICE_ID);
+        
+        $currentElasticSearch = $oldSearchService instanceof ElasticSearch 
+            ? $oldSearchService 
+            : $oldSearchService->getAdvancedSearch();
+        
+        if ($currentElasticSearch instanceof ElasticSearch) {
+            $oldSettings = $oldSearchService->getOptions();
+            
+            if (isset($oldSettings['settings'])) {
+                $config['settings'] = $oldSettings['settings'];
+            }
         }
 
         $config[GenerisSearch::class] = new GenerisSearch();
 
         try {
-            $search = new ElasticSearch($config);
+            $elasticSearch = new ElasticSearch($config);
+            $elasticSearch->createIndexes();
 
-            $search->createIndexes();
-            $this->getServiceManager()->register(Search::SERVICE_ID, $search);
+            /** @var SearchProxy $search */
+            $search = $this->getServiceManager()->get(SearchProxy::SERVICE_ID);
+            
+            if ($search instanceof GenerisSearch) {
+                $this->getServiceManager()->register(Search::SERVICE_ID, $elasticSearch);
+            }
+            
+            if ($search instanceof SearchProxy) {
+                $search->withAdvancedSearch($elasticSearch);
+                
+                $this->getServiceManager()->register(SearchProxy::SERVICE_ID, $search);
+            }
 
             $report->add(new Report(Report::TYPE_SUCCESS, __('Switched search service implementation to ElasticSearch')));
 
