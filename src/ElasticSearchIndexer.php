@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
- * Copyright (c) 2018 (original work) Open Assessment Technologies SA;
+ * Copyright (c) 2018-2021 (original work) Open Assessment Technologies SA;
  */
 
 declare(strict_types=1);
@@ -27,10 +27,6 @@ use RuntimeException;
 use Iterator;
 use oat\tao\model\search\index\IndexDocument;
 
-/**
- * Class ElasticSearchIndexer
- * @package oat\tao\elasticsearch
- */
 class ElasticSearchIndexer implements IndexerInterface
 {
     private const INDEXING_BLOCK_SIZE = 100;
@@ -91,8 +87,13 @@ class ElasticSearchIndexer implements IndexerInterface
             $this->logger->info('indexname:' . $indexName);
 
             if ($indexName === self::UNCLASSIFIEDS_DOCUMENTS_INDEX) {
-                $this->logger->info(sprintf('There is no proper index for the document "%s"', $document->getId()));
-
+                $this->logger->warning(
+                    sprintf(
+                        'There is no proper index for the document "%s", type:"%s"',
+                        $document->getId(),
+                        var_export($document->getBody()['type'] ?? null, true)
+                    )
+                );
                 $documents->next();
                 continue;
             }
@@ -130,8 +131,7 @@ class ElasticSearchIndexer implements IndexerInterface
     }
 
     /**
-     * @param $id
-     * @return bool
+     * @inheritDoc
      */
     public function deleteDocument($id): bool
     {
@@ -152,9 +152,7 @@ class ElasticSearchIndexer implements IndexerInterface
     }
 
     /**
-     * @param array $ids
-     * @param string $type
-     * @return array
+     * @inheritDoc
      */
     public function searchResourceByIds($ids = [])
     {
@@ -168,9 +166,7 @@ class ElasticSearchIndexer implements IndexerInterface
             ]
         ];
         $response = $this->getClient()->search($searchParams);
-        $hits = isset($response['hits'])
-            ? $response['hits']
-            : [];
+        $hits = $response['hits'] ?? [];
 
         $document = [];
         if ($hits && isset($hits['hits']) && isset($hits['total']) && $hits['total']) {
@@ -180,13 +176,6 @@ class ElasticSearchIndexer implements IndexerInterface
         return $document;
     }
 
-    /**
-     * @param string $indexName
-     * @param IndexDocument $document
-     * @param array $params
-     *
-     * @return array
-     */
     private function extendBatch(string $action, string $indexName, IndexDocument $document, array $params): array
     {
         $params['body'][] = [
