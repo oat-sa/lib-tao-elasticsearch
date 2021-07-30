@@ -25,22 +25,20 @@ namespace oat\tao\elasticsearch;
 use ArrayIterator;
 use Elasticsearch\Client;
 use Elasticsearch\ClientBuilder;
+use Exception;
 use Iterator;
 use oat\tao\model\search\index\IndexIterator;
-use oat\tao\model\search\strategy\GenerisSearch;
 use \oat\tao\model\search\SearchInterface as TaoSearchInterface;
 use oat\tao\model\search\SyntaxException;
 use oat\tao\model\search\ResultSet;
 use oat\oatbox\service\ConfigurableService;
 
 /**
- * Class ElasticSearch
- * @package oat\tao\elasticsearch
  * @todo Rename to ElasticSearchService according to our best practises
  */
 class ElasticSearch extends ConfigurableService implements SearchInterface, TaoSearchInterface
 {
-    /** @var \Elasticsearch\Client */
+    /** @var Client */
     private $client;
 
     /** @var QueryBuilder */
@@ -75,7 +73,7 @@ class ElasticSearch extends ConfigurableService implements SearchInterface, TaoS
         );
     }
 
-    /** @return \Elasticsearch\Client */
+    /** @return Client */
     protected function getClient(): Client
     {
         if (is_null($this->client)) {
@@ -88,7 +86,6 @@ class ElasticSearch extends ConfigurableService implements SearchInterface, TaoS
     }
 
 
-    /** @return QueryBuilder */
     protected function getQueryBuilder(): QueryBuilder
     {
         if (is_null($this->queryBuilder)) {
@@ -104,14 +101,7 @@ class ElasticSearch extends ConfigurableService implements SearchInterface, TaoS
     }
 
     /**
-     * @param $queryString
-     * @param $type
-     * @param int $start
-     * @param int $count
-     * @param string $order
-     * @param string $dir
-     * @return ResultSet
-     * @throws SyntaxException
+     * @inheritDoc
      */
     public function query($queryString, $type, $start = 0, $count = 10, $order = '_id', $dir = 'DESC'): ResultSet
     {
@@ -121,26 +111,26 @@ class ElasticSearch extends ConfigurableService implements SearchInterface, TaoS
 
         try {
             $query = $this->getQueryBuilder()->getSearchParams($queryString, $type, $start, $count, $order, $dir);
-            $this->getLogger()->debug('Query ', $query);
+            $this->getLogger()->debug(sprintf('Elasticsearch Query %s', json_encode($query)));
 
             return $this->buildResultSet(
                 $this->getClient()->search(
                     $query
                 )
             );
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             switch ($exception->getCode()) {
                 case 400:
                     $json = json_decode($exception->getMessage(), true);
                     $message = __(
                         'There is an error in your search query, system returned: %s',
-                        $json['error']['reason']
+                        $json['error']['reason'] ?? ''
                     );
-                    $this->getLogger()->error($message, [$exception->getMessage()]);
+                    $this->getLogger()->error(sprintf('Elasticsearch: %s %s', $message, $exception->getMessage()));
                     throw new SyntaxException($queryString, $message);
                 default:
-                    $message = 'An unknown error occured during search';
-                    $this->getLogger()->error($message, [$exception->getMessage()]);
+                    $message = 'An unknown error occurred during search';
+                    $this->getLogger()->error(sprintf('Elasticsearch: %s %s', $message, $exception->getMessage()));
                     throw new SyntaxException($queryString, __($message));
             }
         }
@@ -149,7 +139,6 @@ class ElasticSearch extends ConfigurableService implements SearchInterface, TaoS
     /**
      * (Re)Generate the index for a given resource
      * @param IndexIterator|array $documents
-     * @return integer
      */
     public function index($documents = []): int
     {
@@ -174,11 +163,11 @@ class ElasticSearch extends ConfigurableService implements SearchInterface, TaoS
     {
         $indexFiles = $this->getOption('indexFiles', '');
         $indexes = [];
-        
+
         if ($indexFiles && is_readable($indexFiles)) {
             $indexes = require $indexFiles;
         }
-        
+
         foreach ($indexes as $index) {
             $this->getClient()->indices()->create($index);
         }
@@ -196,11 +185,7 @@ class ElasticSearch extends ConfigurableService implements SearchInterface, TaoS
         );
     }
 
-    /**
-     * @param array $elasticResult
-     * @return ResultSet
-     */
-    protected function buildResultSet($elasticResult = []): ResultSet
+    protected function buildResultSet(array $elasticResult = []): ResultSet
     {
         $uris = [];
         $total = 0;
