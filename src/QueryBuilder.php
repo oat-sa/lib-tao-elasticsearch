@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
- * Copyright (c) 2020 (original work) Open Assessment Technologies SA;
+ * Copyright (c) 2020-2021 (original work) Open Assessment Technologies SA;
  */
 
 declare(strict_types=1);
@@ -26,8 +26,6 @@ use oat\generis\model\data\permission\ReverseRightLookupInterface;
 use oat\oatbox\service\ConfigurableService;
 use oat\oatbox\session\SessionService;
 use oat\oatbox\user\User;
-use tao_helpers_Slug;
-use oat\taoAdvancedSearch\model\Cache\PropertyCachingService;
 
 class QueryBuilder extends ConfigurableService
 {
@@ -109,9 +107,6 @@ class QueryBuilder extends ConfigurableService
         return $params;
     }
 
-    /**
-     * @param string[] $blocks
-     */
     private function buildConditions(string $index, array $blocks): array
     {
         $conditions = $this->buildConditionsByType($index, $blocks);
@@ -153,8 +148,9 @@ class QueryBuilder extends ConfigurableService
         return $this->getResourceConditions($blocks);
     }
 
-    private function getResourceConditions($blocks): array
+    private function getResourceConditions(array $blocks): array
     {
+        $conditions = [];
         foreach ($blocks as $block) {
             $queryBlock = $this->parseBlock($block);
 
@@ -184,10 +180,8 @@ class QueryBuilder extends ConfigurableService
     {
         $conditions = [];
 
-        $field_slug = tao_helpers_Slug::create($queryBlock->getField());
-
         foreach (self::CUSTOM_FIELDS as $customField) {
-            $conditions[] = sprintf('%s_%s:"%s"', $customField, $field_slug, $queryBlock->getTerm());
+            $conditions[] = sprintf('%s_%s:"%s"', $customField, $queryBlock->getField(), $queryBlock->getTerm());
         }
 
         return '(' . implode(' OR ', $conditions). ')';
