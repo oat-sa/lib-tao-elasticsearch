@@ -57,6 +57,15 @@ $dynamicTemplates = [
         ]
     ],
     [
+        "SearchDropdown" => [
+            "match" => "SearchDropdown_*",
+            "match_mapping_type" => "string",
+            "mapping" => [
+                "type" => "keyword"
+            ]
+        ]
+    ],
+    [
         "CheckBox" => [
             "match" => "CheckBox_*",
             "match_mapping_type" => "string",
