@@ -201,7 +201,7 @@ class QueryBuilder extends ConfigurableService
         foreach ($currentUser->getRoles() as $role) {
             $conditions[] = $role;
         }
-
+        
         return sprintf(
             '(%s:("%s"))',
             self::READ_ACCESS_FIELD,
