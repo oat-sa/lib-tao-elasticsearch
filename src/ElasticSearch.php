@@ -110,7 +110,7 @@ class ElasticSearch extends ConfigurableService implements SearchInterface, TaoS
         }
 
         try {
-            $query = $this->getQueryBuilder()->getSearchParams($queryString, $type, $start, $count, $order, $dir);            
+            $query = $this->getQueryBuilder()->getSearchParams($queryString, $type, $start, $count, $order, $dir);
             $this->getLogger()->debug(sprintf('Elasticsearch Query %s', json_encode($query)));
 
             return $this->buildResultSet(
