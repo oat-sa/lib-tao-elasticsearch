@@ -136,7 +136,7 @@ class ElasticSearchTest extends TestCase
                 ]
             )
         ];
-        
+
         $this->client
             ->method('search')
             ->with($query)
@@ -149,20 +149,7 @@ class ElasticSearchTest extends TestCase
 
         $this->assertEquals(new SearchResult([], 0), $this->sut->search($query));
     }
-
-    public function testQuery_callGenerisSearchCaseClassIsNotSupported(): void
-    {
-        $invalidType = 'https://tao.docker.localhost/ontologies/tao.rdf#Invalid';
-        $this->generisSearch->expects($this->once())
-            ->method('query')
-            ->with('item', $invalidType, 0, 10, '_id', 'DESC')
-            ->willReturn(
-                $this->createMock(ResultSet::class)
-            );
-
-        $this->sut->query('item', $invalidType);
-    }
-
+    
     public function testQuery_callElasticSearchCaseClassIsSupported(): void
     {
         $validType = 'http://www.tao.lu/Ontologies/TAOItem.rdf#Item';
@@ -215,15 +202,13 @@ class ElasticSearchTest extends TestCase
 
         $this->logger->expects($this->once())
             ->method('error')
-            ->with('An unknown error occured during search', ['']);
+            ->with('Elasticsearch: An unknown error occurred during search "internal error"');
 
         $documentUri = 'https://tao.docker.localhost/ontologies/tao.rdf#i5ef45f413088c8e7901a84708e84ec';
 
         $this->client->expects($this->once())
             ->method('search')
-            ->willThrowException(
-                new Exception()
-            );
+            ->willThrowException(new Exception('internal error'));
 
         $resultSet = $this->sut->query('item', $validType);
     }
@@ -240,20 +225,13 @@ class ElasticSearchTest extends TestCase
 
         $this->logger->expects($this->once())
             ->method('error')
-            ->with(
-                'There is an error in your search query, system returned: Error',
-                [
-                    '{"error":{"reason": "Error"}}'
-                ]
-            );
+            ->with('Elasticsearch: There is an error in your search query, system returned: Error {"error":{"reason": "Error"}}');
 
         $documentUri = 'https://tao.docker.localhost/ontologies/tao.rdf#i5ef45f413088c8e7901a84708e84ec';
 
         $this->client->expects($this->once())
             ->method('search')
-            ->willThrowException(
-                new Exception('{"error":{"reason": "Error"}}', 400)
-            );
+            ->willThrowException(new Exception('{"error":{"reason": "Error"}}', 400));
 
         $resultSet = $this->sut->query('item', $validType);
     }
@@ -322,9 +300,6 @@ class ElasticSearchTest extends TestCase
 
         $this->logger->expects($this->once())
             ->method('debug')
-            ->with(
-                'Query ',
-                $query
-            );
+            ->with('Elasticsearch Query ' . json_encode($query));
     }
 }

@@ -26,6 +26,8 @@ use oat\generis\model\data\permission\ReverseRightLookupInterface;
 use oat\oatbox\service\ConfigurableService;
 use oat\oatbox\session\SessionService;
 use oat\oatbox\user\User;
+use tao_helpers_Uri;
+use common_Utils;
 
 class QueryBuilder extends ConfigurableService
 {
@@ -199,7 +201,7 @@ class QueryBuilder extends ConfigurableService
         foreach ($currentUser->getRoles() as $role) {
             $conditions[] = $role;
         }
-
+        
         return sprintf(
             '(%s:("%s"))',
             self::READ_ACCESS_FIELD,
@@ -220,14 +222,23 @@ class QueryBuilder extends ConfigurableService
 
     private function parseBlock(string $block): QueryBlock
     {
-        if (\common_Utils::isUri($block)) {
+        if (common_Utils::isUri($block)) {
             return new QueryBlock(null, $block);
         }
 
         preg_match('/((?P<field>[^:]*):)?(?P<term>.*)/', $block,$matches);
-        $field = strtolower(trim($matches['field']));
-        $term = trim($matches['term']);
 
-        return new QueryBlock($field, $term);
+        $field = trim($matches['field']);
+
+        if (!$this->isUri($field)) {
+            $field = strtolower($field);
+        }
+
+        return new QueryBlock($field, trim($matches['term']));
+    }
+
+    private function isUri(string $term): bool
+    {
+        return common_Utils::isUri(tao_helpers_Uri::decode($term));
     }
 }
