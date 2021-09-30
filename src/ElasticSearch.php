@@ -110,7 +110,7 @@ class ElasticSearch extends ConfigurableService implements SearchInterface, TaoS
         }
 
         try {
-            $query = $this->getQueryBuilder()->getSearchParams($queryString, $type, $start, $count, $order, $dir);
+            $query = $this->getQueryBuilder()->getSearchParams($queryString, $type, $start, $count, $order, $dir);            
             $this->getLogger()->debug(sprintf('Elasticsearch Query %s', json_encode($query)));
 
             return $this->buildResultSet(
@@ -130,7 +130,7 @@ class ElasticSearch extends ConfigurableService implements SearchInterface, TaoS
                     throw new SyntaxException($queryString, $message);
                 default:
                     $message = 'An unknown error occurred during search';
-                    $this->getLogger()->error(sprintf('Elasticsearch: %s %s', $message, $exception->getMessage()));
+                    $this->getLogger()->error(sprintf('Elasticsearch: %s "%s"', $message, $exception->getMessage()));
                     throw new SyntaxException($queryString, __($message));
             }
         }
