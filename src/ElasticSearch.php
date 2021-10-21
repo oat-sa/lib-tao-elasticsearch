@@ -29,6 +29,7 @@ use Exception;
 use Iterator;
 use oat\tao\model\search\index\IndexIterator;
 use \oat\tao\model\search\SearchInterface as TaoSearchInterface;
+use oat\tao\model\search\strategy\GenerisSearch;
 use oat\tao\model\search\SyntaxException;
 use oat\tao\model\search\ResultSet;
 use oat\oatbox\service\ConfigurableService;
