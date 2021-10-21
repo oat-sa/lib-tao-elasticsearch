@@ -150,6 +150,24 @@ class ElasticSearchTest extends TestCase
         $this->assertEquals(new SearchResult([], 0), $this->sut->search($query));
     }
     
+    public function testCountDocuments(): void
+    {
+        $this->client
+            ->method('count')
+            ->with(
+                [
+                    'index' => 'indexName',
+                ]
+            )
+            ->willReturn(
+                [
+                    'count' => 777,
+                ]
+            );
+
+        $this->assertEquals(777, $this->sut->countDocuments('indexName'));
+    }
+    
     public function testQuery_callElasticSearchCaseClassIsSupported(): void
     {
         $validType = 'http://www.tao.lu/Ontologies/TAOItem.rdf#Item';

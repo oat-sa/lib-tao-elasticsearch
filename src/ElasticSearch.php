@@ -45,6 +45,17 @@ class ElasticSearch extends ConfigurableService implements SearchInterface, TaoS
     /** @var QueryBuilder */
     private $queryBuilder;
 
+    public function countDocuments(string $index): int
+    {
+        $result = $this->getClient()->count(
+            [
+                'index' => $index
+            ]
+        );
+
+        return $result['count'] ?? 0;
+    }
+
     public function search(Query $query): SearchResult
     {
         $query = [
