@@ -45,6 +45,17 @@ class ElasticSearch extends ConfigurableService implements SearchInterface, TaoS
     /** @var QueryBuilder */
     private $queryBuilder;
 
+    public function countDocuments(string $index): int
+    {
+        $result = $this->getClient()->count(
+            [
+                'index' => $index
+            ]
+        );
+
+        return $result['count'] ?? 0;
+    }
+
     public function search(Query $query): SearchResult
     {
         $query = [
@@ -131,7 +142,7 @@ class ElasticSearch extends ConfigurableService implements SearchInterface, TaoS
                     throw new SyntaxException($queryString, $message);
                 default:
                     $message = 'An unknown error occurred during search';
-                    $this->getLogger()->error(sprintf('Elasticsearch: %s %s', $message, $exception->getMessage()));
+                    $this->getLogger()->error(sprintf('Elasticsearch: %s "%s"', $message, $exception->getMessage()));
                     throw new SyntaxException($queryString, __($message));
             }
         }
