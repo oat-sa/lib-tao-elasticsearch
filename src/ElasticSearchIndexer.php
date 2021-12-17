@@ -100,10 +100,8 @@ class ElasticSearchIndexer implements IndexerInterface
 
             $this->logger->info(sprintf('adding document "%s" to be indexed', $document->getId()));
 
-            $params = $this->extendBatch('delete', $indexName, $document, $params);
-            $params = $this->extendBatch('create', $indexName, $document, $params);
-            $params = $this->extendBatch('update', $indexName, $document, $params);
-
+            $params = $this->extendBatch('index', $indexName, $document, $params);
+           
             $documents->next();
 
             $blockSize++;

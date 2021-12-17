@@ -118,25 +118,12 @@ class ElasticSearchIndexerTest extends TestCase
             ->method('bulk')
             ->with([
                 'body' => [
-                    ['delete' => [
-                        '_index' => IndexerInterface::ITEMS_INDEX,
-                        '_id' => 'some_id'
-                    ]],
-                    ['create' => [
+                    ['index' => [
                         '_index' => IndexerInterface::ITEMS_INDEX,
                         '_id' => 'some_id'
                     ]],
                     ['type' => [
-                        TaoOntology::CLASS_URI_ITEM
-                    ]],
-                    ['update' => [
-                        '_index' => IndexerInterface::ITEMS_INDEX,
-                        '_id' => 'some_id'
-                    ]],
-                    ['doc' => [
-                        'type' => [
                             TaoOntology::CLASS_URI_ITEM
-                        ]
                     ]],
                 ]
             ])
