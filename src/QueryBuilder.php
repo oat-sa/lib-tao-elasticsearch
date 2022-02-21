@@ -116,7 +116,7 @@ class QueryBuilder extends ConfigurableService
         $conditions = $this->buildConditionsByType($index, $blocks);
 
         if ($this->includeAccessData($index)) {
-            $conditions[] = $accessConditions;
+            $conditions[] = $this->buildAccessConditions();
         }
 
         return $conditions;
