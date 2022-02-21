@@ -26,6 +26,8 @@ use oat\generis\model\data\permission\ReverseRightLookupInterface;
 use oat\oatbox\service\ConfigurableService;
 use oat\oatbox\session\SessionService;
 use oat\oatbox\user\User;
+use oat\tao\model\user\TaoRoles;
+use oat\taoDacSimple\model\PermissionProvider;
 use tao_helpers_Uri;
 use common_Utils;
 
@@ -115,7 +117,7 @@ class QueryBuilder extends ConfigurableService
         $conditions = $this->buildConditionsByType($index, $blocks);
 
         if ($this->includeAccessData($index)) {
-            $conditions[] = $this->buildAccessConditions();
+            $conditions[] = $accessConditions;
         }
 
         return $conditions;
@@ -190,18 +192,17 @@ class QueryBuilder extends ConfigurableService
         return '(' . implode(' OR ', $conditions). ')';
     }
 
-    private function buildAccessConditions(): string
+    private function buildAccessConditions(): ?string
     {
         $conditions = [];
 
-        /** @var User $currentUser */
-        $currentUser = $this->getServiceLocator()->get(SessionService::SERVICE_ID)->getCurrentUser();
+        $currentUser = $this->getSessionService()->getCurrentUser();
 
         $conditions[] = $currentUser->getIdentifier();
         foreach ($currentUser->getRoles() as $role) {
             $conditions[] = $role;
         }
-        
+
         return sprintf(
             '(%s:("%s"))',
             self::READ_ACCESS_FIELD,
@@ -215,9 +216,22 @@ class QueryBuilder extends ConfigurableService
             return false;
         }
 
-        $permissionProvider = $this->getServiceLocator()->get(PermissionInterface::SERVICE_ID);
+        $permissionProvider = $this->getPermissionProvider();
 
-        return $permissionProvider instanceof ReverseRightLookupInterface;
+        if (!$permissionProvider instanceof ReverseRightLookupInterface) {
+            return false;
+        }
+
+        $currentUser = $this->getSessionService()->getCurrentUser();
+
+        $nonExistingId = uniqid();
+        $permissions = $permissionProvider->getPermissions($currentUser, [$nonExistingId])[$nonExistingId] ?? [];
+
+        if (in_array(PermissionInterface::RIGHT_READ, $permissions)) {
+            return false;
+        }
+
+        return true;
     }
 
     private function parseBlock(string $block): QueryBlock
@@ -240,5 +254,15 @@ class QueryBuilder extends ConfigurableService
     private function isUri(string $term): bool
     {
         return common_Utils::isUri(tao_helpers_Uri::decode($term));
+    }
+
+    private function getPermissionProvider(): PermissionInterface
+    {
+        return $this->getServiceLocator()->get(PermissionInterface::SERVICE_ID);
+    }
+
+    private function getSessionService(): SessionService
+    {
+        return $this->getServiceLocator()->get(SessionService::SERVICE_ID);
     }
 }
