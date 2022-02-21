@@ -27,7 +27,6 @@ use oat\oatbox\service\ConfigurableService;
 use oat\oatbox\session\SessionService;
 use oat\oatbox\user\User;
 use oat\tao\model\user\TaoRoles;
-use oat\taoDacSimple\model\PermissionProvider;
 use tao_helpers_Uri;
 use common_Utils;
 
