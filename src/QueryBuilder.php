@@ -211,26 +211,11 @@ class QueryBuilder extends ConfigurableService
 
     private function includeAccessData(string $index): bool
     {
-        if (!in_array($index, IndexerInterface::INDEXES_WITH_ACCESS_CONTROL)) {
-            return false;
-        }
-
-        $permissionProvider = $this->getPermissionProvider();
-
-        if (!$permissionProvider instanceof ReverseRightLookupInterface) {
-            return false;
-        }
-
-        $currentUser = $this->getSessionService()->getCurrentUser();
-
-        $nonExistingId = uniqid();
-        $permissions = $permissionProvider->getPermissions($currentUser, [$nonExistingId])[$nonExistingId] ?? [];
-
-        if (in_array(PermissionInterface::RIGHT_READ, $permissions)) {
-            return false;
-        }
-
-        return true;
+        return (new UseAclSpecification())->isSatisfiedBy(
+            $index,
+            $this->getPermissionProvider(),
+            $this->getSessionService()->getCurrentUser()
+        );
     }
 
     private function parseBlock(string $block): QueryBlock
@@ -257,11 +242,11 @@ class QueryBuilder extends ConfigurableService
 
     private function getPermissionProvider(): PermissionInterface
     {
-        return $this->getServiceLocator()->get(PermissionInterface::SERVICE_ID);
+        return $this->getServiceManager()->getContainer()->get(PermissionInterface::SERVICE_ID);
     }
 
     private function getSessionService(): SessionService
     {
-        return $this->getServiceLocator()->get(SessionService::SERVICE_ID);
+        return $this->getServiceManager()->getContainer()->get(SessionService::SERVICE_ID);
     }
 }
