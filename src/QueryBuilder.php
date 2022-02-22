@@ -26,7 +26,7 @@ use oat\generis\model\data\permission\ReverseRightLookupInterface;
 use oat\oatbox\service\ConfigurableService;
 use oat\oatbox\session\SessionService;
 use oat\oatbox\user\User;
-use oat\tao\model\user\TaoRoles;
+use oat\tao\elasticsearch\Specification\UseAclSpecification;
 use tao_helpers_Uri;
 use common_Utils;
 

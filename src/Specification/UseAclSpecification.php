@@ -25,6 +25,7 @@ namespace oat\tao\elasticsearch\Specification;
 use oat\generis\model\data\permission\PermissionInterface;
 use oat\generis\model\data\permission\ReverseRightLookupInterface;
 use oat\oatbox\user\User;
+use oat\tao\elasticsearch\IndexerInterface;
 
 class UseAclSpecification
 {
@@ -32,10 +33,10 @@ class UseAclSpecification
     {
         return in_array($index, IndexerInterface::INDEXES_WITH_ACCESS_CONTROL, true)
             && $permission instanceof ReverseRightLookupInterface
-            && !$this->hasFullAccess($permission);
+            && !$this->hasFullAccess($permission, $user);
     }
 
-    private function hasFullAccess(PermissionInterface $permission): bool
+    private function hasFullAccess(PermissionInterface $permission, User $user): bool
     {
         $nonExistingId = uniqid();
         $permissions = $permission->getPermissions($user, [$nonExistingId])[$nonExistingId] ?? [];
