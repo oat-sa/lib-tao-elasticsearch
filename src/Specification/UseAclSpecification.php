@@ -33,10 +33,10 @@ class UseAclSpecification
     {
         return in_array($index, IndexerInterface::INDEXES_WITH_ACCESS_CONTROL, true)
             && $permission instanceof ReverseRightLookupInterface
-            && !$this->hasFullAccess($permission, $user);
+            && !$this->hasReadAccess($permission, $user);
     }
 
-    private function hasFullAccess(PermissionInterface $permission, User $user): bool
+    private function hasReadAccess(PermissionInterface $permission, User $user): bool
     {
         $nonExistingId = uniqid();
         $permissions = $permission->getPermissions($user, [$nonExistingId])[$nonExistingId] ?? [];
