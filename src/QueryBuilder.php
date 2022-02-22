@@ -74,6 +74,16 @@ class QueryBuilder extends ConfigurableService
         'SearchDropdown',
     ];
 
+    /** @var UseAclSpecification */
+    private $useAclSpecification;
+
+    public function withUseAclSpecification(UseAclSpecification $useAclSpecification): self
+    {
+        $this->useAclSpecification = $useAclSpecification;
+
+        return $this;
+    }
+
     public static function create(): self
     {
         return new self();
@@ -86,7 +96,7 @@ class QueryBuilder extends ConfigurableService
         $blocks = preg_split( '/( AND )/i', $queryString);
         $index = $this->getIndexByType($type);
         $conditions = $this->buildConditions($index, $blocks);
-
+        
         $query = [
             'query' => [
                 'query_string' =>
@@ -212,7 +222,7 @@ class QueryBuilder extends ConfigurableService
 
     private function includeAccessData(string $index): bool
     {
-        return (new UseAclSpecification())->isSatisfiedBy(
+        return $this->getUseAclSpecification()->isSatisfiedBy(
             $index,
             $this->getPermissionProvider(),
             $this->getSessionService()->getCurrentUser()
@@ -234,6 +244,15 @@ class QueryBuilder extends ConfigurableService
         }
 
         return new QueryBlock($field, trim($matches['term']));
+    }
+
+    private function getUseAclSpecification(): UseAclSpecification
+    {
+        if (!isset($this->useAclSpecification)) {
+            $this->useAclSpecification = new UseAclSpecification();
+        }
+
+        return $this->useAclSpecification;
     }
 
     private function isUri(string $term): bool
