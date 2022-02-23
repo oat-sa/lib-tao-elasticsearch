@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -14,21 +15,24 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
- * Copyright (c) 2018-2021 (original work) Open Assessment Technologies SA;
+ * Copyright (c) 2018-2022 (original work) Open Assessment Technologies SA;
  */
 
 declare(strict_types=1);
 
 namespace oat\tao\elasticsearch;
 
+use oat\tao\elasticsearch\internal\BatchLog;
+use oat\tao\model\search\index\IndexDocument;
 use Elasticsearch\Client;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Iterator;
-use oat\tao\model\search\index\IndexDocument;
 
 class ElasticSearchIndexer implements IndexerInterface
 {
+    use BatchLog;
+
     private const INDEXING_BLOCK_SIZE = 100;
 
     /** @var Client */
@@ -73,43 +77,53 @@ class ElasticSearchIndexer implements IndexerInterface
      */
     public function buildIndex(Iterator $documents): int
     {
+        $visited = $skipped = $exceptions = 0;
         $count = 0;
         $blockSize = 0;
         $params = [];
 
-        while ($documents->valid()) {
+        foreach ($documents as $document) {
             /** @var IndexDocument $document */
-            $document = $documents->current();
+            $visited++;
 
-            // First step we trying to create document. If is exist, then skip this step
-            $indexName = $this->getIndexNameByDocument($document);
-
-            $this->logger->info('indexname:' . $indexName);
-
-            if ($indexName === self::UNCLASSIFIEDS_DOCUMENTS_INDEX) {
-                $this->logger->warning(
-                    sprintf(
-                        'There is no proper index for the document "%s", type:"%s"',
-                        $document->getId(),
-                        var_export($document->getBody()['type'] ?? null, true)
-                    )
-                );
-                $documents->next();
+            try {
+                $indexName = $this->getIndexNameByDocument($document);
+            } catch (\Exception $e) {
+                $this->warn($document, "Caught %s exception: %s", get_class($e), $e->getMessage());
+                $exceptions++;
                 continue;
             }
 
-            $this->logger->info(sprintf('adding document "%s" to be indexed', $document->getId()));
+            $this->info(
+                $document,
+                'Using index "%s" for types %s',
+                $indexName,
+                $this->getTypesString($document)
+            );
 
+            if ($indexName === self::UNCLASSIFIEDS_DOCUMENTS_INDEX) {
+                $this->warn(
+                    $document,
+                    'No proper index for document with types "%s"',
+                    $this->getTypesString($document)
+                );
+
+                $this->logMappings($document);
+
+                $skipped++;
+                continue;
+            }
+
+            $this->info($document, 'Queuing document');
             $params = $this->extendBatch('index', $indexName, $document, $params);
            
-            $documents->next();
-
             $blockSize++;
 
             if ($blockSize === self::INDEXING_BLOCK_SIZE) {
+                $this->debug($document, 'Flushing batch with %d operations', count($params));
                 $clientResponse = $this->client->bulk($params);
 
-                $this->logger->debug('client response: '. json_encode($clientResponse));
+                $this->logErrorsFromResponse($document, $clientResponse);
 
                 $count += $blockSize;
                 $blockSize = 0;
@@ -118,12 +132,15 @@ class ElasticSearchIndexer implements IndexerInterface
         }
 
         if ($blockSize > 0) {
+            $this->debug(null, 'Flushing batch with %d operations', count($params));
             $clientResponse = $this->client->bulk($params);
 
-            $this->logger->debug('client response: '. json_encode($clientResponse));
+            $this->logErrorsFromResponse(null, $clientResponse);
 
             $count += $blockSize;
         }
+
+        $this->logCompletion($count, $visited, $skipped, $exceptions);
 
         return $count;
     }
