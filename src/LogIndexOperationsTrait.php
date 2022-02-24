@@ -22,7 +22,6 @@ declare(strict_types=1);
 
 namespace oat\tao\elasticsearch;
 
-use oat\tao\elasticsearch\IndexerInterface;
 use oat\tao\model\search\index\IndexDocument;
 use Psr\Log\LoggerInterface;
 
