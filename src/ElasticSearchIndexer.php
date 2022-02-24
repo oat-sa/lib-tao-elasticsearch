@@ -89,7 +89,7 @@ class ElasticSearchIndexer implements IndexerInterface
             try {
                 $indexName = $this->getIndexNameByDocument($document);
             } catch (\Exception $e) {
-                $this->warn($document, "Caught %s exception: %s", get_class($e), $e->getMessage());
+                $this->logIndexFailure($this->logger, $e, __METHOD__);
                 $exceptions++;
                 continue;
             }
@@ -108,19 +108,19 @@ class ElasticSearchIndexer implements IndexerInterface
                     $this->getTypesString($document)
                 );
 
-                $this->logMappings($document);
+                $this->logMappings($this->logger, $document);
 
                 $skipped++;
                 continue;
             }
 
-            $this->info($document, 'Queuing document');
+            $this->info($this->logger, $document, 'Queuing document');
             $params = $this->extendBatch('index', $indexName, $document, $params);
            
             $blockSize++;
 
             if ($blockSize === self::INDEXING_BLOCK_SIZE) {
-                $this->debug($document, 'Flushing batch with %d operations', count($params));
+                $this->debug($this->logger, $document, 'Flushing batch with %d operations', count($params));
                 $clientResponse = $this->client->bulk($params);
 
                 $this->logErrorsFromResponse($document, $clientResponse);
@@ -132,15 +132,15 @@ class ElasticSearchIndexer implements IndexerInterface
         }
 
         if ($blockSize > 0) {
-            $this->debug(null, 'Flushing batch with %d operations', count($params));
+            $this->logBatchFlush($this->logger, count($params));
             $clientResponse = $this->client->bulk($params);
 
-            $this->logErrorsFromResponse(null, $clientResponse);
+            $this->logErrorsFromResponse($this->logger, null, $clientResponse);
 
             $count += $blockSize;
         }
 
-        $this->logCompletion($count, $visited, $skipped, $exceptions);
+        $this->logCompletion($this->logger, $count, $visited, $skipped, $exceptions);
 
         return $count;
     }

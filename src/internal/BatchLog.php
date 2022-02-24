@@ -23,16 +23,17 @@ declare(strict_types=1);
 namespace oat\tao\elasticsearch\internal;
 
 use oat\tao\model\search\index\IndexDocument;
+use Psr\Log\LoggerInterface;
 
 /**
  * @internal To be used only by lib-tao-elasticsearch
  */
 trait BatchLog
 {
-    private function logCompletion(int $count, int $visited, int $skipped, int $exceptions): void
+    private function logCompletion(LoggerInterface $logger, int $count, int $visited, int $skipped, int $exceptions): void
     {
         if (($count != $visited) || ($exceptions > 0) || ($skipped > 0)) {
-            $this->logger->warning(
+            $logger->warning(
                 sprintf(
                     "%d / %d items were processed (%d skipped, %d exceptions)",
                     $count,
@@ -42,7 +43,7 @@ trait BatchLog
                 )
             );
         } else {
-            $this->logger->debug(
+            $logger->debug(
                 sprintf(
                     "Processed %d items (no exceptions, no skipped items)",
                     $count,
@@ -52,10 +53,10 @@ trait BatchLog
         }
     }
 
-    private function logMappings(IndexDocument $document): void
+    private function logMappings(LoggerInterface $logger, IndexDocument $document): void
     {
         foreach (self::AVAILABLE_INDEXES as $documentType => $indexName) {
-            $this->logger->warning(
+            $logger->warning(
                 sprintf(
                     'documentId: "%s" Index mappings: type="%s" index="%s"',
                     $document->getId(),
@@ -70,38 +71,72 @@ trait BatchLog
         return var_export($document->getBody()['type'] ?? null, true);
     }
 
-    private function debug(?IndexDocument $document, string $message, ...$args): void
+    private function debug(LoggerInterface $logger,  ?IndexDocument $document, string $message, ...$args): void
     {
-        $this->logger->debug(
-            ($document ? sprintf('[documentId: "%s"] ', $document->getId()) : '').
+        $logger->debug(
+            $this->getDocumentIdPrefix($document) .
             vsprintf($message, $args)
         );
     }
 
-    private function info(?IndexDocument $document, string $message, ...$args): void
+    private function info(LoggerInterface $logger, ?IndexDocument $document, string $message, ...$args): void
     {
-        $this->logger->info(
-            ($document ? sprintf('[documentId: "%s"] ', $document->getId()) : '').
+        $logger->info(
+            $this->getDocumentIdPrefix($document) .
             vsprintf($message, $args)
         );
     }
 
-    private function warn(?IndexDocument $document, string $message, ...$args): void
+    private function warn(LoggerInterface $logger, ?IndexDocument $document, string $message, ...$args): void
     {
-        $this->logger->warning(
-            ($document ? sprintf('[documentId: "%s"] ', $document->getId()) : '').
+        $logger->warning(
+            $this->getDocumentIdPrefix($document) .
             vsprintf($message, $args)
         );
     }
 
-    private function logErrorsFromResponse(?IndexDocument $document, $clientResponse): void
+    private function logErrorsFromResponse(LoggerInterface $logger, ?IndexDocument $document, $clientResponse): void
     {
-        if (!isset($clientResponse['errors']) || $clientResponse['errors']) {
-            $this->logger->warning(
-                $document,
-                'Unexpected error response from client: %s',
-                json_encode($clientResponse)
+        if (isset($clientResponse['errors']) && $clientResponse['errors']) {
+            $logger->warning(
+                ($document ? sprintf('[documentId: "%s"] ', $document->getId()) : '').
+                sprintf(
+                    'Unexpected error response from client: %s',
+                    json_encode($clientResponse)
+                )
             );
         }
+    }
+
+    private function getDocumentIdPrefix(?IndexDocument $document): string
+    {
+        return ($document ? sprintf('[documentId: "%s"] ', $document->getId()) : '');
+    }
+
+    private function logIndexFailure(
+        LoggerInterface $logger,
+        Throwable $e,
+        string $method,
+        string $script='',
+        $type = null,
+        array $query = []
+    ): void {
+        $logger->error(
+            sprintf(
+                '%s: Exception %s: %s (code %s) (script="%s" type="%s" query="%s")',
+                $method,
+                get_class($e),
+                $e->getMessage(),
+                $e->getCode(),
+                $script,
+                $type,
+                var_export($query, true)
+            )
+        );
+    }
+
+    private function logBatchFlush(LoggerInterface $logger, int $count): void
+    {
+        $logger->debug(null, 'Flushing batch with %d operations', $count);
     }
 }
