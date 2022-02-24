@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace oat\tao\elasticsearch\internal;
+namespace oat\tao\elasticsearch;
 
 use oat\tao\elasticsearch\IndexerInterface;
 use oat\tao\model\search\index\IndexDocument;
@@ -29,7 +29,7 @@ use Psr\Log\LoggerInterface;
 /**
  * @internal To be used only by lib-tao-elasticsearch
  */
-trait BatchLog
+trait LogIndexOperationsTrait
 {
     private function logCompletion(LoggerInterface $logger, int $count, int $visited, int $skipped, int $exceptions): void
     {

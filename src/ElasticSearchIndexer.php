@@ -22,7 +22,6 @@ declare(strict_types=1);
 
 namespace oat\tao\elasticsearch;
 
-use oat\tao\elasticsearch\internal\BatchLog;
 use oat\tao\model\search\index\IndexDocument;
 use Elasticsearch\Client;
 use Psr\Log\LoggerInterface;
@@ -32,7 +31,7 @@ use RuntimeException;
 
 class ElasticSearchIndexer implements IndexerInterface
 {
-    use BatchLog;
+    use LogIndexOperationsTrait;
 
     private const INDEXING_BLOCK_SIZE = 100;
 

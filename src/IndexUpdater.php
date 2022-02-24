@@ -27,14 +27,13 @@ use Elasticsearch\ClientBuilder;
 use oat\oatbox\service\ConfigurableService;
 use oat\tao\elasticsearch\Exception\FailToRemovePropertyException;
 use oat\tao\elasticsearch\Exception\FailToUpdatePropertiesException;
-use oat\tao\elasticsearch\internal\BatchLog;
 use oat\tao\model\search\index\IndexUpdaterInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
 class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
 {
-    use BatchLog;
+    use LogIndexOperationsTrait;
 
     /** @var Client */
     private $client;
