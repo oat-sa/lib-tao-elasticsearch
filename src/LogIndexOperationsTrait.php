@@ -24,6 +24,7 @@ namespace oat\tao\elasticsearch;
 
 use oat\tao\model\search\index\IndexDocument;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 /**
  * @internal To be used only by lib-tao-elasticsearch
@@ -157,7 +158,7 @@ trait LogIndexOperationsTrait
             $this->getDocumentIdPrefix($document) .
             sprintf(
                 '%s: Skipping document update: %s '.
-                '(index=%s type=%s, typesString=%s, parentClasses=%s,)',
+                '(index=%s type=%s, typesString=%s, parentClasses=%s)',
                 $method,
                 $why,
                 $index,
@@ -183,14 +184,15 @@ trait LogIndexOperationsTrait
     ): void {
         $logger->error(
             sprintf(
-                '%s: Exception %s: %s (code %s) (script="%s" type="%s" query="%s")',
+                '%s: Exception %s: %s (code %s) (script="%s" type="%s" query="%s") trace=%s',
                 $method,
                 get_class($e),
                 $e->getMessage(),
                 $e->getCode(),
                 $script,
                 $type,
-                var_export($query, true)
+                var_export($query, true),
+                $e->getTraceAsString()
             )
         );
     }
