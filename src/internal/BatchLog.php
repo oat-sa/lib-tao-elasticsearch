@@ -196,11 +196,14 @@ trait BatchLog
         );
     }
 
-    private function logBatchFlush(LoggerInterface $logger, array $params): void
+    private function logBatchFlush(LoggerInterface $logger, string $method, array $params): void
     {
         $logger->debug(
-            null,
-            sprintf('Flushing batch with %d operations', count($params))
+            sprintf(
+                '%s: Flushing batch with %d operations',
+                $method,
+                count($params)
+            )
         );
     }
 
