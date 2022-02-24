@@ -137,8 +137,8 @@ class ElasticSearchIndexer implements IndexerInterface
 
         if ($blockSize > 0) {
             $this->logBatchFlush($this->logger, count($params));
-            $response = $this->client->bulk($params);
 
+            $response = $this->client->bulk($params);
             $this->logErrorsFromResponse($this->logger, null, $response);
 
             $count += $blockSize;
