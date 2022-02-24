@@ -28,6 +28,7 @@ use Psr\Log\LoggerInterface;
 use Exception;
 use Iterator;
 use RuntimeException;
+use Throwable;
 
 class ElasticSearchIndexer implements IndexerInterface
 {
@@ -156,10 +157,25 @@ class ElasticSearchIndexer implements IndexerInterface
                 'index' => $document['_index'],
                 'id' => $document['_id']
             ];
-            $this->getClient()->delete($deleteParams);
+
+            try {
+                $this->getClient()->delete($deleteParams);
+                $this->debug($this->logger, $document, 'Document deleted');
+            } catch (Throwable $e) {
+                $this->logDocumentFailure(
+                    $this->logger,
+                    $e,
+                    __METHOD__,
+                    $document,
+                    $id,
+                    $deleteParams
+                );
+            }
 
             return true;
         }
+
+        $this->info($this->logger, $document, 'Document to delete not found: %s', $id);
 
         return false;
     }

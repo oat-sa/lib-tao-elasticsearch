@@ -197,6 +197,29 @@ trait LogIndexOperationsTrait
         );
     }
 
+    private function logDocumentFailure(
+        LoggerInterface $logger,
+        Throwable $e,
+        string $method,
+        $document,
+        $id,
+        array $query = []
+    ): void {
+        $logger->error(
+            sprintf(
+                '%s: [documentId: "%s"] Exception %s: %s (code %s) (query="%s") document=%s trace=%s',
+                $method,
+                $id,
+                get_class($e),
+                $e->getMessage(),
+                $e->getCode(),
+                var_export($query, true),
+                var_export($document, true),
+                $e->getTraceAsString()
+            )
+        );
+    }
+
     private function logBatchFlush(LoggerInterface $logger, string $method, array $params): void
     {
         $logger->debug(
