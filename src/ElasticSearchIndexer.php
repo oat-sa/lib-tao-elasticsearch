@@ -95,18 +95,12 @@ class ElasticSearchIndexer implements IndexerInterface
                 continue;
             }
 
-            $this->info(
-                $document,
-                'Using index "%s" for types %s',
-                $indexName,
-                $this->getTypesString($document)
-            );
-
             if ($indexName === self::UNCLASSIFIEDS_DOCUMENTS_INDEX) {
-                $this->warn(
+                $this->logUnclassifiedDocument(
+                    $this->logger,
                     $document,
-                    'No proper index for document with types "%s"',
-                    $this->getTypesString($document)
+                    __METHOD__,
+                    $indexName
                 );
 
                 $this->logMappings($this->logger, $document);
@@ -116,7 +110,7 @@ class ElasticSearchIndexer implements IndexerInterface
                 continue;
             }
 
-            $this->info($this->logger, $document, 'Queuing document');
+            $this->logAddingDocumentToQueue($this->logger, $document, $indexName);
             $params = $this->extendBatch('index', $indexName, $document, $params);
 
             $documents->next();
@@ -124,7 +118,7 @@ class ElasticSearchIndexer implements IndexerInterface
             $blockSize++;
 
             if ($blockSize === self::INDEXING_BLOCK_SIZE) {
-                $this->logBatchFlush($this->logger, count($params));
+                $this->logBatchFlush($this->logger, $params);
 
                 $response = $this->client->bulk($params);
                 $this->logErrorsFromResponse($this->logger, $document, $response);
@@ -136,7 +130,7 @@ class ElasticSearchIndexer implements IndexerInterface
         }
 
         if ($blockSize > 0) {
-            $this->logBatchFlush($this->logger, count($params));
+            $this->logBatchFlush($this->logger, $params);
 
             $response = $this->client->bulk($params);
             $this->logErrorsFromResponse($this->logger, null, $response);

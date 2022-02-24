@@ -24,7 +24,6 @@ namespace oat\tao\elasticsearch;
 
 use Elasticsearch\Client;
 use Elasticsearch\ClientBuilder;
-use oat\generis\model\WidgetRdf;
 use oat\oatbox\service\ConfigurableService;
 use oat\tao\elasticsearch\Exception\FailToRemovePropertyException;
 use oat\tao\elasticsearch\Exception\FailToUpdatePropertiesException;
@@ -78,12 +77,31 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
         }
 
         if (!isset($type, $parentClasses)) {
+            $this->logSkippedUpdate(
+                $this->getLogger(),
+                'type or parentClasses not set',
+                null,
+                __METHOD__,
+                '',
+                $type ?? null,
+                $parentClasses ?? null
+            );
+
             return;
         }
 
         $index = $this->findIndex($parentClasses, $type);
 
         if ($index === IndexerInterface::UNCLASSIFIEDS_DOCUMENTS_INDEX) {
+            $this->logUnclassifiedDocument(
+                $this->getLogger(),
+                null,
+                __METHOD__,
+                $index,
+                $type,
+                $parentClasses
+            );
+
             return;
         }
 
@@ -116,6 +134,15 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
         $index = $this->findIndex($parentClasses, $typeOrId);
 
         if ($index === IndexerInterface::UNCLASSIFIEDS_DOCUMENTS_INDEX) {
+            $this->logUnclassifiedDocument(
+                $this->getLogger(),
+                null,
+                __METHOD__,
+                $index,
+                null,
+                $parentClasses
+            );
+
             return;
         }
 

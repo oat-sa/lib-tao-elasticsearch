@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace oat\tao\elasticsearch\internal;
 
+use oat\tao\elasticsearch\IndexerInterface;
 use oat\tao\model\search\index\IndexDocument;
 use Psr\Log\LoggerInterface;
 
@@ -53,8 +54,28 @@ trait BatchLog
         }
     }
 
+    private function logAddingDocumentToQueue(
+        LoggerInterface $logger,
+        IndexDocument $document,
+        string $indexName
+    ): void
+    {
+        $logger->info(
+            $this->getDocumentIdPrefix($document) .
+            spritnf(
+                'Queuing document with types %s into index "%s"',
+                $this->getTypesString($document),
+                $indexName
+            )
+        );
+    }
+
     private function logMappings(LoggerInterface $logger, IndexDocument $document): void
     {
+        if (!($this instanceof IndexerInterface)) {
+            return;
+        }
+
         foreach (self::AVAILABLE_INDEXES as $documentType => $indexName) {
             $logger->warning(
                 sprintf(
@@ -64,11 +85,6 @@ trait BatchLog
                     $indexName)
             );
         }
-    }
-
-    private function getTypesString(IndexDocument $document): ?string
-    {
-        return var_export($document->getBody()['type'] ?? null, true);
     }
 
     private function debug(LoggerInterface $logger,  ?IndexDocument $document, string $message, ...$args): void
@@ -99,13 +115,58 @@ trait BatchLog
     {
         if (isset($clientResponse['errors']) && $clientResponse['errors']) {
             $logger->warning(
-                ($document ? sprintf('[documentId: "%s"] ', $document->getId()) : '').
+                $this->getDocumentIdPrefix($document) .
                 sprintf(
                     'Unexpected error response from client: %s',
                     json_encode($clientResponse)
                 )
             );
         }
+    }
+
+    private function logUnclassifiedDocument(
+        LoggerInterface $logger,
+        ?IndexDocument $document,
+        string $method,
+        string $index,
+        $type = null,
+        $parentClasses = null
+    ): void
+    {
+        $this->logSkippedUpdate(
+            $logger,
+            'unclassified document',
+            $document,
+            $method,
+            $index,
+            $type,
+            $parentClasses
+        );
+    }
+
+    private function logSkippedUpdate(
+        LoggerInterface $logger,
+        string $why,
+        ?IndexDocument $document,
+        string $method,
+        string $index,
+        $type = null,
+        $parentClasses = null
+    ): void
+    {
+        $logger->info(
+            $this->getDocumentIdPrefix($document) .
+            sprintf(
+                '%s: Skipping document update: %s '.
+                '(index=%s type=%s, typesString=%s, parentClasses=%s,)',
+                $method,
+                $why,
+                $index,
+                var_export($type, true),
+                $document !== null ? $this->getTypesString($document) : '',
+                var_export($parentClasses, true)
+            )
+        );
     }
 
     private function getDocumentIdPrefix(?IndexDocument $document): string
@@ -135,8 +196,19 @@ trait BatchLog
         );
     }
 
-    private function logBatchFlush(LoggerInterface $logger, int $count): void
+    private function logBatchFlush(LoggerInterface $logger, array $params): void
     {
-        $logger->debug(null, 'Flushing batch with %d operations', $count);
+        $logger->debug(
+            null,
+            sprintf('Flushing batch with %d operations', count($params))
+        );
+    }
+
+    /**
+     * @internal
+     */
+    private function getTypesString(IndexDocument $document): ?string
+    {
+        return var_export($document->getBody()['type'] ?? null, true);
     }
 }
