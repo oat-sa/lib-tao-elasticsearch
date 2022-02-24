@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -14,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
- * Copyright (c) 2020-2021 (original work) Open Assessment Technologies SA;
+ * Copyright (c) 2020-2022 (original work) Open Assessment Technologies SA;
  */
 
 declare(strict_types=1);
@@ -26,6 +27,7 @@ use oat\generis\model\data\permission\ReverseRightLookupInterface;
 use oat\oatbox\service\ConfigurableService;
 use oat\oatbox\session\SessionService;
 use oat\oatbox\user\User;
+use oat\tao\elasticsearch\Specification\UseAclSpecification;
 use tao_helpers_Uri;
 use common_Utils;
 
@@ -72,6 +74,16 @@ class QueryBuilder extends ConfigurableService
         'SearchDropdown',
     ];
 
+    /** @var UseAclSpecification */
+    private $useAclSpecification;
+
+    public function withUseAclSpecification(UseAclSpecification $useAclSpecification): self
+    {
+        $this->useAclSpecification = $useAclSpecification;
+
+        return $this;
+    }
+
     public static function create(): self
     {
         return new self();
@@ -84,7 +96,7 @@ class QueryBuilder extends ConfigurableService
         $blocks = preg_split( '/( AND )/i', $queryString);
         $index = $this->getIndexByType($type);
         $conditions = $this->buildConditions($index, $blocks);
-
+        
         $query = [
             'query' => [
                 'query_string' =>
@@ -194,14 +206,13 @@ class QueryBuilder extends ConfigurableService
     {
         $conditions = [];
 
-        /** @var User $currentUser */
-        $currentUser = $this->getServiceLocator()->get(SessionService::SERVICE_ID)->getCurrentUser();
+        $currentUser = $this->getSessionService()->getCurrentUser();
 
         $conditions[] = $currentUser->getIdentifier();
         foreach ($currentUser->getRoles() as $role) {
             $conditions[] = $role;
         }
-        
+
         return sprintf(
             '(%s:("%s"))',
             self::READ_ACCESS_FIELD,
@@ -211,13 +222,11 @@ class QueryBuilder extends ConfigurableService
 
     private function includeAccessData(string $index): bool
     {
-        if (!in_array($index, IndexerInterface::INDEXES_WITH_ACCESS_CONTROL)) {
-            return false;
-        }
-
-        $permissionProvider = $this->getServiceLocator()->get(PermissionInterface::SERVICE_ID);
-
-        return $permissionProvider instanceof ReverseRightLookupInterface;
+        return $this->getUseAclSpecification()->isSatisfiedBy(
+            $index,
+            $this->getPermissionProvider(),
+            $this->getSessionService()->getCurrentUser()
+        );
     }
 
     private function parseBlock(string $block): QueryBlock
@@ -237,8 +246,27 @@ class QueryBuilder extends ConfigurableService
         return new QueryBlock($field, trim($matches['term']));
     }
 
+    private function getUseAclSpecification(): UseAclSpecification
+    {
+        if (!isset($this->useAclSpecification)) {
+            $this->useAclSpecification = new UseAclSpecification();
+        }
+
+        return $this->useAclSpecification;
+    }
+
     private function isUri(string $term): bool
     {
         return common_Utils::isUri(tao_helpers_Uri::decode($term));
+    }
+
+    private function getPermissionProvider(): PermissionInterface
+    {
+        return $this->getServiceManager()->getContainer()->get(PermissionInterface::SERVICE_ID);
+    }
+
+    private function getSessionService(): SessionService
+    {
+        return $this->getServiceManager()->getContainer()->get(SessionService::SERVICE_ID);
     }
 }
