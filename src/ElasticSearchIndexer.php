@@ -26,8 +26,9 @@ use oat\tao\elasticsearch\internal\BatchLog;
 use oat\tao\model\search\index\IndexDocument;
 use Elasticsearch\Client;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
+use Exception;
 use Iterator;
+use RuntimeException;
 
 class ElasticSearchIndexer implements IndexerInterface
 {
@@ -89,7 +90,7 @@ class ElasticSearchIndexer implements IndexerInterface
 
             try {
                 $indexName = $this->getIndexNameByDocument($document);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->logIndexFailure($this->logger, $e, __METHOD__);
                 $exceptions++;
                 continue;
