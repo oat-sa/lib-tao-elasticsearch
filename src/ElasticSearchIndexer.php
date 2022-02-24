@@ -82,8 +82,9 @@ class ElasticSearchIndexer implements IndexerInterface
         $blockSize = 0;
         $params = [];
 
-        foreach ($documents as $document) {
+        while ($documents->valid()) {
             /** @var IndexDocument $document */
+            $document = $documents->current();
             $visited++;
 
             try {
@@ -110,13 +111,16 @@ class ElasticSearchIndexer implements IndexerInterface
 
                 $this->logMappings($this->logger, $document);
 
+                $documents->next();
                 $skipped++;
                 continue;
             }
 
             $this->info($this->logger, $document, 'Queuing document');
             $params = $this->extendBatch('index', $indexName, $document, $params);
-           
+
+            $documents->next();
+
             $blockSize++;
 
             if ($blockSize === self::INDEXING_BLOCK_SIZE) {
