@@ -149,7 +149,7 @@ class ElasticSearchTest extends TestCase
 
         $this->assertEquals(new SearchResult([], 0), $this->sut->search($query));
     }
-    
+
     public function testCountDocuments(): void
     {
         $this->client
@@ -167,7 +167,7 @@ class ElasticSearchTest extends TestCase
 
         $this->assertEquals(777, $this->sut->countDocuments('indexName'));
     }
-    
+
     public function testQuery_callElasticSearchCaseClassIsSupported(): void
     {
         $validType = 'http://www.tao.lu/Ontologies/TAOItem.rdf#Item';
@@ -297,6 +297,33 @@ class ElasticSearchTest extends TestCase
         $this->sut->setOption('indexFiles', __DIR__ . DIRECTORY_SEPARATOR . 'sample' . DIRECTORY_SEPARATOR . 'testIndexes.conf.php');
 
         $this->sut->createIndexes();
+    }
+
+    /**
+     * @dataProvider pingProvider
+     */
+    public function testPing(bool $clientPing, bool $expected): void
+    {
+        $this->client
+            ->expects($this->once())
+            ->method('ping')
+            ->willReturn($clientPing);
+
+        $this->assertEquals($expected, $this->sut->ping());
+    }
+
+    public function pingProvider(): array
+    {
+        return [
+            'True' => [
+                'clientPing' => true,
+                'expected' => true,
+            ],
+            'False' => [
+                'clientPing' => false,
+                'expected' => false,
+            ],
+        ];
     }
 
     private function mockDebugLogger(): void
