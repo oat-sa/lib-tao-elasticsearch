@@ -235,8 +235,7 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
 
     private function getUpdateQuery(string $index, string $typeOrId, string $script): array
     {
-        return
-        [
+        return [
             'index' => $index,
             'type' => '_doc',
             'conflicts' => 'proceed',
