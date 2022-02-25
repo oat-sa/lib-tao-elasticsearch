@@ -61,7 +61,7 @@ trait LogIndexOperationsTrait
     ): void
     {
         $logger->info(
-            $this->getDocumentIdPrefix($document) .
+            ($document ? sprintf('[documentId: "%s"] ', $document->getId()) : '') .
             spritnf(
                 'Queuing document with types %s into index "%s"',
                 var_export($document->getBody()['type'] ?? null, true),
@@ -90,7 +90,7 @@ trait LogIndexOperationsTrait
     private function debug(LoggerInterface $logger,  ?IndexDocument $document, string $message, ...$args): void
     {
         $logger->debug(
-            $this->getDocumentIdPrefix($document) .
+            ($document ? sprintf('[documentId: "%s"] ', $document->getId()) : '') .
             vsprintf($message, $args)
         );
     }
@@ -98,7 +98,7 @@ trait LogIndexOperationsTrait
     private function info(LoggerInterface $logger, ?IndexDocument $document, string $message, ...$args): void
     {
         $logger->info(
-            $this->getDocumentIdPrefix($document) .
+            ($document ? sprintf('[documentId: "%s"] ', $document->getId()) : '') .
             vsprintf($message, $args)
         );
     }
@@ -106,7 +106,7 @@ trait LogIndexOperationsTrait
     private function warn(LoggerInterface $logger, ?IndexDocument $document, string $message, ...$args): void
     {
         $logger->warning(
-            $this->getDocumentIdPrefix($document) .
+            ($document ? sprintf('[documentId: "%s"] ', $document->getId()) : '') .
             vsprintf($message, $args)
         );
     }
@@ -115,7 +115,7 @@ trait LogIndexOperationsTrait
     {
         if (isset($clientResponse['errors']) && $clientResponse['errors']) {
             $logger->warning(
-                $this->getDocumentIdPrefix($document) .
+                ($document ? sprintf('[documentId: "%s"] ', $document->getId()) : '') .
                 sprintf(
                     'Unexpected error response from client: %s',
                     json_encode($clientResponse)
@@ -155,7 +155,7 @@ trait LogIndexOperationsTrait
     ): void
     {
         $logger->info(
-            $this->getDocumentIdPrefix($document) .
+            ($document ? sprintf('[documentId: "%s"] ', $document->getId()) : '') .
             sprintf(
                 '%s: Skipping document update: %s '.
                 '(index=%s type=%s, typesString=%s, parentClasses=%s)',
@@ -167,11 +167,6 @@ trait LogIndexOperationsTrait
                 var_export($parentClasses, true)
             )
         );
-    }
-
-    private function getDocumentIdPrefix(?IndexDocument $document): string
-    {
-        return ($document ? sprintf('[documentId: "%s"] ', $document->getId()) : '');
     }
 
     private function logIndexFailure(
