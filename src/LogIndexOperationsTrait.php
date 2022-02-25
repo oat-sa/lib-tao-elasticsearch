@@ -64,7 +64,7 @@ trait LogIndexOperationsTrait
             $this->getDocumentIdPrefix($document) .
             spritnf(
                 'Queuing document with types %s into index "%s"',
-                $this->getTypesString($document),
+                var_export($document->getBody()['type'] ?? null, true),
                 $indexName
             )
         );
@@ -163,7 +163,7 @@ trait LogIndexOperationsTrait
                 $why,
                 $index,
                 var_export($type, true),
-                $document !== null ? $this->getTypesString($document) : '',
+                $document !== null ? var_export($document->getBody()['type'] ?? null, true) : '',
                 var_export($parentClasses, true)
             )
         );
@@ -229,13 +229,5 @@ trait LogIndexOperationsTrait
                 count($params)
             )
         );
-    }
-
-    /**
-     * @internal
-     */
-    private function getTypesString(IndexDocument $document): ?string
-    {
-        return var_export($document->getBody()['type'] ?? null, true);
     }
 }
