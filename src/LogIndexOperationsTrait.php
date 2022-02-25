@@ -64,7 +64,7 @@ trait LogIndexOperationsTrait
             ($document ? sprintf('[documentId: "%s"] ', $document->getId()) : '') .
             sprintf(
                 'Queuing document with types %s into index "%s"',
-                var_export($document->getBody()['type'] ?? null, true),
+                implode(', ', $document->getBody()['type'] ?? []),
                 $indexName
             )
         );

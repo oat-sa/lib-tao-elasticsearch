@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -14,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
- * Copyright (c) 2020 (original work) Open Assessment Technologies SA;
+ * Copyright (c) 2020-2022 (original work) Open Assessment Technologies SA;
  *
  */
 
@@ -22,13 +23,14 @@ declare(strict_types=1);
 
 namespace oat\tao\test\elasticsearch;
 
-use Elasticsearch\Client;
 use oat\generis\test\TestCase;
 use oat\oatbox\log\LoggerService;
 use oat\tao\elasticsearch\ElasticSearchIndexer;
 use oat\tao\elasticsearch\IndexerInterface;
 use oat\tao\model\search\index\IndexDocument;
 use oat\tao\model\TaoOntology;
+use Elasticsearch\Client;
+use PHPUnit\Framework\MockObject\MockObject;
 use ArrayIterator;
 
 /**
@@ -104,11 +106,18 @@ class ElasticSearchIndexerTest extends TestCase
 
         $this->logger->expects($this->at(0))
             ->method('info')
-            ->with('indexname:' . IndexerInterface::ITEMS_INDEX);
+            ->with(
+                '[documentId: "some_id"] Queuing document with types '.
+                'http://www.tao.lu/Ontologies/TAOItem.rdf#Item '.
+                sprintf('into index "%s"', IndexerInterface::ITEMS_INDEX)
+            );
 
         $this->logger->expects($this->at(1))
-            ->method('info')
-            ->with('adding document "some_id" to be indexed');
+            ->method('debug')
+            ->with(
+                ElasticSearchIndexer::class . '::buildIndex'.
+                ': Flushing batch with 1 operations'
+            );
 
         $iterator = $this->createIterator([$document]);
         $iterator->expects($this->once())
@@ -131,14 +140,14 @@ class ElasticSearchIndexerTest extends TestCase
 
         $this->logger->expects($this->at(2))
             ->method('debug')
-            ->with('client response: '. json_encode(['bulk_response']));
+            ->with('Processed 1 items (no exceptions, no skipped items)');
 
         $count = $this->sut->buildIndex($iterator);
 
         $this->assertSame(1, $count);
     }
 
-    private function createIterator(array $items = []): \PHPUnit\Framework\MockObject\MockObject
+    private function createIterator(array $items = []): MockObject
     {
         $iteratorMock = $this->createMock(ArrayIterator::class);
 
