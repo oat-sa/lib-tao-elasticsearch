@@ -62,7 +62,7 @@ trait LogIndexOperationsTrait
     {
         $logger->info(
             ($document ? sprintf('[documentId: "%s"] ', $document->getId()) : '') .
-            spritnf(
+            sprintf(
                 'Queuing document with types %s into index "%s"',
                 var_export($document->getBody()['type'] ?? null, true),
                 $indexName
