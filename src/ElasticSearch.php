@@ -197,6 +197,11 @@ class ElasticSearch extends ConfigurableService implements SearchInterface, TaoS
         );
     }
 
+    public function ping(): bool
+    {
+        return $this->getClient()->ping();
+    }
+
     protected function buildResultSet(array $elasticResult = []): ResultSet
     {
         $uris = [];
