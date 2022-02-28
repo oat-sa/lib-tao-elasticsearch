@@ -159,7 +159,7 @@ class QueryBuilderTest extends TestCase
             ],
         ];
     }
-    
+
     /**
      * @dataProvider queryResultsWithoutAccessControl
      */
