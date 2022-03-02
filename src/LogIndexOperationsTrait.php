@@ -150,7 +150,7 @@ trait LogIndexOperationsTrait
 
     private function logSkippedUpdate(
         LoggerInterface $logger,
-        string $why,
+        string $reason,
         ?IndexDocument $document,
         string $method,
         string $index,
@@ -162,7 +162,7 @@ trait LogIndexOperationsTrait
             sprintf(
                 '%s: Skipping document update: %s (index=%s type=%s, typesString=%s, parentClasses=%s)',
                 $method,
-                $why,
+                $reason,
                 $index,
                 var_export($type, true),
                 $document !== null ? var_export($document->getBody()['type'] ?? null, true) : '',
