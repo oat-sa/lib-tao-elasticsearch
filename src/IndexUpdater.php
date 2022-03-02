@@ -15,9 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
- * Copyright (c) 2020 (original work) Open Assessment Technologies SA;
- *
- *
+ * Copyright (c) 2020-2022 (original work) Open Assessment Technologies SA;
  */
 
 declare(strict_types=1);
@@ -26,7 +24,6 @@ namespace oat\tao\elasticsearch;
 
 use Elasticsearch\Client;
 use Elasticsearch\ClientBuilder;
-use oat\generis\model\WidgetRdf;
 use oat\oatbox\service\ConfigurableService;
 use oat\tao\elasticsearch\Exception\FailToRemovePropertyException;
 use oat\tao\elasticsearch\Exception\FailToUpdatePropertiesException;
@@ -36,6 +33,8 @@ use Throwable;
 
 class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
 {
+    use LogIndexOperationsTrait;
+
     /** @var Client */
     private $client;
 
@@ -77,20 +76,43 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
         }
 
         if (!isset($type, $parentClasses)) {
+            $this->logSkippedUpdate(
+                $this->getLogger(),
+                'type or parentClasses not set',
+                null,
+                __METHOD__,
+                '',
+                $type ?? null,
+                $parentClasses ?? null
+            );
+
             return;
         }
 
         $index = $this->findIndex($parentClasses, $type);
 
         if ($index === IndexerInterface::UNCLASSIFIEDS_DOCUMENTS_INDEX) {
+            $this->logUnclassifiedDocument(
+                $this->getLogger(),
+                null,
+                __METHOD__,
+                $index,
+                $type,
+                $parentClasses
+            );
+
             return;
         }
 
         $script = implode(' ', array_merge($queryNewProperty, $queryRemoveOldProperty));
 
+        $query = $this->getUpdateQuery($index, $type, $script);
+
         try {
-            $this->executeUpdateQuery($index, $type, $script);
+            $this->getClient()->updateByQuery($query);
         } catch (Throwable $e) {
+            $this->logIndexFailure($this->getLogger(), $e, __METHOD__, $script, $type, $query);
+
             throw new FailToUpdatePropertiesException(
                 sprintf(
                     'by script: %s AND type: %s',
@@ -103,11 +125,23 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
         }
     }
 
+    /**
+     * @throws FailToUpdatePropertiesException
+     */
     public function updatePropertyValue(string $typeOrId, array $parentClasses, string $propertyName, array $value): void
     {
         $index = $this->findIndex($parentClasses, $typeOrId);
 
         if ($index === IndexerInterface::UNCLASSIFIEDS_DOCUMENTS_INDEX) {
+            $this->logUnclassifiedDocument(
+                $this->getLogger(),
+                null,
+                __METHOD__,
+                $index,
+                null,
+                $parentClasses
+            );
+
             return;
         }
 
@@ -117,9 +151,13 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
             implode('\', \'', $value)
         );
 
+        $query = $this->getUpdateQuery($index, $typeOrId, $script);
+
         try {
-            $this->executeUpdateQuery($index, $typeOrId, $script);
+            $this->getClient()->updateByQuery($query);
         } catch (Throwable $e) {
+            $this->logIndexFailure($this->getLogger(), $e, __METHOD__, $script, $typeOrId, $query);
+
             throw new FailToUpdatePropertiesException(
                 sprintf(
                     'by script: %s AND type: %s',
@@ -132,6 +170,9 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
         }
     }
 
+    /**
+     * @throws FailToRemovePropertyException
+     */
     public function deleteProperty(array $property): void
     {
         $name = $property['name'];
@@ -153,9 +194,13 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
             $name
         );
 
+        $query = $this->getUpdateQuery($index, $type, $script);
+
         try {
-            $this->executeUpdateQuery($index, $type, $script);
+            $this->getClient()->updateByQuery($query);
         } catch (Throwable $e) {
+            $this->logIndexFailure($this->getLogger(), $e, __METHOD__, $script, $type, $query);
+
             throw new FailToRemovePropertyException(
                 sprintf(
                     'by script: %s AND type: %s',
@@ -188,26 +233,24 @@ class IndexUpdater extends ConfigurableService implements IndexUpdaterInterface
         return IndexerInterface::UNCLASSIFIEDS_DOCUMENTS_INDEX;
     }
 
-    private function executeUpdateQuery(string $index, string $typeOrId, string $script): void
+    private function getUpdateQuery(string $index, string $typeOrId, string $script): array
     {
-        $this->getClient()->updateByQuery(
-            [
-                'index' => $index,
-                'type' => '_doc',
-                'conflicts' => 'proceed',
-                'wait_for_completion' => true,
-                'body' => [
-                    'query' => [
-                        'multi_match' => [
-                            'query' => $typeOrId,
-                            'fields' => ['type', '_id'],
-                        ]
-                    ],
-                    'script' => [
-                        'source' => $script
+        return [
+            'index' => $index,
+            'type' => '_doc',
+            'conflicts' => 'proceed',
+            'wait_for_completion' => true,
+            'body' => [
+                'query' => [
+                    'multi_match' => [
+                        'query' => $typeOrId,
+                        'fields' => ['type', '_id'],
                     ]
+                ],
+                'script' => [
+                    'source' => $script
                 ]
             ]
-        );
+        ];
     }
 }
