@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -14,21 +15,25 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
- * Copyright (c) 2018-2021 (original work) Open Assessment Technologies SA;
+ * Copyright (c) 2018-2022 (original work) Open Assessment Technologies SA;
  */
 
 declare(strict_types=1);
 
 namespace oat\tao\elasticsearch;
 
+use oat\tao\model\search\index\IndexDocument;
 use Elasticsearch\Client;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
+use Exception;
 use Iterator;
-use oat\tao\model\search\index\IndexDocument;
+use RuntimeException;
+use Throwable;
 
 class ElasticSearchIndexer implements IndexerInterface
 {
+    use LogIndexOperationsTrait;
+
     private const INDEXING_BLOCK_SIZE = 100;
 
     /** @var Client */
@@ -73,6 +78,9 @@ class ElasticSearchIndexer implements IndexerInterface
      */
     public function buildIndex(Iterator $documents): int
     {
+        $visited = 0;
+        $skipped = 0;
+        $exceptions = 0;
         $count = 0;
         $blockSize = 0;
         $params = [];
@@ -80,36 +88,45 @@ class ElasticSearchIndexer implements IndexerInterface
         while ($documents->valid()) {
             /** @var IndexDocument $document */
             $document = $documents->current();
+            $visited++;
 
-            // First step we trying to create document. If is exist, then skip this step
-            $indexName = $this->getIndexNameByDocument($document);
+            try {
+                $indexName = $this->getIndexNameByDocument($document);
+            } catch (Exception $e) {
+                $this->logIndexFailure($this->logger, $e, __METHOD__);
+                $exceptions++;
 
-            $this->logger->info('indexname:' . $indexName);
-
-            if ($indexName === self::UNCLASSIFIEDS_DOCUMENTS_INDEX) {
-                $this->logger->warning(
-                    sprintf(
-                        'There is no proper index for the document "%s", type:"%s"',
-                        $document->getId(),
-                        var_export($document->getBody()['type'] ?? null, true)
-                    )
-                );
-                $documents->next();
                 continue;
             }
 
-            $this->logger->info(sprintf('adding document "%s" to be indexed', $document->getId()));
+            if ($indexName === self::UNCLASSIFIEDS_DOCUMENTS_INDEX) {
+                $this->logUnclassifiedDocument(
+                    $this->logger,
+                    $document,
+                    __METHOD__,
+                    $indexName
+                );
 
+                $this->logMappings($this->logger, $document);
+
+                $documents->next();
+                $skipped++;
+
+                continue;
+            }
+
+            $this->logAddingDocumentToQueue($this->logger, $document, $indexName);
             $params = $this->extendBatch('index', $indexName, $document, $params);
-           
+
             $documents->next();
 
             $blockSize++;
 
             if ($blockSize === self::INDEXING_BLOCK_SIZE) {
-                $clientResponse = $this->client->bulk($params);
+                $this->logBatchFlush($this->logger, __METHOD__, $params);
 
-                $this->logger->debug('client response: '. json_encode($clientResponse));
+                $response = $this->client->bulk($params);
+                $this->logErrorsFromResponse($this->logger, $document, $response);
 
                 $count += $blockSize;
                 $blockSize = 0;
@@ -118,12 +135,15 @@ class ElasticSearchIndexer implements IndexerInterface
         }
 
         if ($blockSize > 0) {
-            $clientResponse = $this->client->bulk($params);
+            $this->logBatchFlush($this->logger, __METHOD__, $params);
 
-            $this->logger->debug('client response: '. json_encode($clientResponse));
+            $response = $this->client->bulk($params);
+            $this->logErrorsFromResponse($this->logger, null, $response);
 
             $count += $blockSize;
         }
+
+        $this->logCompletion($this->logger, $count, $visited, $skipped, $exceptions);
 
         return $count;
     }
@@ -141,10 +161,25 @@ class ElasticSearchIndexer implements IndexerInterface
                 'index' => $document['_index'],
                 'id' => $document['_id']
             ];
-            $this->getClient()->delete($deleteParams);
+
+            try {
+                $this->getClient()->delete($deleteParams);
+                $this->debug($this->logger, $document, 'Document deleted');
+            } catch (Throwable $e) {
+                $this->logDocumentFailure(
+                    $this->logger,
+                    $e,
+                    __METHOD__,
+                    $document,
+                    $id,
+                    $deleteParams
+                );
+            }
 
             return true;
         }
+
+        $this->info($this->logger, $document, 'Document to delete not found: %s', $id);
 
         return false;
     }

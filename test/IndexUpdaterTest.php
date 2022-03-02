@@ -26,6 +26,7 @@ namespace oat\tao\test\elasticsearch;
 use Elasticsearch\Client;
 use Elasticsearch\Common\Exceptions\BadMethodCallException;
 use oat\generis\test\TestCase;
+use oat\oatbox\log\LoggerService;
 use oat\tao\elasticsearch\Exception\FailToUpdatePropertiesException;
 use oat\tao\elasticsearch\Exception\FailToRemovePropertyException;
 use oat\tao\elasticsearch\IndexUpdater;
@@ -48,6 +49,8 @@ class IndexUpdaterTest extends TestCase
     {
         $this->sut = new IndexUpdater();
         $this->client = $this->createMock(Client::class);
+
+        $this->sut->setLogger($this->createMock(LoggerService::class));
 
         $reflection = new ReflectionObject($this->sut);
         $this->clientProperty = $reflection->getProperty('client');
