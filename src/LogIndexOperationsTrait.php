@@ -31,9 +31,14 @@ use Throwable;
  */
 trait LogIndexOperationsTrait
 {
-    private function logCompletion(LoggerInterface $logger, int $count, int $visited, int $skipped, int $exceptions): void
-    {
-        if (($count != $visited) || ($exceptions > 0) || ($skipped > 0)) {
+    private function logCompletion(
+        LoggerInterface $logger,
+        int $count,
+        int $visited,
+        int $skipped,
+        int $exceptions
+    ): void {
+        if ($count !== $visited || $exceptions > 0 || $skipped > 0) {
             $logger->warning(
                 sprintf(
                     "%d / %d items were processed (%d skipped, %d exceptions)",
@@ -58,11 +63,10 @@ trait LogIndexOperationsTrait
         LoggerInterface $logger,
         IndexDocument $document,
         string $indexName
-    ): void
-    {
+    ): void {
         $logger->info(
-            ($document ? sprintf('[documentId: "%s"] ', $document->getId()) : '') .
-            sprintf(
+            ($document ? sprintf('[documentId: "%s"] ', $document->getId()) : '')
+            . sprintf(
                 'Queuing document with types %s into index "%s"',
                 implode(', ', $document->getBody()['type'] ?? []),
                 $indexName
@@ -72,7 +76,7 @@ trait LogIndexOperationsTrait
 
     private function logMappings(LoggerInterface $logger, IndexDocument $document): void
     {
-        if (!($this instanceof IndexerInterface)) {
+        if (!$this instanceof IndexerInterface) {
             return;
         }
 
@@ -82,7 +86,8 @@ trait LogIndexOperationsTrait
                     'documentId: "%s" Index mappings: type="%s" index="%s"',
                     $document->getId(),
                     $documentType,
-                    $indexName)
+                    $indexName
+                )
             );
         }
     }
@@ -113,7 +118,7 @@ trait LogIndexOperationsTrait
 
     private function logErrorsFromResponse(LoggerInterface $logger, ?IndexDocument $document, $clientResponse): void
     {
-        if (isset($clientResponse['errors']) && $clientResponse['errors']) {
+        if ($clientResponse['errors'] ?? false) {
             $logger->warning(
                 ($document ? sprintf('[documentId: "%s"] ', $document->getId()) : '') .
                 sprintf(
@@ -131,8 +136,7 @@ trait LogIndexOperationsTrait
         string $index,
         $type = null,
         $parentClasses = null
-    ): void
-    {
+    ): void {
         $this->logSkippedUpdate(
             $logger,
             'unclassified document',
@@ -152,13 +156,11 @@ trait LogIndexOperationsTrait
         string $index,
         $type = null,
         $parentClasses = null
-    ): void
-    {
+    ): void {
         $logger->info(
             ($document ? sprintf('[documentId: "%s"] ', $document->getId()) : '') .
             sprintf(
-                '%s: Skipping document update: %s '.
-                '(index=%s type=%s, typesString=%s, parentClasses=%s)',
+                '%s: Skipping document update: %s (index=%s type=%s, typesString=%s, parentClasses=%s)',
                 $method,
                 $why,
                 $index,

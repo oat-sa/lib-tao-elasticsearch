@@ -78,7 +78,9 @@ class ElasticSearchIndexer implements IndexerInterface
      */
     public function buildIndex(Iterator $documents): int
     {
-        $visited = $skipped = $exceptions = 0;
+        $visited = 0;
+        $skipped = 0;
+        $exceptions = 0;
         $count = 0;
         $blockSize = 0;
         $params = [];
@@ -93,6 +95,7 @@ class ElasticSearchIndexer implements IndexerInterface
             } catch (Exception $e) {
                 $this->logIndexFailure($this->logger, $e, __METHOD__);
                 $exceptions++;
+
                 continue;
             }
 
@@ -108,6 +111,7 @@ class ElasticSearchIndexer implements IndexerInterface
 
                 $documents->next();
                 $skipped++;
+
                 continue;
             }
 
