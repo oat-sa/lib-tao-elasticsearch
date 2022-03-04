@@ -84,6 +84,12 @@ class QueryBuilder extends ConfigurableService
         return $this;
     }
 
+    private const QUERY_STRING_REPLACEMENTS = [
+        '"' => '',
+        '\'' => '',
+        '\\' => '\\\\'
+    ];
+
     public static function create(): self
     {
         return new self();
@@ -91,12 +97,17 @@ class QueryBuilder extends ConfigurableService
 
     public function getSearchParams(string $queryString, string $type, int $start, int $count, string $order, string $dir): array
     {
-        $queryString = str_replace(['"', '\''], '', $queryString);
+        $queryString = str_replace(
+            array_keys(self::QUERY_STRING_REPLACEMENTS),
+            array_values(self::QUERY_STRING_REPLACEMENTS),
+            $queryString
+        );
+
         $queryString = htmlspecialchars_decode($queryString);
         $blocks = preg_split( '/( AND )/i', $queryString);
         $index = $this->getIndexByType($type);
         $conditions = $this->buildConditions($index, $blocks);
-        
+
         $query = [
             'query' => [
                 'query_string' =>
