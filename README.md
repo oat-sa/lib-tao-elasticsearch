@@ -1,3 +1,13 @@
+# DEPRECATED
+
+This libary must not be used anymore, since it is tighly coupled with 
+tao extensions and its code is not reusable for other applications.
+
+Please, refer to the [Advanced Search extension](https://github.com/oat-sa/extension-tao-advanced-search) when 
+implementing elastic search integration related to search in the TAO platform. 
+
+[![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
+
 # lib-tao-elasticsearch
 
 Elastic Search engine
