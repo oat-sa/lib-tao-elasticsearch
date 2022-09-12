@@ -35,7 +35,7 @@ use oat\tao\model\search\ResultSet;
 use oat\oatbox\service\ConfigurableService;
 
 /**
- * @todo Rename to ElasticSearchService according to our best practises
+ * @deprecated use oat-sa/extension-tao-advanced-search
  */
 class ElasticSearch extends ConfigurableService implements SearchInterface, TaoSearchInterface
 {
