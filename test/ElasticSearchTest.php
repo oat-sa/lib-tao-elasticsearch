@@ -21,13 +21,12 @@ declare(strict_types=1);
 
 namespace oat\tao\test\elasticsearch;
 
-use Elasticsearch\Client;
-use Elasticsearch\Namespaces\IndicesNamespace;
+use Elastic\Elasticsearch\Client;
+use Elastic\Elasticsearch\Endpoints\Indices;
 use Exception;
 use oat\generis\test\TestCase;
 use oat\oatbox\log\LoggerService;
 use oat\tao\elasticsearch\ElasticSearch;
-use oat\tao\elasticsearch\IndexUpdater;
 use oat\tao\elasticsearch\Query;
 use oat\tao\elasticsearch\QueryBuilder;
 use oat\tao\elasticsearch\SearchResult;
@@ -256,7 +255,7 @@ class ElasticSearchTest extends TestCase
 
     public function testCreateIndexes_callIndexCreationBasedOnIndexOption(): void
     {
-        $indexMock = $this->createMock(IndicesNamespace::class);
+        $indexMock = $this->createMock(Indices::class);
         $indexMock->expects($this->at(0))
             ->method('create')
             ->with(

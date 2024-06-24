@@ -32,5 +32,12 @@
     "psr-4" : {
       "oat\\tao\\elasticsearch\\" : "src/"
     }
+  },
+  "config": {
+    "allow-plugins": {
+      "php-http/discovery": true,
+      "oat-sa/oatbox-extension-installer": true,
+      "oat-sa/composer-npm-bridge": true
+    }
   }
 }

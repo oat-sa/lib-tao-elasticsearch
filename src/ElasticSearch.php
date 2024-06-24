@@ -23,8 +23,8 @@ declare(strict_types=1);
 namespace oat\tao\elasticsearch;
 
 use ArrayIterator;
-use Elasticsearch\Client;
-use Elasticsearch\ClientBuilder;
+use Elastic\Elasticsearch\Client;
+use Elastic\Elasticsearch\ClientBuilder;
 use Exception;
 use Iterator;
 use oat\tao\model\search\index\IndexIterator;

@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace oat\tao\elasticsearch\Action;
 
-use Elasticsearch\Common\Exceptions\BadRequest400Exception;
+use BadRequest400Exception;
 use oat\tao\elasticsearch\ElasticSearch;
 use common_report_Report as Report;
 use oat\tao\elasticsearch\Watcher\IndexDocumentFactory;

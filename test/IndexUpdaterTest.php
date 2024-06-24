@@ -23,8 +23,8 @@ declare(strict_types=1);
 
 namespace oat\tao\test\elasticsearch;
 
-use Elasticsearch\Client;
-use Elasticsearch\Common\Exceptions\BadMethodCallException;
+use Elastic\Elasticsearch\Client;
+use BadMethodCallException;
 use oat\generis\test\TestCase;
 use oat\oatbox\log\LoggerService;
 use oat\tao\elasticsearch\Exception\FailToUpdatePropertiesException;

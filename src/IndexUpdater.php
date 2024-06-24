@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace oat\tao\elasticsearch;
 
-use Elasticsearch\Client;
-use Elasticsearch\ClientBuilder;
+use Elastic\Elasticsearch\Client;
+use Elastic\Elasticsearch\ClientBuilder;
 use oat\oatbox\service\ConfigurableService;
 use oat\tao\elasticsearch\Exception\FailToRemovePropertyException;
 use oat\tao\elasticsearch\Exception\FailToUpdatePropertiesException;

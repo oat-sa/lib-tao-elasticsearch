@@ -29,7 +29,7 @@ use oat\tao\elasticsearch\ElasticSearchIndexer;
 use oat\tao\elasticsearch\IndexerInterface;
 use oat\tao\model\search\index\IndexDocument;
 use oat\tao\model\TaoOntology;
-use Elasticsearch\Client;
+use Elastic\Elasticsearch\Client;
 use PHPUnit\Framework\MockObject\MockObject;
 use ArrayIterator;
 

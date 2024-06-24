@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace oat\tao\elasticsearch;
 
 use oat\tao\model\search\index\IndexDocument;
-use Elasticsearch\Client;
+use Elastic\Elasticsearch\Client;
 use Psr\Log\LoggerInterface;
 use Exception;
 use Iterator;
